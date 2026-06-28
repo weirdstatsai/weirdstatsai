@@ -28,7 +28,8 @@
       "Bash(git commit -m ' *)",
       "Bash(git remote *)",
       "Bash(git push *)",
-      "Bash(npx firebase *)"
+      "Bash(npx firebase *)",
+      "Bash(sleep 6 && curl -s http://localhost:8000/health 2>&1; echo \"\"; tail -3 /tmp/backend.log 2>/dev/null)"
     ]
   }
 }

@@ -144,12 +144,6 @@ export class ExplorePage implements OnInit, OnDestroy {
     this.router.navigate(['/card'], { state: { card, viewOnly: true } });
   }
 
-  askSearch(): void {
-    const q = this.searchQuery.trim();
-    if (!q) return;
-    // Redirect to home page with query pre-filled in the text field
-    this.router.navigate(['/tabs/home'], { state: { prefillQuery: q } });
-  }
 
   private _computeProfiles(): void {
     const q = this.searchQuery.trim().toLowerCase();

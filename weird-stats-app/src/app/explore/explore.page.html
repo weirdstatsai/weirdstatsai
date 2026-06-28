@@ -25,13 +25,10 @@
       <input
         [(ngModel)]="searchQuery"
         type="search"
-        placeholder="Search or ask anything…"
+        placeholder="Search cards or people…"
         class="search-input"
-        (input)="onSearchChange()"
-        (keyup.enter)="askSearch()" />
-      <button *ngIf="searchQuery.trim()" class="search-ask-btn" (click)="askSearch()">
-        <ion-icon name="sparkles-outline"></ion-icon> Ask
-      </button>
+        (input)="onSearchChange()" />
+      <ion-icon name="close-circle" *ngIf="searchQuery.trim()" class="search-clear" (click)="searchQuery=''; onSearchChange()"></ion-icon>
     </div>
   </div>
 
@@ -73,17 +70,14 @@
   </div>
 
   <ng-template #noResults>
-    <div class="no-results" *ngIf="!isLoading">
+    <div class="no-results" *ngIf="!isLoading && matchingProfiles.length === 0">
       <div class="no-results-icon">
         <ion-icon name="search-outline"></ion-icon>
       </div>
-      <p class="no-results-title" *ngIf="searchQuery">Nothing for "{{ searchQuery }}"</p>
+      <p class="no-results-title" *ngIf="searchQuery">No matches for "{{ searchQuery }}"</p>
       <p class="no-results-title" *ngIf="!searchQuery">No cards yet</p>
-      <p class="no-results-sub" *ngIf="!searchQuery">Ask a question to generate your first card!</p>
-      <ion-button fill="solid" color="primary" size="small" (click)="askSearch()" *ngIf="searchQuery">
-        <ion-icon name="home-outline" slot="start"></ion-icon>
-        Generate on Home
-      </ion-button>
+      <p class="no-results-sub" *ngIf="searchQuery">Try a different card title or person's name</p>
+      <p class="no-results-sub" *ngIf="!searchQuery">Published cards will show up here</p>
     </div>
   </ng-template>
 

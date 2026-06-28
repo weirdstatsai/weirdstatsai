@@ -80,9 +80,11 @@ async def generate_stream(req: GenerateRequest) -> StreamingResponse:
             yield _sse("error", {"message": "Could not format card. Try again."})
             return
 
-        # Step 3: save + return
+        # Step 3: save a cache-only copy (not user-owned) + return.
+        # Drafts live on the device; a card only enters a user's collection
+        # when they explicitly Save publicly/privately from the app.
         yield _sse("status", {"message": "Almost done…", "step": 3})
-        graph_id = save_graph(card, req.prompt, uid=req.uid)
+        graph_id = save_graph(card, req.prompt, uid=None)
         result = {
             **card,
             "id": graph_id,
@@ -122,8 +124,8 @@ async def generate(req: GenerateRequest) -> dict:
             logger.warning("Pipeline failed (attempt 2), using fallback", exc_info=True)
             card = _fallback_card(req.prompt, str(e)[:80])
 
-    # 3. Persist and return the stored shape.
-    graph_id = save_graph(card, req.prompt, uid=req.uid)
+    # 3. Persist a cache-only copy (not user-owned) and return.
+    graph_id = save_graph(card, req.prompt, uid=None)
     return {
         **card,
         "id": graph_id,

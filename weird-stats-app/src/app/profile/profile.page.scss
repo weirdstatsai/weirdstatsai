@@ -253,7 +253,7 @@ ion-toolbar {
 // ── Vertical 2-column grid ────────────────────────────────────────────────
 .cards-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
   padding: 12px 12px 0;
 }
@@ -279,7 +279,31 @@ ion-toolbar {
     transform: scale(0.97);
   }
 
+  // Saved-card visibility borders
+  &.is-public  { box-shadow: 0 0 0 2.5px $green; }
+  &.is-private { box-shadow: 0 0 0 2.5px $purple; }
+
   &:active { opacity: 0.9; }
+}
+
+// ── Status badge (Public / Private) ───────────────────────────────────────
+.status-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  color: #fff;
+  backdrop-filter: blur(4px);
+  ion-icon { font-size: 10px; }
+
+  &.public  { background: rgba(29, 158, 117, 0.9); }
+  &.private { background: rgba(108, 92, 231, 0.9); }
 }
 
 // ── Inline draft detail panel ─────────────────────────────────────────────

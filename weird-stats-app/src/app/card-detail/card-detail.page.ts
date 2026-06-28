@@ -13,6 +13,7 @@ import { KpiStyle } from '../shared/cards/card-kpi/card-kpi.component';
 import { VersusStyle } from '../shared/cards/card-versus/card-versus.component';
 import { MapStyle } from '../shared/cards/card-map/card-map.component';
 import { MembershipService } from '../services/membership.service';
+import { DraftService } from '../services/draft.service';
 import firebase from 'firebase/compat/app';
 
 @Component({
@@ -102,6 +103,7 @@ export class CardDetailPage implements OnInit {
     private toastCtrl: ToastController,
     private ngZone: NgZone,
     private membership: MembershipService,
+    private drafts: DraftService,
   ) {}
 
   private _buildAltStyles(): void {
@@ -243,6 +245,19 @@ export class CardDetailPage implements OnInit {
               this.card = event.data;
               this._buildAltStyles();
               this.membership.recordGeneration();
+              // Store the new card as a device-local draft (not in Firestore)
+              if (uid) {
+                this.drafts.add(uid, {
+                  id: event.data.id,
+                  status: 'completed',
+                  publishStatus: 'draft',
+                  createdBy: uid,
+                  createdAt: event.data.createdAt ?? new Date().toISOString(),
+                  prompt,
+                  promptHash: '',
+                  data: event.data,
+                });
+              }
               this.isLoading = false;
               this.statusMsg = '';
               this.router.navigate(['/tabs/profile']);

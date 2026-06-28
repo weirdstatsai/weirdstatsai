@@ -320,3 +320,34 @@ ion-content {
     border: 0.5px solid rgba(0,0,0,0.08);
   }
 }
+
+// ── Fixed mobile frame on larger screens ───────────────────────────────────
+// Keeps WeirdStats looking like a phone app when opened on desktop/web.
+// Change $app-frame-width below to widen/narrow the frame.
+$app-frame-width: 480px;
+
+@media (min-width: 600px) {
+  body {
+    background: #e7e7ec;
+  }
+  ion-app {
+    max-width: $app-frame-width !important;
+    margin: 0 auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.14);
+  }
+  // Keep modals/popovers/action-sheets within the frame too
+  ion-modal,
+  ion-action-sheet,
+  ion-popover,
+  ion-alert,
+  ion-toast,
+  ion-loading {
+    max-width: $app-frame-width !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+}

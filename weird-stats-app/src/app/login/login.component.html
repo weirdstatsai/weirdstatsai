@@ -1,117 +1,134 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-button *ngIf="mode !== 'choose'" (click)="setMode('choose')" fill="clear">
-        <ion-icon name="chevron-back-outline" slot="icon-only"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-    <ion-title>{{ mode === 'choose' ? 'Sign in' : mode === 'email-signin' ? 'Email sign in' : mode === 'email-signup' ? 'Create account' : 'Phone' }}</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="cancel()" fill="clear">
-        <ion-icon name="close-outline" slot="icon-only"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<ion-content class="login-content">
 
-<ion-content class="ion-padding">
+  <!-- Gradient hero -->
+  <div class="login-hero">
+    <button class="hero-close" (click)="cancel()" aria-label="Close">
+      <ion-icon name="close"></ion-icon>
+    </button>
+    <button class="hero-back" *ngIf="mode !== 'choose'" (click)="setMode('choose')" aria-label="Back">
+      <ion-icon name="chevron-back"></ion-icon>
+    </button>
 
-  <!-- ── Mode: choose ────────────────────────────────────────────────────── -->
-  <ng-container *ngIf="mode === 'choose'">
-    <p class="login-subtitle">Sign in to save, publish and share your stats.</p>
+    <p class="hero-logo">WeirdStats<span>.ai</span></p>
+    <h1 class="hero-title">
+      {{ mode === 'choose' ? 'Welcome back' :
+         mode === 'email-signin' ? 'Sign in with email' :
+         mode === 'email-signup' ? 'Create your account' :
+         'Sign in with phone' }}
+    </h1>
+    <p class="hero-sub">
+      {{ mode === 'choose' ? 'Sign in to save, publish and share your weird stats.' :
+         mode === 'email-signin' ? 'Enter your details to continue.' :
+         mode === 'email-signup' ? 'Join to start creating stat cards.' :
+         'We\'ll text you a verification code.' }}
+    </p>
+  </div>
 
-    <div class="card">
-      <div class="list-item" (click)="continueWithGoogle()">
-        <div class="icon-avatar avatar-blue"><ion-icon name="logo-google"></ion-icon></div>
-        <div class="list-item-info"><p class="list-item-title">Continue with Google</p></div>
-        <ion-icon name="chevron-forward-outline" class="list-item-chevron"></ion-icon>
-      </div>
-      <div class="list-item" (click)="continueWithFacebook()">
-        <div class="icon-avatar avatar-purple"><ion-icon name="logo-facebook"></ion-icon></div>
-        <div class="list-item-info"><p class="list-item-title">Continue with Facebook</p></div>
-        <ion-icon name="chevron-forward-outline" class="list-item-chevron"></ion-icon>
-      </div>
-      <div class="list-item" (click)="setMode('email-signin')">
-        <div class="icon-avatar avatar-green"><ion-icon name="mail-outline"></ion-icon></div>
-        <div class="list-item-info"><p class="list-item-title">Sign in with Email</p></div>
-        <ion-icon name="chevron-forward-outline" class="list-item-chevron"></ion-icon>
-      </div>
-      <div class="list-item" (click)="setMode('email-signup')">
-        <div class="icon-avatar avatar-orange"><ion-icon name="person-add-outline"></ion-icon></div>
-        <div class="list-item-info"><p class="list-item-title">Create account</p></div>
-        <ion-icon name="chevron-forward-outline" class="list-item-chevron"></ion-icon>
-      </div>
-      <div class="list-item" (click)="setMode('phone')">
-        <div class="icon-avatar avatar-teal"><ion-icon name="phone-portrait-outline"></ion-icon></div>
-        <div class="list-item-info"><p class="list-item-title">Use phone number</p></div>
-        <ion-icon name="chevron-forward-outline" class="list-item-chevron"></ion-icon>
-      </div>
-    </div>
-  </ng-container>
+  <div class="login-body">
 
-  <!-- ── Mode: email-signin ──────────────────────────────────────────────── -->
-  <ng-container *ngIf="mode === 'email-signin'">
-    <div class="card">
-      <ion-item lines="none" class="login-input">
-        <ion-input type="email" placeholder="Email address" [(ngModel)]="email" autocomplete="email"></ion-input>
-      </ion-item>
-      <ion-item lines="none" class="login-input">
-        <ion-input type="password" placeholder="Password" [(ngModel)]="password"></ion-input>
-      </ion-item>
-      <ion-button expand="block" [disabled]="loading" (click)="signInWithEmail()">
+    <!-- ── Mode: choose ── -->
+    <ng-container *ngIf="mode === 'choose'">
+      <button class="provider google" (click)="continueWithGoogle()">
+        <span class="prov-icon"><ion-icon name="logo-google"></ion-icon></span>
+        Continue with Google
+      </button>
+      <button class="provider facebook" (click)="continueWithFacebook()">
+        <span class="prov-icon"><ion-icon name="logo-facebook"></ion-icon></span>
+        Continue with Facebook
+      </button>
+
+      <div class="divider"><span>or</span></div>
+
+      <div class="alt-row">
+        <button class="alt-btn" (click)="setMode('email-signin')">
+          <ion-icon name="mail-outline"></ion-icon>
+          <span>Email</span>
+        </button>
+        <button class="alt-btn" (click)="setMode('email-signup')">
+          <ion-icon name="person-add-outline"></ion-icon>
+          <span>Sign up</span>
+        </button>
+        <button class="alt-btn" (click)="setMode('phone')">
+          <ion-icon name="phone-portrait-outline"></ion-icon>
+          <span>Phone</span>
+        </button>
+      </div>
+
+      <p class="terms">By continuing you agree to our Terms and Privacy Policy.</p>
+    </ng-container>
+
+    <!-- ── Mode: email-signin ── -->
+    <ng-container *ngIf="mode === 'email-signin'">
+      <div class="field">
+        <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+        <input type="email" placeholder="Email address" [(ngModel)]="email" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+        <input type="password" placeholder="Password" [(ngModel)]="password" autocomplete="current-password"/>
+      </div>
+      <button class="primary-btn" [disabled]="loading" (click)="signInWithEmail()">
         <ion-spinner name="dots" *ngIf="loading"></ion-spinner>
         <span *ngIf="!loading">Sign in</span>
-      </ion-button>
-    </div>
-    <button class="forgot-link" (click)="forgotPassword()">Forgot password?</button>
-    <p class="switch-mode">Don't have an account? <button class="link-btn" (click)="setMode('email-signup')">Create one</button></p>
-  </ng-container>
+      </button>
+      <button class="text-link forgot" (click)="forgotPassword()">Forgot password?</button>
+      <p class="switch">Don't have an account?
+        <button class="text-link" (click)="setMode('email-signup')">Create one</button>
+      </p>
+    </ng-container>
 
-  <!-- ── Mode: email-signup ──────────────────────────────────────────────── -->
-  <ng-container *ngIf="mode === 'email-signup'">
-    <div class="card">
-      <ion-item lines="none" class="login-input">
-        <ion-input type="text" placeholder="Your name" [(ngModel)]="displayName" autocomplete="name"></ion-input>
-      </ion-item>
-      <ion-item lines="none" class="login-input">
-        <ion-input type="email" placeholder="Email address" [(ngModel)]="email" autocomplete="email"></ion-input>
-      </ion-item>
-      <ion-item lines="none" class="login-input">
-        <ion-input type="password" placeholder="Password (min 6 chars)" [(ngModel)]="password"></ion-input>
-      </ion-item>
-      <ion-item lines="none" class="login-input">
-        <ion-input type="password" placeholder="Confirm password" [(ngModel)]="confirmPassword"></ion-input>
-      </ion-item>
-      <ion-button expand="block" [disabled]="loading" (click)="createAccount()">
+    <!-- ── Mode: email-signup ── -->
+    <ng-container *ngIf="mode === 'email-signup'">
+      <div class="field">
+        <ion-icon name="person-outline" class="field-icon"></ion-icon>
+        <input type="text" placeholder="Your name" [(ngModel)]="displayName" autocomplete="name"/>
+      </div>
+      <div class="field">
+        <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+        <input type="email" placeholder="Email address" [(ngModel)]="email" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+        <input type="password" placeholder="Password (min 6 chars)" [(ngModel)]="password"/>
+      </div>
+      <div class="field">
+        <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+        <input type="password" placeholder="Confirm password" [(ngModel)]="confirmPassword"/>
+      </div>
+      <button class="primary-btn" [disabled]="loading" (click)="createAccount()">
         <ion-spinner name="dots" *ngIf="loading"></ion-spinner>
         <span *ngIf="!loading">Create account</span>
-      </ion-button>
-    </div>
-    <p class="switch-mode">Already have an account? <button class="link-btn" (click)="setMode('email-signin')">Sign in</button></p>
-  </ng-container>
+      </button>
+      <p class="switch">Already have an account?
+        <button class="text-link" (click)="setMode('email-signin')">Sign in</button>
+      </p>
+    </ng-container>
 
-  <!-- ── Mode: phone ─────────────────────────────────────────────────────── -->
-  <ng-container *ngIf="mode === 'phone'">
-    <div class="card">
-      <ion-item lines="none" class="login-input">
-        <ion-input type="tel" placeholder="+1 555 123 4567" [(ngModel)]="phoneNumber" [disabled]="otpSent"></ion-input>
-      </ion-item>
-      <ion-item lines="none" class="login-input" *ngIf="otpSent">
-        <ion-input type="text" inputmode="numeric" placeholder="Verification code" [(ngModel)]="otpCode"></ion-input>
-      </ion-item>
-      <ion-button expand="block" *ngIf="!otpSent" [disabled]="loading" (click)="sendCode()">
+    <!-- ── Mode: phone ── -->
+    <ng-container *ngIf="mode === 'phone'">
+      <div class="field">
+        <ion-icon name="call-outline" class="field-icon"></ion-icon>
+        <input type="tel" placeholder="+1 555 123 4567" [(ngModel)]="phoneNumber" [disabled]="otpSent"/>
+      </div>
+      <div class="field" *ngIf="otpSent">
+        <ion-icon name="keypad-outline" class="field-icon"></ion-icon>
+        <input type="text" inputmode="numeric" placeholder="Verification code" [(ngModel)]="otpCode"/>
+      </div>
+      <button class="primary-btn" *ngIf="!otpSent" [disabled]="loading" (click)="sendCode()">
         <ion-spinner name="dots" *ngIf="loading"></ion-spinner>
         <span *ngIf="!loading">Send code</span>
-      </ion-button>
-      <ion-button expand="block" *ngIf="otpSent" [disabled]="loading" (click)="verifyCode()">
+      </button>
+      <button class="primary-btn" *ngIf="otpSent" [disabled]="loading" (click)="verifyCode()">
         <ion-spinner name="dots" *ngIf="loading"></ion-spinner>
-        <span *ngIf="!loading">Verify</span>
-      </ion-button>
-    </div>
-  </ng-container>
+        <span *ngIf="!loading">Verify &amp; continue</span>
+      </button>
+    </ng-container>
 
-  <p class="login-error" *ngIf="error">{{ error }}</p>
+    <p class="login-error" *ngIf="error">
+      <ion-icon name="alert-circle-outline"></ion-icon> {{ error }}
+    </p>
 
-  <div id="recaptcha-container"></div>
+    <div id="recaptcha-container"></div>
+  </div>
 
 </ion-content>

@@ -9,6 +9,7 @@ import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.compon
 import { StoredStatCard } from '../models/weird-card.model';
 import { MembershipService } from '../services/membership.service';
 import { AdminService } from '../services/admin.service';
+import { DraftService } from '../services/draft.service';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 import { PublishModalComponent } from '../shared/publish-modal/publish-modal.component';
 import { CardMenuPopoverComponent } from '../shared/card-menu-popover/card-menu-popover.component';
@@ -27,10 +28,12 @@ export class ProfilePage implements OnInit, OnDestroy {
   user$ = this.authService.user$;
   userProfile$ = this.authService.userProfile$;
   savedCards$: Observable<StoredStatCard[]> = of([]);
-  allCards: StoredStatCard[] = [];
+  savedCards: StoredStatCard[] = [];   // from Firestore (published + private)
+  draftCards: StoredStatCard[] = [];   // from device localStorage
   isLoading = true;
   activeFilter: 'all' | 'chart' | 'map' | 'fact' = 'all';
-  activeTab: 'published' | 'draft' = 'draft';
+  activeTab: 'saved' | 'draft' = 'saved';
+  private currentUid = '';
   private sub?: Subscription;
 
   // Inline draft alternatives panel
@@ -75,6 +78,7 @@ export class ProfilePage implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private membership: MembershipService,
     private adminService: AdminService,
+    private drafts: DraftService,
   ) {}
 
   isAdmin = false;
@@ -86,6 +90,8 @@ export class ProfilePage implements OnInit, OnDestroy {
     });
     this.sub = this.user$.pipe(
       switchMap(user => {
+        this.currentUid = user?.uid ?? '';
+        this.draftCards = user ? this.drafts.list(user.uid) : [];
         if (!user) return of([] as StoredStatCard[]);
         return this.afs
           .collection<StoredStatCard>('stats', ref =>
@@ -95,13 +101,20 @@ export class ProfilePage implements OnInit, OnDestroy {
       }),
     ).subscribe({
       next: docs => {
-        this.allCards = docs
+        // Saved tab = published + private cards owned by the user
+        this.savedCards = docs
           .filter(d => d.data?.title && d.data?.cardType)
+          .filter(d => ['published', 'private'].includes(d.publishStatus ?? 'draft'))
           .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
         this.isLoading = false;
       },
-      error: () => { this.allCards = []; this.isLoading = false; },
+      error: () => { this.savedCards = []; this.isLoading = false; },
     });
+  }
+
+  ionViewWillEnter(): void {
+    // Refresh local drafts each time the page is shown
+    if (this.currentUid) this.draftCards = this.drafts.list(this.currentUid);
   }
 
   ngOnDestroy(): void { this.sub?.unsubscribe(); }
@@ -114,25 +127,21 @@ export class ProfilePage implements OnInit, OnDestroy {
     this.activeFilter = f;
   }
 
-  setTab(tab: 'published' | 'draft'): void {
+  setTab(tab: 'saved' | 'draft'): void {
     this.activeTab = tab;
     this.selectedDraft = undefined;
   }
 
   get draftCount(): number {
-    return this.allCards.filter(c => (c.publishStatus ?? 'draft') === 'draft').length;
+    return this.draftCards.length;
   }
 
-  get publishedCount(): number {
-    return this.allCards.filter(c => ['published', 'private'].includes(c.publishStatus ?? 'draft')).length;
+  get savedCount(): number {
+    return this.savedCards.length;
   }
 
   filteredCards(): StoredStatCard[] {
-    const isPublishedTab = this.activeTab === 'published';
-    let cards = this.allCards.filter(c => {
-      const s = c.publishStatus ?? 'draft';
-      return isPublishedTab ? ['published', 'private'].includes(s) : s === 'draft';
-    });
+    let cards = this.activeTab === 'saved' ? this.savedCards : this.draftCards;
     if (this.activeFilter !== 'all') {
       cards = cards.filter(c => {
         const t = c.data?.cardType;
@@ -205,7 +214,13 @@ export class ProfilePage implements OnInit, OnDestroy {
   async deleteCard(card: StoredStatCard): Promise<void> {
     if (!card.id) return;
     try {
-      await this.afs.collection('stats').doc(card.id).delete();
+      if (this.isDraft(card)) {
+        // Local draft — just remove from device
+        this.drafts.remove(this.currentUid, card.id);
+        this.draftCards = this.drafts.list(this.currentUid);
+      } else {
+        await this.afs.collection('stats').doc(card.id).delete();
+      }
       const t = await this.toastCtrl.create({ message: 'Card deleted', duration: 1500, color: 'danger' });
       await t.present();
     } catch {
@@ -237,17 +252,20 @@ export class ProfilePage implements OnInit, OnDestroy {
     await sheet.present();
   }
 
+  private isDraft(card: StoredStatCard): boolean {
+    return (card.publishStatus ?? 'draft') === 'draft';
+  }
+
   async togglePublish(card: StoredStatCard): Promise<void> {
     if (!card.id) return;
-    const isPublished = (card.publishStatus ?? 'draft') !== 'draft';
 
-    // If already published → move back to drafts directly
-    if (isPublished) {
-      await this._setPublishStatus(card, 'draft');
+    // Saved card → move back to Drafts (delete Firestore, restore local draft)
+    if (!this.isDraft(card)) {
+      await this._moveToDrafts(card);
       return;
     }
 
-    // Show elegant publish options sheet
+    // Draft → choose how to save
     const modal = await this.modalCtrl.create({
       component: PublishModalComponent,
       breakpoints: [0, 1], initialBreakpoint: 1,
@@ -257,41 +275,66 @@ export class ProfilePage implements OnInit, OnDestroy {
     const { data } = await modal.onWillDismiss();
     if (!data?.choice) return;
     if (data.choice === 'public') {
-      await this._setPublishStatus(card, 'published');
+      await this._saveCard(card, 'published');
     } else {
-      await this._publishPrivate(card);
+      await this._savePrivate(card);
     }
   }
 
-  private async _publishPrivate(card: StoredStatCard): Promise<void> {
-    const isPremium = await this.membership.isPremium();
-    if (!isPremium) {
-      const modal = await this.modalCtrl.create({
-        component: PlanModalComponent,
-        componentProps: { mode: 'limit' },
-        breakpoints: [0, 1], initialBreakpoint: 1,
-        handle: false,
-      });
-      await modal.present();
-      const { data } = await modal.onWillDismiss();
-      if (data?.plan === 'premium') {
-        await this._setPublishStatus(card, 'private');
-      }
+  private async _savePrivate(card: StoredStatCard): Promise<void> {
+    // Premium members (and admins) save privately straight away — no upsell.
+    const allowed = this.isAdmin || await this.membership.isPremium();
+    if (allowed) {
+      await this._saveCard(card, 'private');
       return;
     }
-    await this._setPublishStatus(card, 'private');
+
+    // Free users see the upgrade sheet first.
+    const modal = await this.modalCtrl.create({
+      component: PlanModalComponent,
+      componentProps: { mode: 'limit' },
+      breakpoints: [0, 1], initialBreakpoint: 1,
+      handle: false,
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss();
+    if (data?.plan === 'premium') await this._saveCard(card, 'private');
   }
 
-  private async _setPublishStatus(card: StoredStatCard, status: 'draft' | 'published' | 'private'): Promise<void> {
+  // Promote a local draft into the user's Firestore collection
+  private async _saveCard(card: StoredStatCard, status: 'published' | 'private'): Promise<void> {
     try {
-      await this.afs.collection('stats').doc(card.id).update({ publishStatus: status });
-      const msg = status === 'published' ? 'Published to Explore!' :
-                  status === 'private'   ? 'Private — shareable via link' :
-                                           'Moved to Drafts';
+      const id = card.id;
+      await this.afs.collection('stats').doc(id).set({
+        ...card,
+        publishStatus: status,
+        createdBy: this.currentUid,
+        createdAt: card.createdAt ?? new Date().toISOString(),
+      });
+      this.drafts.remove(this.currentUid, id);
+      this.draftCards = this.drafts.list(this.currentUid);
+      this.selectedDraft = undefined;
+      this.activeTab = 'saved';
+      const msg = status === 'published' ? 'Saved publicly — live on Explore!' : 'Saved privately';
       const t = await this.toastCtrl.create({ message: msg, duration: 1800, color: 'primary' });
       await t.present();
     } catch {
-      const t = await this.toastCtrl.create({ message: 'Could not update card', duration: 1500, color: 'danger' });
+      const t = await this.toastCtrl.create({ message: 'Could not save card', duration: 1500, color: 'danger' });
+      await t.present();
+    }
+  }
+
+  // Move a saved card back to device drafts
+  private async _moveToDrafts(card: StoredStatCard): Promise<void> {
+    try {
+      await this.afs.collection('stats').doc(card.id).delete();
+      this.drafts.add(this.currentUid, { ...card, publishStatus: 'draft' });
+      this.draftCards = this.drafts.list(this.currentUid);
+      this.activeTab = 'draft';
+      const t = await this.toastCtrl.create({ message: 'Moved to Drafts', duration: 1600, color: 'medium' });
+      await t.present();
+    } catch {
+      const t = await this.toastCtrl.create({ message: 'Could not move card', duration: 1500, color: 'danger' });
       await t.present();
     }
   }

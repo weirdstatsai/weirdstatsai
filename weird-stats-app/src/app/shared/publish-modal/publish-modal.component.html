@@ -2,8 +2,8 @@
   <div class="handle"></div>
 
   <div class="header">
-    <p class="eyebrow">Publishing</p>
-    <h2 class="title">Who can see this card?</h2>
+    <p class="eyebrow">Save card</p>
+    <h2 class="title">How do you want to save it?</h2>
   </div>
 
   <div class="options">
@@ -13,19 +13,19 @@
         <ion-icon name="earth-outline"></ion-icon>
       </div>
       <div class="option-text">
-        <p class="option-name">Public</p>
-        <p class="option-desc">Visible to everyone on the Explore feed</p>
+        <p class="option-name">Save publicly</p>
+        <p class="option-desc">Goes live on the Explore feed for everyone</p>
       </div>
       <ion-icon name="chevron-forward-outline" class="option-arrow"></ion-icon>
     </button>
 
     <button class="option premium" (click)="choose('private')">
       <div class="option-icon private">
-        <ion-icon name="link-outline"></ion-icon>
+        <ion-icon name="lock-closed-outline"></ion-icon>
       </div>
       <div class="option-text">
-        <p class="option-name">Private <span class="premium-tag">Premium</span></p>
-        <p class="option-desc">Only accessible via a shareable link</p>
+        <p class="option-name">Save privately <span class="premium-tag">Premium</span></p>
+        <p class="option-desc">Only you can see it — shareable via link</p>
       </div>
       <ion-icon name="chevron-forward-outline" class="option-arrow"></ion-icon>
     </button>

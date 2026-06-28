@@ -76,6 +76,11 @@ $yellow: #BA7517;
 
   .search-icon { font-size: 18px; color: #aaa; flex-shrink: 0; }
 
+  .search-clear {
+    font-size: 18px; color: #ccc; flex-shrink: 0; cursor: pointer;
+    &:active { color: #999; }
+  }
+
   .search-input {
     flex: 1;
     border: none;
