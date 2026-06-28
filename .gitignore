@@ -24,3 +24,6 @@ weird-stats-app/www/
 # IDE
 .idea/
 .vscode/
+
+# Firebase deploy cache
+.firebase/
