@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: weirdstats-api
+    runtime: docker
+    rootDir: services/backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false                       # set in Render dashboard (secret)
+      - key: FIREBASE_PROJECT_ID
+        value: weirdstatsai-aaaf7
+      - key: FIREBASE_SERVICE_ACCOUNT_KEY
+        value: /etc/secrets/firebase-adminsdk.json   # upload as a Render Secret File
+      - key: RESEARCH_MODEL
+        value: gpt-4o
+      - key: FORMAT_MODEL
+        value: gpt-4o-mini
+      - key: MAX_WEB_SEARCHES
+        value: "2"

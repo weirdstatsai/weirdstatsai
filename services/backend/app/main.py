@@ -19,12 +19,20 @@ logger = logging.getLogger("uvicorn.error")
 
 app = FastAPI(title="WeirdStats Backend")
 
+import os
+
+# Local dev + hosted frontend origins. Add extras via CORS_ORIGINS (comma-separated).
+_default_origins = [
+    "http://localhost:4200", "http://localhost:8100",
+    "http://localhost:8080", "capacitor://localhost", "ionic://localhost",
+    "https://weirdstatsai-aaaf7.web.app",
+    "https://weirdstatsai-aaaf7.firebaseapp.com",
+]
+_extra = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:4200", "http://localhost:8100",
-        "http://localhost:8080", "capacitor://localhost", "ionic://localhost",
-    ],
+    allow_origins=_default_origins + _extra,
     allow_methods=["*"],
     allow_headers=["*"],
 )

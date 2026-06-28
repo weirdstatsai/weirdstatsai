@@ -29,7 +29,10 @@
       "Bash(git remote *)",
       "Bash(git push *)",
       "Bash(npx firebase *)",
-      "Bash(sleep 6 && curl -s http://localhost:8000/health 2>&1; echo \"\"; tail -3 /tmp/backend.log 2>/dev/null)"
+      "Bash(sleep 6 && curl -s http://localhost:8000/health 2>&1; echo \"\"; tail -3 /tmp/backend.log 2>/dev/null)",
+      "Bash(git branch *)",
+      "Bash(git fetch *)",
+      "Bash(python3 -c \"from app.main import app; print\\('Backend imports OK — routes:', len\\(app.routes\\)\\)\")"
     ]
   }
 }
