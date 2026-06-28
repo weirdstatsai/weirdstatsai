@@ -23,7 +23,12 @@
       "Bash(python3 -c \"from openai import AsyncOpenAI; import inspect; c = AsyncOpenAI\\(api_key='test'\\); print\\([p for p in inspect.signature\\(c.responses.create\\).parameters]\\)\")",
       "mcp__visualize__read_me",
       "Bash(git init *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(grep \"firebase-adminsdk\\\\|\\\\.env$\")",
+      "Bash(git commit -m ' *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(npx firebase *)"
     ]
   }
 }

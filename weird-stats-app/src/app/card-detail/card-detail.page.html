@@ -5,8 +5,11 @@
         <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
+    <div class="admin-view-badge" *ngIf="isAdminView">
+      <ion-icon name="shield-checkmark-outline"></ion-icon> Admin view
+    </div>
     <ion-buttons slot="end">
-      <ion-button (click)="viewOnly ? presentViewActions() : presentActions()" *ngIf="card" aria-label="Options">
+      <ion-button (click)="isAdminView ? presentAdminActions() : viewOnly ? presentViewActions() : presentActions()" *ngIf="card" aria-label="Options">
         <ion-icon slot="icon-only" name="ellipsis-vertical-outline"></ion-icon>
       </ion-button>
     </ion-buttons>

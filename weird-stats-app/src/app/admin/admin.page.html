@@ -1,0 +1,104 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="admin-toolbar">
+    <ion-buttons slot="start">
+      <ion-button (click)="back()" class="back-btn">
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <div class="admin-title-wrap">
+      <ion-icon name="shield-checkmark-outline" class="title-icon"></ion-icon>
+      <ion-title class="admin-title">Admin</ion-title>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="admin-content">
+
+  <div class="loading-state" *ngIf="isLoading">
+    <ion-spinner name="dots"></ion-spinner>
+    <p>Loading panel…</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading">
+
+    <!-- Metric cards -->
+    <div class="metrics">
+      <div class="metric-card">
+        <ion-icon name="people-outline" class="metric-icon"></ion-icon>
+        <p class="metric-num">{{ users.length }}</p>
+        <p class="metric-lbl">Total users</p>
+      </div>
+      <div class="metric-card warn" *ngIf="flaggedCards.length > 0">
+        <ion-icon name="flag-outline" class="metric-icon"></ion-icon>
+        <p class="metric-num">{{ flaggedCards.length }}</p>
+        <p class="metric-lbl">Flagged</p>
+      </div>
+      <div class="metric-card ok" *ngIf="flaggedCards.length === 0">
+        <ion-icon name="checkmark-circle-outline" class="metric-icon"></ion-icon>
+        <p class="metric-num">All clear</p>
+        <p class="metric-lbl">No reports</p>
+      </div>
+    </div>
+
+    <!-- Section tabs -->
+    <div class="section-tabs">
+      <button class="stab" [class.active]="activeTab === 'users'" (click)="activeTab = 'users'">
+        Users
+      </button>
+      <button class="stab" [class.active]="activeTab === 'flagged'" (click)="activeTab = 'flagged'">
+        Flagged
+        <span class="stab-badge" *ngIf="flaggedCards.length > 0">{{ flaggedCards.length }}</span>
+      </button>
+    </div>
+
+    <!-- Users -->
+    <div *ngIf="activeTab === 'users'" class="tab-body">
+      <div class="search-row">
+        <ion-icon name="search-outline"></ion-icon>
+        <input [(ngModel)]="searchQuery" placeholder="Search by name or email" class="search-in"/>
+        <ion-icon name="close-outline" *ngIf="searchQuery" (click)="searchQuery=''" class="clear-icon"></ion-icon>
+      </div>
+
+      <div class="user-list">
+        <div class="user-item" *ngFor="let u of filteredUsers" (click)="openUser(u.uid)">
+          <div class="u-avatar">{{ (u.displayName || '?').charAt(0).toUpperCase() }}</div>
+          <div class="u-info">
+            <p class="u-name">{{ u.displayName || 'Unknown' }}</p>
+            <p class="u-sub">{{ u.cardCount }} cards
+              <span class="u-plan premium" *ngIf="u.plan === 'premium'">Premium</span>
+              <span class="u-ban" *ngIf="u.banned">Banned</span>
+            </p>
+          </div>
+          <ion-icon name="chevron-forward-outline" class="u-arrow"></ion-icon>
+        </div>
+        <p class="empty-state" *ngIf="filteredUsers.length === 0">No users found</p>
+      </div>
+    </div>
+
+    <!-- Flagged -->
+    <div *ngIf="activeTab === 'flagged'" class="tab-body">
+      <div class="flagged-list">
+        <div class="flagged-item" *ngFor="let c of flaggedCards">
+          <div class="f-info">
+            <p class="f-title">{{ c.data?.title }}</p>
+            <p class="f-meta">{{ c.createdByName || 'Unknown' }} · {{ c.flagCount }} reports</p>
+          </div>
+          <div class="f-actions">
+            <button class="f-btn ok" (click)="dismissFlag(c.id)" title="Dismiss">
+              <ion-icon name="checkmark-outline"></ion-icon>
+            </button>
+            <button class="f-btn del" (click)="deleteCard(c.id)" title="Delete">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
+          </div>
+        </div>
+        <div class="flagged-empty" *ngIf="flaggedCards.length === 0">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <p>No flagged content</p>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+</ion-content>

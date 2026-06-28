@@ -1,0 +1,158 @@
+$purple: #6C5CE7;
+$green:  #1D9E75;
+$red:    #D85A30;
+
+.admin-toolbar {
+  --background: #fff;
+  --border-width: 0;
+}
+
+.admin-title-wrap {
+  display: flex; align-items: center; gap: 6px;
+  position: absolute; left: 50%; transform: translateX(-50%);
+}
+.title-icon { font-size: 18px; color: $purple; }
+.admin-title { font-size: 17px; font-weight: 800; color: #1a1a2e; position: static; }
+
+.back-btn { --color: #1a1a2e; }
+
+.admin-content { --background: #F6F6F9; }
+
+.loading-state {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 80px 20px; gap: 10px;
+  p { font-size: 13px; color: #aaa; margin: 0; }
+}
+
+// ── Metrics ────────────────────────────────────────────────────────────────
+.metrics {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; padding: 16px 16px 0;
+}
+
+.metric-card {
+  background: #fff; border-radius: 16px; padding: 16px 14px;
+  border: 0.5px solid rgba(0,0,0,0.07);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+
+  &.warn { background: #FFF8F5; border-color: rgba($red,0.2); }
+  &.ok   { background: #F0FDF6; border-color: rgba($green,0.2); }
+}
+
+.metric-icon {
+  font-size: 20px; color: $purple; margin-bottom: 4px;
+  .warn & { color: $red; }
+  .ok &   { color: $green; }
+}
+
+.metric-num {
+  font-size: 26px; font-weight: 800; color: #1a1a2e;
+  letter-spacing: -1px; line-height: 1; margin: 0;
+}
+
+.metric-lbl {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: #aaa; margin: 0;
+}
+
+// ── Section tabs ──────────────────────────────────────────────────────────
+.section-tabs {
+  display: flex; gap: 4px; padding: 16px 16px 0;
+  border-bottom: 0.5px solid rgba(0,0,0,0.08);
+}
+
+.stab {
+  flex: 1; height: 36px; border: none; background: transparent;
+  font-size: 13px; font-weight: 600; color: #aaa;
+  cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: color 0.15s, border-color 0.15s;
+  &.active { color: $purple; border-bottom-color: $purple; }
+}
+
+.stab-badge {
+  background: $red; color: #fff; font-size: 9px; font-weight: 700;
+  padding: 1px 5px; border-radius: 10px; min-width: 16px; text-align: center;
+}
+
+// ── Tab body ──────────────────────────────────────────────────────────────
+.tab-body { padding: 14px 16px 32px; }
+
+// ── Search ────────────────────────────────────────────────────────────────
+.search-row {
+  display: flex; align-items: center; gap: 8px;
+  background: #fff; border-radius: 12px; padding: 10px 14px;
+  border: 0.5px solid rgba(0,0,0,0.08); margin-bottom: 12px;
+  ion-icon { font-size: 16px; color: #bbb; flex-shrink: 0; }
+}
+.search-in {
+  flex: 1; border: none; outline: none; font-size: 14px;
+  font-family: inherit; background: transparent;
+  &::placeholder { color: #ccc; }
+}
+.clear-icon { cursor: pointer; color: #ccc; }
+
+// ── User list ─────────────────────────────────────────────────────────────
+.user-list { display: flex; flex-direction: column; gap: 6px; }
+
+.user-item {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; border-radius: 14px; padding: 12px 14px;
+  border: 0.5px solid rgba(0,0,0,0.07); cursor: pointer;
+  transition: background 0.1s;
+  &:active { background: rgba(0,0,0,0.02); }
+}
+
+.u-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, $purple, #378ADD);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+
+.u-info { flex: 1; min-width: 0; }
+.u-name { font-size: 14px; font-weight: 600; color: #1a1a2e; margin: 0 0 3px; }
+.u-sub {
+  font-size: 12px; color: #aaa; margin: 0;
+  display: flex; align-items: center; gap: 6px;
+}
+.u-plan {
+  font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px;
+  &.premium { background: rgba($purple,0.1); color: $purple; }
+}
+.u-ban { font-size: 10px; font-weight: 700; color: $red; }
+.u-arrow { font-size: 15px; color: #ddd; }
+
+.empty-state { text-align: center; color: #ccc; font-size: 13px; padding: 32px 0; }
+
+// ── Flagged ───────────────────────────────────────────────────────────────
+.flagged-list { display: flex; flex-direction: column; gap: 8px; }
+
+.flagged-item {
+  display: flex; align-items: center; gap: 10px;
+  background: #fff; border-radius: 14px; padding: 12px 14px;
+  border: 0.5px solid rgba($red,0.15);
+}
+
+.f-info { flex: 1; min-width: 0; }
+.f-title {
+  font-size: 13px; font-weight: 600; color: #1a1a2e; margin: 0 0 3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.f-meta { font-size: 11px; color: #aaa; margin: 0; }
+
+.f-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.f-btn {
+  width: 32px; height: 32px; border-radius: 10px; border: none;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  ion-icon { font-size: 16px; }
+  &.ok  { background: rgba($green,0.1); ion-icon { color: $green; } }
+  &.del { background: rgba($red,0.1);   ion-icon { color: $red;   } }
+}
+
+.flagged-empty {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 48px 0; gap: 8px;
+  ion-icon { font-size: 40px; color: rgba($green,0.4); }
+  p { font-size: 13px; color: #bbb; margin: 0; }
+}

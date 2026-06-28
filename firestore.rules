@@ -2,21 +2,29 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Stats collection — written by the backend service account.
-    // Readable by anyone (Explore / discover feed).
+    // Helper — check if the requesting user is an admin
+    function isAdmin() {
+      return request.auth != null &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Stats — public read, backend writes
     match /stats/{statId} {
       allow read: if true;
       allow write: if true;
     }
 
-    // User profile — only the owner can read/write.
+    // Users — owner can read/write their own; admin can read/write any
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null &&
+                     (request.auth.uid == userId || isAdmin());
+      allow write: if request.auth != null &&
+                      (request.auth.uid == userId || isAdmin());
     }
 
-    // Plan subcollection — owner only.
     match /users/{userId}/plan/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null &&
+                            (request.auth.uid == userId || isAdmin());
     }
   }
 }

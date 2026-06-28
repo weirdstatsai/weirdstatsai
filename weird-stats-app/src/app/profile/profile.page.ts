@@ -8,6 +8,7 @@ import { LoginComponent } from '../login/login.component';
 import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.component';
 import { StoredStatCard } from '../models/weird-card.model';
 import { MembershipService } from '../services/membership.service';
+import { AdminService } from '../services/admin.service';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 import { PublishModalComponent } from '../shared/publish-modal/publish-modal.component';
 import { CardMenuPopoverComponent } from '../shared/card-menu-popover/card-menu-popover.component';
@@ -73,9 +74,16 @@ export class ProfilePage implements OnInit, OnDestroy {
     private router: Router,
     private cdr: ChangeDetectorRef,
     private membership: MembershipService,
+    private adminService: AdminService,
   ) {}
 
+  isAdmin = false;
+
   ngOnInit(): void {
+    this.adminService.isAdmin().then(v => {
+      this.isAdmin = v;
+      this.cdr.detectChanges();
+    });
     this.sub = this.user$.pipe(
       switchMap(user => {
         if (!user) return of([] as StoredStatCard[]);

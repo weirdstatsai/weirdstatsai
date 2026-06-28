@@ -13,6 +13,7 @@ import { KpiStyle } from '../shared/cards/card-kpi/card-kpi.component';
 import { VersusStyle } from '../shared/cards/card-versus/card-versus.component';
 import { MapStyle } from '../shared/cards/card-map/card-map.component';
 import { MembershipService } from '../services/membership.service';
+import firebase from 'firebase/compat/app';
 
 @Component({
   selector: 'app-card-detail',
@@ -28,6 +29,8 @@ export class CardDetailPage implements OnInit {
   viewOnly = false;
   editing = false;
   isSaved = false;
+  isAdminView = false;
+  returnUrl = '';
 
   altTypes: Array<'bar' | 'line' | 'doughnut'> = ['bar', 'line', 'doughnut'];
   selectedAltType?: 'bar' | 'line' | 'doughnut';
@@ -147,14 +150,14 @@ export class CardDetailPage implements OnInit {
     // ionViewWillEnter handles re-entry when the page is reused by Ionic's cache.
     const nav = this.router.getCurrentNavigation();
     if (nav?.extras?.state) {
-      this.pendingState = nav.extras.state as { card?: StoredStatCard; prompt?: string; fromSaved?: boolean; viewOnly?: boolean };
+      this.pendingState = nav.extras.state as { card?: StoredStatCard; prompt?: string; fromSaved?: boolean; viewOnly?: boolean; isAdminView?: boolean; returnUrl?: string };
     }
   }
 
-  private pendingState?: { card?: StoredStatCard; prompt?: string; fromSaved?: boolean; viewOnly?: boolean };
+  private pendingState?: { card?: StoredStatCard; prompt?: string; fromSaved?: boolean; viewOnly?: boolean; isAdminView?: boolean; returnUrl?: string };
 
   ionViewWillEnter(): void {
-    const state = this.pendingState ?? (history.state as { card?: StoredStatCard; prompt?: string; fromSaved?: boolean; viewOnly?: boolean } | undefined);
+    const state = this.pendingState ?? (history.state as { card?: StoredStatCard; prompt?: string; fromSaved?: boolean; viewOnly?: boolean; isAdminView?: boolean; returnUrl?: string } | undefined);
     this.pendingState = undefined;
 
     // Reset state on every entry so stale card doesn't persist
@@ -164,6 +167,8 @@ export class CardDetailPage implements OnInit {
     this.isSaved = false;
     this.editing = false;
     this.viewOnly = !!state?.viewOnly;
+    this.isAdminView = !!state?.isAdminView;
+    this.returnUrl = state?.returnUrl ?? '';
 
     if (state?.fromSaved) this.isSaved = true;
 
@@ -267,16 +272,59 @@ export class CardDetailPage implements OnInit {
           handler: () => { setTimeout(() => this.goShare(), 250); },
         },
         {
-          text: 'Irrelevant',
+          text: 'Report',
           icon: 'flag-outline',
+          handler: () => { setTimeout(() => this._reportCard(), 250); },
+        },
+        { text: 'Cancel', role: 'cancel', icon: 'close' },
+      ],
+    });
+    await sheet.present();
+  }
+
+  private async _reportCard(): Promise<void> {
+    const id = this.storedCard?.id;
+    if (id) {
+      await this.afs.doc(`stats/${id}`).update({
+        flagCount: firebase.firestore.FieldValue.increment(1),
+      }).catch(() => {});
+    }
+    const t = await this.toastCtrl.create({
+      message: 'Under review — thanks for your report',
+      duration: 2500,
+      position: 'bottom',
+      color: 'warning',
+      icon: 'flag-outline',
+    });
+    await t.present();
+  }
+
+  async presentAdminActions(): Promise<void> {
+    const sheet = await this.actionSheetCtrl.create({
+      header: 'Admin actions',
+      buttons: [
+        {
+          text: 'Approve — remove flag',
+          icon: 'checkmark-circle-outline',
           handler: () => {
             setTimeout(async () => {
-              const t = await this.toastCtrl.create({
-                message: 'Thanks for your feedback — coming soon!',
-                duration: 2000,
-                position: 'bottom',
-              });
-              await t.present();
+              const id = this.storedCard?.id;
+              if (id) await this.afs.doc(`stats/${id}`).update({ flagCount: 0 }).catch(() => {});
+              this.toast('Card approved — flag cleared');
+              this.back();
+            }, 250);
+          },
+        },
+        {
+          text: 'Delete card',
+          icon: 'trash-outline',
+          role: 'destructive',
+          handler: () => {
+            setTimeout(async () => {
+              const id = this.storedCard?.id;
+              if (id) await this.afs.doc(`stats/${id}`).delete().catch(() => {});
+              this.toast('Card deleted');
+              this.back();
             }, 250);
           },
         },
@@ -285,6 +333,7 @@ export class CardDetailPage implements OnInit {
     });
     await sheet.present();
   }
+
 
   async presentActions(): Promise<void> {
     const user = await firstValueFrom(this.authService.user$);
@@ -438,6 +487,7 @@ export class CardDetailPage implements OnInit {
   }
 
   back(): void {
+    if (this.returnUrl) { this.router.navigateByUrl(this.returnUrl); return; }
     this.router.navigate([this.isSaved ? '/tabs/profile' : '/tabs/explore']);
   }
 

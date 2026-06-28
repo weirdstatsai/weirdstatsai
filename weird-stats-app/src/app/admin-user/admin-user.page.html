@@ -1,0 +1,77 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="back()">
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>User Profile</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="loading-state" *ngIf="isLoading"><ion-spinner name="dots"></ion-spinner></div>
+
+  <ng-container *ngIf="!isLoading && user">
+
+    <!-- User header -->
+    <div class="user-header">
+      <div class="user-avatar">{{ initial() }}</div>
+
+      <div class="user-name-row" *ngIf="!editingName">
+        <h1 class="user-name">{{ user.displayName || 'No name' }}</h1>
+        <button class="edit-btn" (click)="editingName = true">
+          <ion-icon name="create-outline"></ion-icon>
+        </button>
+      </div>
+
+      <div class="name-edit-row" *ngIf="editingName">
+        <input [(ngModel)]="newName" class="name-input" placeholder="Display name"/>
+        <button class="save-btn" (click)="saveName()">Save</button>
+        <button class="cancel-btn" (click)="editingName = false">✕</button>
+      </div>
+
+      <p class="user-email">{{ user.email || user.uid }}</p>
+
+      <!-- Action pills -->
+      <div class="action-pills">
+        <button class="pill" [class.premium]="user.plan === 'premium'" (click)="togglePlan()">
+          <ion-icon [name]="user.plan === 'premium' ? 'star' : 'star-outline'"></ion-icon>
+          {{ user.plan === 'premium' ? 'Premium' : 'Free' }}
+        </button>
+        <button class="pill" [class.ban]="user.banned" (click)="toggleBan()">
+          <ion-icon [name]="user.banned ? 'ban-outline' : 'shield-checkmark-outline'"></ion-icon>
+          {{ user.banned ? 'Banned' : 'Active' }}
+        </button>
+      </div>
+
+      <div class="user-stats">
+        <span>{{ cards.length }} total cards</span>
+        <span>{{ cards | statsFilter:'published' }} published</span>
+        <span>{{ cards | statsFilter:'draft' }} drafts</span>
+      </div>
+    </div>
+
+    <!-- All cards -->
+    <div class="section-head">
+      <p class="section-lbl">All cards</p>
+    </div>
+
+    <div class="cards-list">
+      <div class="card-row" *ngFor="let c of cards" (click)="openCard(c)">
+        <div class="card-row-info">
+          <p class="card-row-title">{{ c.data?.title }}</p>
+          <p class="card-row-meta">
+            <span class="status-dot" [class.published]="c.publishStatus === 'published'"></span>
+            {{ c.publishStatus || 'draft' }} · {{ c.data?.cardType }}
+          </p>
+        </div>
+        <button class="delete-card-btn" (click)="$event.stopPropagation(); deleteCard(c)">
+          <ion-icon name="trash-outline"></ion-icon>
+        </button>
+      </div>
+      <p class="empty-msg" *ngIf="cards.length === 0">No cards</p>
+    </div>
+
+  </ng-container>
+</ion-content>

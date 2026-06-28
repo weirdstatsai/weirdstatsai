@@ -1046,3 +1046,39 @@ ion-toolbar {
   background: rgba(0,0,0,0.08);
   margin: 3px 0;
 }
+
+
+.admin-panel-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: linear-gradient(135deg, #6C5CE7, #378ADD);
+  color: #fff; border: none; border-radius: 12px;
+  padding: 8px 18px; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: inherit; margin-bottom: 12px;
+  ion-icon { font-size: 15px; }
+  &:active { opacity: 0.85; }
+}
+
+// ── Admin entry row ───────────────────────────────────────────────────────
+.admin-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin: 0 0 12px;
+  background: rgba(108, 92, 231, 0.06);
+  border: 1px solid rgba(108, 92, 231, 0.15);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  &:active { background: rgba(108, 92, 231, 0.12); }
+}
+.admin-entry-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: rgba(108, 92, 231, 0.12);
+  display: flex; align-items: center; justify-content: center;
+  ion-icon { font-size: 15px; color: #6C5CE7; }
+}
+.admin-entry-label {
+  flex: 1; font-size: 13px; font-weight: 600; color: #6C5CE7;
+}
+.admin-entry-arrow { font-size: 14px; color: rgba(108, 92, 231, 0.4); }

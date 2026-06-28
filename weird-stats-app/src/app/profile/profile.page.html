@@ -41,6 +41,15 @@
       </div>
     </div>
 
+    <!-- Admin entry — subtle row, only visible to admin -->
+    <div class="admin-entry" *ngIf="isAdmin" [routerLink]="['/admin']">
+      <div class="admin-entry-icon">
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+      </div>
+      <span class="admin-entry-label">Admin Panel</span>
+      <ion-icon name="chevron-forward-outline" class="admin-entry-arrow"></ion-icon>
+    </div>
+
     <!-- Tab bar — compact, no toggle look -->
     <div class="status-tabs">
       <button class="status-tab" [class.active]="activeTab === 'draft'" (click)="setTab('draft')">

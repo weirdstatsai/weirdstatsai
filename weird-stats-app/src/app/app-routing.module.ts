@@ -23,6 +23,14 @@ const routes: Routes = [
     loadChildren: () => import('./public-profile/public-profile.module').then(m => m.PublicProfilePageModule),
   },
   {
+    path: 'admin',
+    loadChildren: () => import('./admin/admin.module').then(m => m.AdminPageModule),
+  },
+  {
+    path: 'admin-user/:uid',
+    loadChildren: () => import('./admin-user/admin-user.module').then(m => m.AdminUserPageModule),
+  },
+  {
     path: 'graph-detail',
     loadChildren: () => import('./graph-detail/graph-detail.module').then(m => m.GraphDetailPageModule),
   },
