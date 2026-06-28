@@ -1,0 +1,41 @@
+<svg
+  *ngIf="type === 'bar' || type === 'polarArea'"
+  viewBox="0 0 64 44"
+  class="mini-chart"
+  preserveAspectRatio="none"
+>
+  <rect
+    *ngFor="let h of barHeights; let i = index"
+    [attr.x]="4 + i * 10"
+    [attr.y]="40 - h"
+    width="6"
+    [attr.height]="h"
+    rx="2"
+    class="bar"
+    [style.opacity]="0.35 + (i / (barHeights.length - 1 || 1)) * 0.65"
+  ></rect>
+</svg>
+
+<svg
+  *ngIf="type === 'line' || type === 'scatter' || type === 'bubble'"
+  viewBox="0 0 64 44"
+  class="mini-chart"
+  preserveAspectRatio="none"
+>
+  <polygon [attr.points]="areaPoints" class="line-area"></polygon>
+  <polyline [attr.points]="linePoints" class="line-stroke" fill="none"></polyline>
+</svg>
+
+<svg
+  *ngIf="type === 'doughnut' || type === 'pie' || type === 'radar'"
+  viewBox="0 0 44 44"
+  class="mini-chart"
+>
+  <circle cx="22" cy="22" r="16" class="ring-bg"></circle>
+  <circle
+    cx="22" cy="22" r="16"
+    class="ring-fg"
+    [attr.stroke-dasharray]="ringDashArray"
+    transform="rotate(-90 22 22)"
+  ></circle>
+</svg>

@@ -1,0 +1,249 @@
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 80px 20px;
+  text-align: center;
+  color: #888;
+
+  ion-icon { font-size: 36px; color: #D85A30; }
+  p { font-size: 14px; margin: 0; }
+}
+
+.status-msg {
+  font-size: 15px;
+  font-weight: 600;
+  color: #444;
+  min-height: 22px;
+  transition: all 0.3s ease;
+}
+
+.status-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  width: 100%;
+  max-width: 200px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(0,0,0,0.25);
+  padding: 6px 12px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+
+  ion-icon { font-size: 14px; }
+
+  &.active {
+    color: #6C5CE7;
+    background: rgba(108, 92, 231, 0.08);
+    border-color: rgba(108, 92, 231, 0.2);
+    font-weight: 600;
+  }
+}
+
+app-weird-card {
+  display: block;
+  margin-bottom: 20px;
+}
+
+.main-card-wrap {
+  padding: 0 16px;
+}
+
+// ── Alternatives ──────────────────────────────────────────────────────────
+.alts-section {
+  padding: 0 16px 24px;
+  margin-top: 32px;
+}
+
+.alts-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #888;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+.alts-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+// Ranking horizontal scroll — wider cards
+.alts-hscroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 4px 16px 12px;
+  align-items: flex-start;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.rank-alt-wrap {
+  flex: 0 0 calc(45vw - 12px);
+  height: calc((45vw - 12px) * 4 / 3);
+  cursor: pointer;
+  border-radius: 16px;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, box-shadow 0.15s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  app-card-ranking,
+  app-card-kpi,
+  app-card-table,
+  app-card-chart {
+    display: block;
+    flex: 1;
+    min-height: 0;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  &.selected {
+    opacity: 1;
+    box-shadow: 0 0 0 2.5px #6C5CE7;
+  }
+}
+
+.alt-wrap {
+  flex: 0 0 calc(33.3% - 7px);
+  min-width: 0;
+}
+
+.alt-wrap {
+  cursor: pointer;
+  border-radius: 18px;
+  opacity: 0.55;
+  transform: scale(0.97);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+
+  &.selected {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.alt-type-label {
+  display: none;
+}
+
+// ── Edit panel ────────────────────────────────────────────────────────────
+.edit-panel {
+  background: #fff;
+  border-radius: 16px;
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.font-size-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.font-size-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  background: transparent;
+  font-weight: 800;
+  font-size: 14px;
+  color: #888;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+
+  &.active {
+    background: #1a1a2e;
+    color: #fff;
+    border-color: #1a1a2e;
+  }
+}
+
+.edit-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+  margin: 14px 0 8px;
+  &:first-child { margin-top: 0; }
+}
+
+.swatches {
+  display: flex;
+  gap: 10px;
+}
+
+.swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+
+  &.active {
+    border-color: #1a1a2e;
+    transform: scale(1.12);
+  }
+}
+
+.badge-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.badge-opt {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 14px;
+  padding: 6px 11px;
+  cursor: pointer;
+
+  &.active {
+    background: var(--ion-color-primary);
+    color: #fff;
+  }
+}
+
+.edit-input {
+  width: 100%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1a1a2e;
+  outline: none;
+  resize: vertical;
+  box-sizing: border-box;
+
+  &:focus { border-color: var(--ion-color-primary); }
+}
+
+.share-btn {
+  --border-radius: 14px;
+  margin-top: 4px;
+}

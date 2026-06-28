@@ -1,0 +1,35 @@
+.menu {
+  background: #fff;
+  border-radius: 14px;
+  padding: 6px 0;
+  min-width: 170px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a2e;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.1s;
+
+  ion-icon { font-size: 17px; color: #555; flex-shrink: 0; }
+
+  &:active { background: rgba(0,0,0,0.05); }
+  &.danger { color: #D85A30; ion-icon { color: #D85A30; } }
+}
+
+.divider {
+  height: 0.5px;
+  background: rgba(0,0,0,0.08);
+  margin: 4px 0;
+}

@@ -1,0 +1,44 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="back()">
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <ion-spinner name="dots"></ion-spinner>
+  </div>
+
+  <ng-container *ngIf="!isLoading">
+
+    <!-- Profile header -->
+    <div class="pub-header">
+      <div class="pub-avatar">{{ initial() }}</div>
+      <h1 class="pub-name">{{ displayName }}</h1>
+      <p class="pub-meta">{{ cards.length }} published card{{ cards.length !== 1 ? 's' : '' }}</p>
+      <div class="pub-view-badge">
+        <ion-icon name="eye-outline"></ion-icon> View only
+      </div>
+    </div>
+
+    <!-- Cards grid -->
+    <div class="pub-grid" *ngIf="cards.length > 0">
+      <div class="pub-card-wrap" *ngFor="let card of cards" (click)="open(card)">
+        <app-weird-card [card]="card.data" size="feed"></app-weird-card>
+      </div>
+    </div>
+
+    <!-- Empty -->
+    <div class="pub-empty" *ngIf="cards.length === 0">
+      <ion-icon name="albums-outline"></ion-icon>
+      <p>No published cards yet</p>
+    </div>
+
+  </ng-container>
+
+</ion-content>

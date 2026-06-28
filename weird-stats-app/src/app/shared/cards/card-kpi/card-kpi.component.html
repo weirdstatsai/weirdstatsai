@@ -1,0 +1,81 @@
+<div class="wcard" [class.full]="size==='full'" [class.alt]="size==='alt'"
+     [style.--accent]="accent" [style.--grad-from]="gradFrom" [style.--grad-to]="gradTo">
+  <span class="wcard-bg-icon" *ngIf="bgSvg && size==='full'" [innerHTML]="bgSvg"></span>
+
+  <ng-container *ngIf="size !== 'alt'">
+    <div class="wcard-head">
+      <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.icon }} {{ card.uiMeta.category }}</span>
+      <span class="weird-badge" *ngIf="card.uiMeta?.insightBadge">{{ card.uiMeta.insightBadge }}</span>
+    </div>
+  </ng-container>
+
+  <!-- ── A: Default — title+illus row, then big number ── -->
+  <ng-container *ngIf="kpiStyle === 'default'">
+    <!-- Title + illustration side by side -->
+    <div class="kpi-title-row" *ngIf="size !== 'alt'">
+      <p class="wcard-title">{{ card.title }}</p>
+      <div class="kpi-illus" *ngIf="card.uiMeta?.icon">
+        <span class="illus-emoji">{{ card.uiMeta.icon }}</span>
+      </div>
+    </div>
+    <!-- Big number spanning full width -->
+    <div class="kpi-number-row">
+      <p class="kpi-value">{{ displayValue }}</p>
+      <p class="kpi-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</p>
+    </div>
+    <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
+  </ng-container>
+
+  <!-- ── B: Circular ring ── -->
+  <ng-container *ngIf="kpiStyle === 'circular'">
+    <div class="circ-layout">
+      <div class="circ-ring-wrap">
+        <svg width="90" height="90" viewBox="0 0 90 90">
+          <circle cx="45" cy="45" r="30" fill="none" stroke-width="7" [attr.stroke]="accent + '22'"/>
+          <circle cx="45" cy="45" r="30" fill="none" stroke-width="7" [attr.stroke]="accent"
+                  [attr.stroke-dasharray]="ringDash"
+                  stroke-dashoffset="0" stroke-linecap="round"
+                  transform="rotate(-90 45 45)"/>
+        </svg>
+        <div class="circ-center">
+          <span class="circ-val">{{ displayValue }}</span>
+        </div>
+      </div>
+      <div class="circ-info">
+        <p class="circ-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</p>
+        <p class="circ-name">{{ card.metric?.name || card.rows?.[0]?.label }}</p>
+        <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ── C: Comparison vs benchmark ── -->
+  <ng-container *ngIf="kpiStyle === 'comparison'">
+    <div class="comp-layout">
+      <div class="comp-main">
+        <p class="comp-val">{{ displayValue }}</p>
+        <p class="comp-lbl">{{ card.rows?.[0]?.label || card.metric?.name }}</p>
+      </div>
+      <div class="comp-divider"></div>
+      <div class="comp-bench">
+        <p class="comp-bench-val">{{ compValue }}</p>
+        <p class="comp-bench-lbl">{{ compLabel }}</p>
+      </div>
+    </div>
+    <div class="comp-diff" *ngIf="diffPct !== 0">
+      <span>{{ diffPct > 0 ? '↑' : '↓' }} {{ diffPct | number:'1.0-0' }}% {{ diffPct > 0 ? 'more' : 'less' }}</span>
+    </div>
+    <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
+  </ng-container>
+
+  <!-- ── D: Hero centered ── -->
+  <ng-container *ngIf="kpiStyle === 'hero'">
+    <div class="hero-layout">
+      <p class="hero-val">{{ displayValue }}</p>
+      <p class="hero-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</p>
+      <p class="hero-name">{{ card.metric?.name || card.rows?.[0]?.label }}</p>
+    </div>
+    <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
+  </ng-container>
+
+</div>

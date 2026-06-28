@@ -1,0 +1,54 @@
+<div class="wcard" [class.full]="size==='full'" [class.alt]="size==='alt'"
+     [style.--accent]="accent" [style.--grad-from]="gradFrom" [style.--grad-to]="gradTo">
+  <span class="wcard-bg-icon" *ngIf="bgSvg && size==='full'" [innerHTML]="bgSvg"></span>
+
+  <div class="wcard-head">
+    <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.icon }} {{ card.uiMeta.category }}</span>
+    <span class="weird-badge" *ngIf="card.uiMeta?.insightBadge">{{ card.uiMeta.insightBadge }}</span>
+  </div>
+
+  <p class="wcard-title">{{ card.title }}</p>
+
+  <!-- ── Style: pill (bar inside value pill) ── -->
+  <ng-container *ngIf="tableStyle === 'pill'">
+    <div class="pill-rows">
+      <div class="pill-row" *ngFor="let row of rows; let i = index">
+        <span class="pill-rank">{{ row.rank ?? (i + 1) }}</span>
+        <span class="pill-label">{{ row.label }}</span>
+        <div class="pill-wrap">
+          <div class="pill-fill" [style.width.%]="barWidth(row)"></div>
+          <span class="pill-val">{{ fmt(row.value) }}<span class="pill-unit" *ngIf="row.unit"> {{ row.unit }}</span></span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ── Style: bars (horizontal bar + value label) ── -->
+  <ng-container *ngIf="tableStyle === 'bars'">
+    <div class="bar-rows">
+      <div class="bar-row" *ngFor="let row of rows; let i = index">
+        <div class="bar-row-top">
+          <span class="pill-rank">{{ row.rank ?? (i + 1) }}</span>
+          <span class="bar-label">{{ row.label }}</span>
+          <span class="bar-value">{{ fmt(row.value) }}<span class="pill-unit" *ngIf="row.unit"> {{ row.unit }}</span></span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" [style.width.%]="barWidth(row)"></div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ── Style: rows (clean list) ── -->
+  <ng-container *ngIf="tableStyle === 'rows'">
+    <div class="clean-rows">
+      <div class="clean-row" *ngFor="let row of rows; let i = index">
+        <span class="clean-rank">{{ row.rank ?? (i + 1) }}</span>
+        <span class="clean-label">{{ row.label }}</span>
+        <span class="clean-val">{{ fmt(row.value) }}<span class="pill-unit" *ngIf="row.unit"> {{ row.unit }}</span></span>
+      </div>
+    </div>
+  </ng-container>
+
+  <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
+</div>

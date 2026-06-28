@@ -1,0 +1,87 @@
+$purple: #6C5CE7;
+$green: #1D9E75;
+
+.sheet {
+  padding: 0 16px 36px;
+  background: #fff;
+  border-radius: 24px 24px 0 0;
+}
+
+.handle {
+  width: 36px; height: 4px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 4px;
+  margin: 12px auto 20px;
+}
+
+.header { text-align: center; margin-bottom: 20px; }
+
+.eyebrow {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: $purple; margin: 0 0 6px;
+}
+
+.title {
+  font-size: 22px; font-weight: 800;
+  color: #1a1a2e; margin: 0;
+  letter-spacing: -0.4px;
+}
+
+.options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+
+.option {
+  display: flex; align-items: center; gap: 14px;
+  background: #fff;
+  border: 1.5px solid rgba(0,0,0,0.08);
+  border-radius: 16px; padding: 14px 16px;
+  cursor: pointer; text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit; width: 100%;
+
+  &:active {
+    border-color: $purple;
+    box-shadow: 0 0 0 3px rgba(108,92,231,0.1);
+  }
+
+  &.premium { background: #faf9ff; }
+}
+
+.option-icon {
+  width: 48px; height: 48px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  ion-icon { font-size: 22px; }
+
+  &.public  { background: #e8f5e9; ion-icon { color: $green; } }
+  &.private { background: rgba($purple,0.1); ion-icon { color: $purple; } }
+}
+
+.option-text { flex: 1; min-width: 0; }
+
+.option-name {
+  font-size: 16px; font-weight: 700;
+  color: #1a1a2e; margin: 0 0 2px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.option-desc { font-size: 12px; color: #888; margin: 0; line-height: 1.4; }
+
+.option-arrow { font-size: 16px; color: rgba(0,0,0,0.2); flex-shrink: 0; }
+
+.premium-tag {
+  font-size: 10px; font-weight: 700;
+  background: rgba($purple,0.12); color: $purple;
+  padding: 2px 8px; border-radius: 20px;
+  letter-spacing: 0.02em;
+}
+
+.cancel-btn {
+  width: 100%; height: 48px;
+  background: rgba(0,0,0,0.04); border: none;
+  border-radius: 14px; font-size: 15px;
+  font-weight: 600; color: #888;
+  cursor: pointer; font-family: inherit;
+  transition: background 0.15s;
+  &:active { background: rgba(0,0,0,0.08); }
+}

@@ -1,0 +1,44 @@
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 52px;
+  border-radius: 12px;
+  background: #F4F2FF;
+  flex-shrink: 0;
+}
+
+.mini-chart {
+  width: 100%;
+  height: 100%;
+}
+
+.bar {
+  fill: var(--ion-color-primary);
+}
+
+.line-area {
+  fill: rgba(108, 92, 231, 0.15);
+  stroke: none;
+}
+
+.line-stroke {
+  stroke: #0F6E56;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ring-bg {
+  fill: none;
+  stroke: #E3DFFB;
+  stroke-width: 6;
+}
+
+.ring-fg {
+  fill: none;
+  stroke: var(--ion-color-primary);
+  stroke-width: 6;
+  stroke-linecap: round;
+}

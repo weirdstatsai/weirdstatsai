@@ -1,0 +1,94 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Seed Explore Data</ion-title>
+    <ion-buttons slot="end" *ngIf="failedCount > 0 && !isRunning">
+      <ion-button color="warning" (click)="retryFailed()">
+        <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <!-- Summary card -->
+  <div class="summary-card">
+    <div class="summary-stats">
+      <div class="stat">
+        <p class="stat-num">{{ jobs.length }}</p>
+        <p class="stat-label">Total</p>
+      </div>
+      <div class="stat stat-done">
+        <p class="stat-num">{{ doneCount }}</p>
+        <p class="stat-label">Done</p>
+      </div>
+      <div class="stat stat-failed" *ngIf="failedCount > 0">
+        <p class="stat-num">{{ failedCount }}</p>
+        <p class="stat-label">Failed</p>
+      </div>
+      <div class="stat stat-pending">
+        <p class="stat-num">{{ jobs.length - doneCount - failedCount }}</p>
+        <p class="stat-label">Remaining</p>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-track">
+      <div class="progress-fill" [style.width.%]="progress"></div>
+    </div>
+    <p class="progress-label">{{ progress }}% complete</p>
+
+    <!-- Action buttons -->
+    <div class="action-row">
+      <button class="btn-run" *ngIf="!isRunning && !allFinished" (click)="runAll()">
+        <ion-icon name="play-circle-outline"></ion-icon>
+        {{ doneCount > 0 ? 'Continue' : 'Run All' }}
+      </button>
+      <button class="btn-stop" *ngIf="isRunning" (click)="stop()">
+        <ion-icon name="stop-circle-outline"></ion-icon>
+        Stop
+      </button>
+      <button class="btn-reset" *ngIf="!isRunning && (doneCount > 0 || failedCount > 0)" (click)="reset()">
+        <ion-icon name="refresh-outline"></ion-icon>
+        Reset
+      </button>
+      <div class="done-badge" *ngIf="allFinished && !isRunning">
+        <ion-icon name="checkmark-circle"></ion-icon>
+        All done! {{ doneCount }} charts saved to Firebase.
+      </div>
+    </div>
+  </div>
+
+  <!-- Job list -->
+  <div class="job-list">
+    <div
+      *ngFor="let job of jobs; let i = index"
+      class="job-row"
+      [class.is-running]="job.status === 'running'"
+      [class.is-done]="job.status === 'done'"
+      [class.is-failed]="job.status === 'failed'">
+
+      <div class="job-num">{{ i + 1 }}</div>
+
+      <div class="job-body">
+        <p class="job-prompt">{{ job.prompt }}</p>
+        <p class="job-title" *ngIf="job.title">→ {{ job.title }}</p>
+        <p class="job-error" *ngIf="job.error">{{ job.error }}</p>
+      </div>
+
+      <div class="job-status">
+        <ion-icon
+          [name]="statusIcon(job.status)"
+          [class]="'status-icon status-' + job.status"
+          [class.spinning]="job.status === 'running'">
+        </ion-icon>
+      </div>
+    </div>
+  </div>
+
+</ion-content>

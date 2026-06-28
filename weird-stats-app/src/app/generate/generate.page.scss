@@ -1,0 +1,158 @@
+.input-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 20px;
+  border: 0.5px solid rgba(0,0,0,0.08);
+}
+
+.input-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+  margin-bottom: 10px;
+
+  ion-icon.ai-icon {
+    color: var(--ion-color-primary);
+    font-size: 18px;
+  }
+}
+
+.prompt-input {
+  --padding-start: 0;
+  --padding-end: 0;
+  font-size: 14px;
+  --placeholder-color: var(--ion-color-medium);
+  --background: transparent;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.suggestion-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.suggestion-chip {
+  font-size: 13px;
+  color: var(--ion-color-primary);
+  background: #EEEDFE;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.optional {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ion-color-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.generate-btn {
+  --border-radius: 12px;
+  height: 50px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.error-banner {
+  background: #FAECE7;
+  color: #993C1D;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+
+  ion-icon { font-size: 18px; flex-shrink: 0; }
+}
+
+.result-section {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  border: 0.5px solid rgba(0,0,0,0.08);
+  animation: fadeUp 0.3s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.result-header {
+  margin-bottom: 12px;
+}
+
+.result-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+  margin: 0 0 8px;
+}
+
+.result-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+
+  &-type {
+    background: #f0f0f0;
+    color: #555;
+    text-transform: capitalize;
+  }
+
+  &-weird {
+    background: #FAEEDA;
+    color: #633806;
+  }
+}
+
+.chart-wrap {
+  height: 240px;
+  margin-bottom: 14px;
+}
+
+.result-tags {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 14px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 11px;
+  background: #f4f5f8;
+  color: #888;
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  ion-button {
+    --border-radius: 10px;
+    margin: 0;
+  }
+}

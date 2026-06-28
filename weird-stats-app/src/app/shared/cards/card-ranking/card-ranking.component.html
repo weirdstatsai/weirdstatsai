@@ -1,0 +1,125 @@
+<div class="wcard" [class.full]="size==='full'" [class.alt]="size==='alt'"
+     [style.--accent]="accent" [style.--grad-from]="gradFrom" [style.--grad-to]="gradTo"
+     [attr.data-style]="rankStyle">
+
+  <!-- Header -->
+  <span class="wcard-bg-icon" *ngIf="bgSvg && size==='full'" [innerHTML]="bgSvg"></span>
+  <div class="wcard-head">
+    <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.icon }} {{ card.uiMeta.category }}</span>
+    <span class="weird-badge" *ngIf="card.uiMeta?.insightBadge">{{ card.uiMeta.insightBadge }}</span>
+  </div>
+
+  <p class="wcard-title">{{ card.title }}</p>
+
+  <!-- ── Style: bars (default) ─────────────────────────────────────────── -->
+  <ng-container *ngIf="rankStyle === 'bars'">
+    <div class="rows">
+      <div class="row" *ngFor="let row of rows; let i = index">
+        <div class="row-top">
+          <span class="rank">{{ row.rank ?? (i + 1) }}</span>
+          <span class="label">{{ row.label }}</span>
+          <span class="value">{{ fmt(row.value) }}<span class="unit" *ngIf="row.unit"> {{ row.unit }}</span></span>
+        </div>
+        <div class="track"><div class="bar" [style.width.%]="barWidth(row)"></div></div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ── Style: pill (bar inside value pill) ───────────────────────────── -->
+  <ng-container *ngIf="rankStyle === 'pill'">
+    <div class="rows">
+      <div class="row" *ngFor="let row of rows; let i = index">
+        <div class="row-top">
+          <span class="rank">{{ row.rank ?? (i + 1) }}</span>
+          <span class="label">{{ row.label }}</span>
+        </div>
+        <div class="pill-wrap">
+          <div class="pill-fill" [style.width.%]="barWidth(row)"></div>
+          <span class="pill-text">{{ fmt(row.value) }}<span *ngIf="row.unit"> {{ row.unit }}</span></span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ── Style: percent (bar + % of max) ──────────────────────────────── -->
+  <ng-container *ngIf="rankStyle === 'percent'">
+    <div class="rows">
+      <div class="row" *ngFor="let row of rows; let i = index">
+        <div class="row-top">
+          <span class="rank">{{ row.rank ?? (i + 1) }}</span>
+          <span class="label">{{ row.label }}</span>
+          <span class="value">{{ fmt(row.value) }}<span class="unit" *ngIf="row.unit"> {{ row.unit }}</span></span>
+        </div>
+        <div class="pct-row">
+          <div class="track pct-track"><div class="bar" [style.width.%]="barWidth(row)"></div></div>
+          <span class="pct-label">{{ pct(row) }}%</span>
+        </div>
+        <span class="vs-max">vs max</span>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ── Style: vertical bars ─────────────────────────────────────────── -->
+  <ng-container *ngIf="rankStyle === 'vertical'">
+    <div class="vert-cols">
+      <div class="vert-col" *ngFor="let row of rows; let i = index">
+        <div class="vert-val">{{ fmt(row.value) }}<br><span class="vert-unit" *ngIf="row.unit">{{ row.unit }}</span></div>
+        <div class="vert-bar-wrap">
+          <div class="vert-bar">
+            <div class="vert-segment" *ngFor="let seg of [].constructor(10); let si = index"
+                 [class.filled]="(si / 10) < (barWidth(row) / 100)"></div>
+          </div>
+        </div>
+        <span class="vert-rank">{{ row.rank ?? (i + 1) }}</span>
+        <span class="vert-label">{{ row.label }}</span>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ── Style: circular progress ─────────────────────────────────────── -->
+  <ng-container *ngIf="rankStyle === 'circular'">
+    <div class="rows">
+      <div class="circ-row" *ngFor="let row of rows; let i = index">
+        <div class="circ-left">
+          <div class="circ-rank-badge">{{ row.rank ?? (i + 1) }}</div>
+          <div class="circ-info">
+            <span class="label">{{ row.label }}</span>
+            <span class="circ-val">{{ fmt(row.value) }}<span class="unit" *ngIf="row.unit"> {{ row.unit }}</span></span>
+          </div>
+        </div>
+        <div class="circ-wrap">
+          <svg width="56" height="56" viewBox="0 0 56 56">
+            <circle cx="28" cy="28" r="22" fill="none" stroke-width="5" [attr.stroke]="accent + '22'"/>
+            <circle cx="28" cy="28" r="22" fill="none" stroke-width="5" [attr.stroke]="accent"
+                    [attr.stroke-dasharray]="ringDash(row)"
+                    stroke-dashoffset="0"
+                    stroke-linecap="round"
+                    transform="rotate(-90 28 28)"/>
+          </svg>
+          <span class="circ-pct">{{ fmt(row.value) }}</span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ── Style: sparkline + bar ───────────────────────────────────────── -->
+  <ng-container *ngIf="rankStyle === 'sparkline'">
+    <div class="rows">
+      <div class="row" *ngFor="let row of rows; let i = index">
+        <div class="row-top">
+          <span class="rank">{{ row.rank ?? (i + 1) }}</span>
+          <span class="label">{{ row.label }}</span>
+          <span class="value">{{ fmt(row.value) }}<span class="unit" *ngIf="row.unit"> {{ row.unit }}</span></span>
+        </div>
+        <div class="spark-bar-row">
+          <svg class="sparkline" viewBox="0 0 48 24" preserveAspectRatio="none">
+            <path [attr.d]="sparkPath(i)" fill="none" [attr.stroke]="accent" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+          </svg>
+          <div class="spark-track"><div class="bar" [style.width.%]="barWidth(row)"></div></div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
+</div>

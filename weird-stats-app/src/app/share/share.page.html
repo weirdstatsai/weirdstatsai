@@ -1,0 +1,71 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/home" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title>Share Your Result</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ng-container *ngIf="graph; else notFound">
+  <ion-content class="ion-padding">
+
+    <div class="share-card" #shareCard>
+      <p class="brand">WeirdStats<span class="brand-accent">.ai</span></p>
+      <h1 class="share-title">{{ graph.title }}</h1>
+
+      <div class="chart-wrap">
+        <app-chart [config]="graph.config" [height]="180"></app-chart>
+      </div>
+
+      <div class="ai-insight">
+        <ion-icon name="sparkles-outline"></ion-icon>
+        <span>{{ graph.insight }}</span>
+      </div>
+
+      <p class="watermark">WeirdStats<span class="brand-accent">.ai</span></p>
+    </div>
+
+    <p class="section-title">Share via</p>
+    <div class="share-icons">
+      <button class="share-icon-btn whatsapp" (click)="shareTo('whatsapp')">
+        <ion-icon name="logo-whatsapp"></ion-icon>
+        WhatsApp
+      </button>
+      <button class="share-icon-btn facebook" (click)="shareTo('facebook')">
+        <ion-icon name="logo-facebook"></ion-icon>
+        Facebook
+      </button>
+      <button class="share-icon-btn twitter" (click)="shareTo('twitter')">
+        <ion-icon name="logo-twitter"></ion-icon>
+        X (Twitter)
+      </button>
+      <button class="share-icon-btn linkedin" (click)="shareTo('linkedin')">
+        <ion-icon name="logo-linkedin"></ion-icon>
+        LinkedIn
+      </button>
+    </div>
+
+  </ion-content>
+
+  <div class="action-row">
+    <ion-button fill="outline" color="primary" (click)="download()">
+      <ion-icon name="download-outline" slot="start"></ion-icon>
+      Download Image
+    </ion-button>
+    <ion-button fill="outline" color="primary" (click)="copyLink()">
+      <ion-icon name="link-outline" slot="start"></ion-icon>
+      Copy Link
+    </ion-button>
+  </div>
+</ng-container>
+
+<ng-template #notFound>
+  <ion-content class="ion-padding ion-text-center">
+    <div style="padding-top: 80px;">
+      <ion-icon name="alert-circle-outline" style="font-size: 48px; color: var(--ion-color-medium);"></ion-icon>
+      <p style="margin-top: 12px; color: var(--ion-color-medium);">Graph not found</p>
+      <ion-button fill="clear" routerLink="/tabs/home">Go home</ion-button>
+    </div>
+  </ion-content>
+</ng-template>

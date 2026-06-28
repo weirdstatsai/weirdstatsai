@@ -1,0 +1,188 @@
+@use '../card-base' as *;
+
+// ── Map container ─────────────────────────────────────────────────────────
+.map-wrap {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 8px 0 8px;
+  background: rgba(0,0,0,0.03);
+  position: relative;
+}
+
+.world-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.map-skeleton {
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.skeleton-line {
+  width: 60%;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.08);
+}
+
+// ── Insight ───────────────────────────────────────────────────────────────
+.map-insight {
+  font-size: 12px;
+  color: #555;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.full .map-insight { font-size: 14px; }
+
+// ── Unmapped fallback list (choropleth) ───────────────────────────────────
+.unmapped-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 4px 0 8px;
+}
+
+.unmapped-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.unmapped-rank {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(0,0,0,0.3);
+  width: 14px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.unmapped-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.unmapped-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(0,0,0,0.6);
+  flex: 1;
+}
+
+.unmapped-val {
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+// ── Pin legend ────────────────────────────────────────────────────────────
+.pin-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  margin-top: 2px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-text {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(0,0,0,0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.legend-pct {
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pin-legend-mini {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.legend-mini-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.legend-dot-mini {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-mini-text {
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(0,0,0,0.5);
+}
+
+// ── Bubble legend ─────────────────────────────────────────────────────────
+.bubble-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.bubble-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.bubble-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.bubble-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(0,0,0,0.6);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bubble-val {
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}

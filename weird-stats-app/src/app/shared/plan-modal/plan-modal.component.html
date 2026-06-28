@@ -1,0 +1,50 @@
+<div class="plan-sheet">
+
+  <div class="sheet-handle"></div>
+
+  <div class="sheet-top">
+    <p class="sheet-eyebrow">{{ mode === 'limit' ? 'Limit reached' : 'Welcome to WeirdStats' }}</p>
+    <h1 class="sheet-title">{{ mode === 'limit' ? 'Upgrade to keep going' : 'Choose your plan' }}</h1>
+    <p class="sheet-sub">
+      {{ mode === 'limit'
+        ? "You've used all 10 cards in your current window. Upgrade or wait for reset."
+        : 'Pick how you want to create AI-powered stat cards. You can upgrade anytime from Profile.' }}
+    </p>
+  </div>
+
+  <!-- Free plan -->
+  <div class="plan-card" [class.selected]="selected === 'free'" (click)="select('free')">
+    <div class="plan-icon free-icon">
+      <ion-icon name="add-outline"></ion-icon>
+    </div>
+    <div class="plan-info">
+      <p class="plan-name">Free</p>
+      <p class="plan-price">$0 <span class="plan-period">/ month</span></p>
+      <p class="plan-desc">10 cards every 10 days, shareable with watermark.</p>
+    </div>
+    <div class="plan-radio" [class.active]="selected === 'free'"></div>
+  </div>
+
+  <!-- Premium plan -->
+  <div class="plan-card premium" [class.selected]="selected === 'premium'" (click)="select('premium')">
+    <div class="plan-icon premium-icon">
+      <ion-icon name="star-outline"></ion-icon>
+    </div>
+    <div class="plan-info">
+      <p class="plan-name">Premium</p>
+      <p class="plan-price">$10 <span class="plan-period">/ month</span></p>
+      <p class="plan-desc">Unlimited cards, share without watermark.</p>
+    </div>
+    <div class="plan-radio" [class.active]="selected === 'premium'"></div>
+  </div>
+
+  <button class="continue-btn" [class.loading]="loading" (click)="confirm()" [disabled]="loading">
+    <ion-spinner *ngIf="loading" name="dots"></ion-spinner>
+    <span *ngIf="!loading">{{ selected === 'premium' ? 'Continue with Premium' : 'Continue' }}</span>
+  </button>
+
+  <button class="skip-btn" (click)="continueFree()" *ngIf="mode === 'onboard'">
+    Continue with Free
+  </button>
+
+</div>

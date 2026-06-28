@@ -1,0 +1,90 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>
+      <span class="page-title">Explore</span>
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- Sticky category + search header -->
+  <div class="sticky-header">
+    <div class="category-chips">
+      <div
+        *ngFor="let c of categories"
+        class="category-chip"
+        [class.active]="activeCategory === c.id"
+        (click)="setCategory(c.id)">
+        <span class="chip-emoji">{{ c.emoji }}</span>{{ c.label }}
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <ion-icon name="search-outline" class="search-icon"></ion-icon>
+      <input
+        [(ngModel)]="searchQuery"
+        type="search"
+        placeholder="Search or ask anything…"
+        class="search-input"
+        (input)="onSearchChange()"
+        (keyup.enter)="askSearch()" />
+      <button *ngIf="searchQuery.trim()" class="search-ask-btn" (click)="askSearch()">
+        <ion-icon name="sparkles-outline"></ion-icon> Ask
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading skeleton -->
+  <div class="feed" *ngIf="isLoading">
+    <div class="skeleton-card skeleton-featured"></div>
+    <div class="skeleton-card skeleton-mini"></div>
+    <div class="skeleton-card skeleton-mini"></div>
+    <div class="skeleton-card skeleton-featured"></div>
+    <div class="skeleton-card skeleton-mini"></div>
+    <div class="skeleton-card skeleton-mini"></div>
+  </div>
+
+  <!-- Feed -->
+  <div class="feed" *ngIf="!isLoading && filteredCards.length > 0; else noResults">
+    <div class="card-tile"
+         *ngFor="let card of filteredCards; let i = index"
+         [class.span-full]="isFullWidth(card)"
+         (click)="open(card)">
+      <app-weird-card [card]="card.data" size="feed"></app-weird-card>
+      <div class="card-creator" *ngIf="card.createdByName">
+        <span class="creator-avatar">{{ card.createdByName.charAt(0).toUpperCase() }}</span>
+        <span class="creator-name">{{ card.createdByName }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile search results — shown above no-results when profiles match -->
+  <div class="profile-results" *ngIf="searchQuery && matchingProfiles.length > 0">
+    <p class="profile-results-label">People</p>
+    <div class="profile-chip" *ngFor="let p of matchingProfiles" (click)="openProfile(p.uid)">
+      <div class="profile-chip-avatar">{{ p.name.charAt(0).toUpperCase() }}</div>
+      <div class="profile-chip-info">
+        <p class="profile-chip-name">{{ p.name }}</p>
+        <p class="profile-chip-count">{{ p.cardCount }} card{{ p.cardCount !== 1 ? 's' : '' }}</p>
+      </div>
+      <ion-icon name="chevron-forward-outline" class="profile-chip-arrow"></ion-icon>
+    </div>
+  </div>
+
+  <ng-template #noResults>
+    <div class="no-results" *ngIf="!isLoading">
+      <div class="no-results-icon">
+        <ion-icon name="search-outline"></ion-icon>
+      </div>
+      <p class="no-results-title" *ngIf="searchQuery">Nothing for "{{ searchQuery }}"</p>
+      <p class="no-results-title" *ngIf="!searchQuery">No cards yet</p>
+      <p class="no-results-sub" *ngIf="!searchQuery">Ask a question to generate your first card!</p>
+      <ion-button fill="solid" color="primary" size="small" (click)="askSearch()" *ngIf="searchQuery">
+        <ion-icon name="home-outline" slot="start"></ion-icon>
+        Generate on Home
+      </ion-button>
+    </div>
+  </ng-template>
+
+</ion-content>

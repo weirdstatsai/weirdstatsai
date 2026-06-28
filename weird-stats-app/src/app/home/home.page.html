@@ -1,0 +1,80 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <span class="logo">WeirdStats<span class="logo-accent">.ai</span></span>
+    </ion-buttons>
+    <ion-buttons slot="end">
+      <ion-button routerLink="/tabs/explore">
+        <ion-icon slot="icon-only" name="compass-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="greeting-row" *ngIf="userName">
+      <span class="greeting-emoji">{{ userEmoji || '👋' }}</span>
+      <span class="greeting-text">Hi, {{ userName }}</span>
+    </div>
+    <h1>Ask any question.</h1>
+    <p>Get stats, charts, rankings and surprising insights.</p>
+
+    <div class="ask-card">
+      <textarea
+        [(ngModel)]="query"
+        placeholder="e.g. Which country spends the most time on social media?"
+        class="ask-textarea"
+        rows="2"
+        (keydown.enter)="$event.preventDefault(); goGenerate(query)">
+      </textarea>
+    </div>
+    <button class="ask-btn" (click)="goGenerate(query)">
+      <ion-icon name="sparkles-outline"></ion-icon>
+      Generate
+    </button>
+  </div>
+
+  <!-- Suggestions — shown when no recent cards -->
+  <ng-container *ngIf="recentCards.length === 0 && !isLoading">
+    <div class="section-header">
+      <p class="section-title">Try these</p>
+      <a class="see-all" routerLink="/tabs/explore">See all</a>
+    </div>
+    <div class="suggestions-scroll">
+      <div
+        *ngFor="let s of suggestions; let i = index"
+        class="suggestion-card"
+        (click)="goGenerate(s)">
+        <div class="suggestion-icon">
+          <ion-icon [name]="suggestionIcons[i]"></ion-icon>
+        </div>
+        <p class="suggestion-text">{{ s }}</p>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Curated home feed — vertical 2-column grid, view only -->
+  <ng-container *ngIf="recentCards.length > 0">
+    <div class="section-header">
+      <p class="section-title">Featured</p>
+      <a class="see-all" routerLink="/tabs/explore">Explore all</a>
+    </div>
+    <div class="home-grid">
+      <div class="home-card" *ngFor="let card of recentCards" (click)="open(card)">
+        <app-weird-card [card]="card.data" size="feed"></app-weird-card>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Skeleton while loading -->
+  <ng-container *ngIf="isLoading">
+    <div class="skeleton-row">
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+  </ng-container>
+
+</ion-content>

@@ -1,0 +1,110 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>Generate</ion-title>
+    <ion-buttons slot="end">
+      <ion-button *ngIf="generatedGraph || prompt" (click)="reset()">
+        <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <!-- Prompt input -->
+  <div class="input-card">
+    <div class="input-header">
+      <ion-icon name="sparkles-outline" class="ai-icon"></ion-icon>
+      <span>Describe your graph</span>
+    </div>
+    <ion-textarea
+      [(ngModel)]="prompt"
+      placeholder="e.g. coffee consumption vs productivity by programming language"
+      rows="3"
+      class="prompt-input"
+      [disabled]="isGenerating">
+    </ion-textarea>
+
+    <!-- Suggestions -->
+    <div class="suggestion-row" *ngIf="!prompt">
+      <span
+        *ngFor="let s of suggestions"
+        class="suggestion-chip"
+        (click)="useSuggestion(s)">
+        {{ s }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Chart type selector -->
+  <p class="section-title">Chart type <span class="optional">(optional — AI picks if blank)</span></p>
+  <div class="chart-type-grid">
+    <div
+      *ngFor="let opt of chartOptions"
+      class="chart-type-item"
+      [class.selected]="selectedType === opt.type"
+      (click)="selectType(opt.type)">
+      <ion-icon [name]="opt.icon"></ion-icon>
+      <span>{{ opt.label }}</span>
+    </div>
+  </div>
+
+  <!-- Generate button -->
+  <ion-button
+    expand="block"
+    class="generate-btn"
+    [disabled]="!prompt.trim() || isGenerating"
+    (click)="generate()">
+    <ion-spinner *ngIf="isGenerating" name="dots" slot="start"></ion-spinner>
+    <ion-icon *ngIf="!isGenerating" name="sparkles-outline" slot="start"></ion-icon>
+    {{ isGenerating ? 'Generating…' : 'Generate graph' }}
+  </ion-button>
+
+  <!-- Error -->
+  <div *ngIf="errorMsg" class="error-banner">
+    <ion-icon name="alert-circle-outline"></ion-icon>
+    {{ errorMsg }}
+  </div>
+
+  <!-- Generated result -->
+  <div *ngIf="generatedGraph && !isGenerating" class="result-section">
+    <div class="result-header">
+      <p class="result-title">{{ generatedGraph.title }}</p>
+      <div class="result-badges">
+        <span class="chip chip-type">{{ generatedGraph.type }}</span>
+        <span class="chip chip-weird" *ngIf="generatedGraph.weirdScore >= 7">
+          Weird score: {{ generatedGraph.weirdScore }}/10
+        </span>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <app-chart [config]="generatedGraph.config" [height]="240"></app-chart>
+    </div>
+
+    <div class="ai-insight">
+      <ion-icon name="sparkles-outline"></ion-icon>
+      <span>{{ generatedGraph.insight }}</span>
+    </div>
+
+    <div class="result-tags">
+      <span *ngFor="let t of generatedGraph.tags" class="tag">{{ t }}</span>
+    </div>
+
+    <div class="result-actions">
+      <ion-button fill="solid" color="primary" (click)="save()" expand="block">
+        <ion-icon name="bookmark" slot="start"></ion-icon>
+        Save
+      </ion-button>
+      <ion-button fill="outline" color="primary" (click)="viewDetail()" expand="block">
+        <ion-icon name="expand-outline" slot="start"></ion-icon>
+        Full view
+      </ion-button>
+      <ion-button fill="clear" color="medium" (click)="regenerate()" expand="block">
+        <ion-icon name="refresh-outline" slot="start"></ion-icon>
+        Regenerate
+      </ion-button>
+    </div>
+  </div>
+
+</ion-content>

@@ -1,0 +1,218 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="end">
+      <ion-button (click)="openMenu()" fill="clear" class="menu-icon-btn">
+        <ion-icon slot="icon-only" name="menu-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content (click)="closeMenu()">
+
+  <!-- ── Signed-in ─────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="user$ | async as user; else signedOutCard">
+
+    <!-- Centered profile header -->
+    <div class="profile-header">
+      <div class="avatar-ring" (click)="openAvatarPicker(user.uid)">
+        <div class="avatar-inner">
+          <span class="avatar-emoji" *ngIf="getEmoji(user.uid) as emoji">{{ emoji }}</span>
+          <ion-icon name="person" class="avatar-placeholder" *ngIf="!getEmoji(user.uid)"></ion-icon>
+        </div>
+        <div class="avatar-edit-dot">
+          <ion-icon name="add-outline"></ion-icon>
+        </div>
+      </div>
+
+      <ng-container *ngIf="userProfile$ | async as profile; else authNameBlock">
+        <p class="profile-name">{{ profile.name }}</p>
+      </ng-container>
+      <ng-template #authNameBlock>
+        <p class="profile-name">{{ user.displayName || user.phoneNumber || 'WeirdStats User' }}</p>
+      </ng-template>
+      <p class="profile-bio">Collecting the world's weirdest stats 📊</p>
+      <p class="profile-email">{{ user.email }}</p>
+
+      <div class="profile-stats-row">
+        <span class="profile-stat"><strong>{{ draftCount }}</strong> Drafts</span>
+        <span class="profile-stat-sep">·</span>
+        <span class="profile-stat"><strong>{{ publishedCount }}</strong> Published</span>
+      </div>
+    </div>
+
+    <!-- Tab bar — compact, no toggle look -->
+    <div class="status-tabs">
+      <button class="status-tab" [class.active]="activeTab === 'draft'" (click)="setTab('draft')">
+        <ion-icon name="lock-closed-outline"></ion-icon>
+        <span>Drafts</span>
+      </button>
+      <button class="status-tab" [class.active]="activeTab === 'published'" (click)="setTab('published')">
+        <ion-icon name="earth-outline"></ion-icon>
+        <span>Published</span>
+      </button>
+    </div>
+
+    <!-- ── Card feed (same layout as Explore) ── -->
+    <div class="loading-state" *ngIf="isLoading">
+      <ion-spinner name="dots"></ion-spinner>
+    </div>
+
+    <ng-container *ngIf="!isLoading">
+
+      <!-- Inline draft alternatives panel (shown above grid when a card is selected) -->
+      <div class="draft-detail-panel" *ngIf="selectedDraft && activeTab === 'draft'">
+        <div class="draft-panel-header">
+          <span class="draft-panel-title">{{ selectedDraft.data?.title }}</span>
+          <button class="draft-panel-close" (click)="selectedDraft = undefined">
+            <ion-icon name="close-outline"></ion-icon>
+          </button>
+        </div>
+
+        <!-- Full card -->
+        <div class="draft-full-card">
+          <ng-container [ngSwitch]="selectedDraft.data?.cardType">
+            <app-card-ranking *ngSwitchCase="'ranking'" [card]="selectedDraft.data!" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>
+            <app-card-kpi     *ngSwitchCase="'kpi'"     [card]="selectedDraft.data!" size="full" [kpiStyle]="selectedKpiStyle"></app-card-kpi>
+            <app-card-table   *ngSwitchCase="'table'"   [card]="selectedDraft.data!" size="full" [tableStyle]="selectedTableStyle"></app-card-table>
+            <app-card-chart   *ngSwitchCase="'chart'"   [card]="selectedDraft.data!" size="full" [forceType]="selectedChartType"></app-card-chart>
+            <app-weird-card   *ngSwitchDefault           [card]="selectedDraft.data!" size="full"></app-weird-card>
+          </ng-container>
+        </div>
+
+        <!-- Alternatives: ranking -->
+        <div class="alts-section" *ngIf="selectedDraft.data?.cardType === 'ranking'">
+          <p class="alts-label">Alternatives</p>
+          <div class="alts-hscroll">
+            <div class="alt-wrap" *ngFor="let s of rankAltStyles"
+                 [class.selected]="selectedRankStyle === s.key"
+                 (click)="selectedRankStyle = s.key">
+              <p class="alt-type-label">{{ s.label }}</p>
+              <app-card-ranking [card]="selectedDraft.data!" size="alt" [rankStyle]="s.key"></app-card-ranking>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alternatives: kpi -->
+        <div class="alts-section" *ngIf="selectedDraft.data?.cardType === 'kpi'">
+          <p class="alts-label">Alternatives</p>
+          <div class="alts-hscroll">
+            <div class="alt-wrap" *ngFor="let s of kpiAltStyles"
+                 [class.selected]="selectedKpiStyle === s.key"
+                 (click)="selectedKpiStyle = s.key">
+              <p class="alt-type-label">{{ s.label }}</p>
+              <app-card-kpi [card]="selectedDraft.data!" size="alt" [kpiStyle]="s.key"></app-card-kpi>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alternatives: table -->
+        <div class="alts-section" *ngIf="selectedDraft.data?.cardType === 'table'">
+          <p class="alts-label">Alternatives</p>
+          <div class="alts-hscroll">
+            <div class="alt-wrap" *ngFor="let s of tableAltStyles"
+                 [class.selected]="selectedTableStyle === s.key"
+                 (click)="selectedTableStyle = s.key">
+              <p class="alt-type-label">{{ s.label }}</p>
+              <app-card-table [card]="selectedDraft.data!" size="alt" [tableStyle]="s.key"></app-card-table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alternatives: chart -->
+        <div class="alts-section" *ngIf="selectedDraft.data?.cardType === 'chart'">
+          <p class="alts-label">Alternatives</p>
+          <div class="alts-hscroll">
+            <div class="alt-wrap" *ngFor="let t of chartAltTypes"
+                 [class.selected]="selectedChartType === t"
+                 (click)="selectedChartType = t">
+              <p class="alt-type-label">{{ t }}</p>
+              <app-card-chart [card]="selectedDraft.data!" size="alt" [forceType]="t"></app-card-chart>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="draft-panel-actions">
+          <button class="draft-action-btn publish" (click)="togglePublish(selectedDraft!)">
+            <ion-icon name="earth-outline"></ion-icon> Publish
+          </button>
+          <button class="draft-action-btn share" (click)="openCard(selectedDraft!)">
+            <ion-icon name="eye-outline"></ion-icon> Open
+          </button>
+        </div>
+      </div>
+
+      <!-- Cards in vertical 2-column grid -->
+      <div class="cards-grid" *ngIf="filteredCards().length > 0">
+        <div class="grid-card-wrap"
+             *ngFor="let sc of filteredCards()"
+             (click)="openCard(sc)">
+          <app-weird-card [card]="sc.data" size="feed"></app-weird-card>
+
+          <!-- Floating 3-dot menu -->
+          <button class="card-menu-btn"
+                  (click)="$event.stopPropagation(); toggleCardMenu(sc.id)">
+            <ion-icon name="ellipsis-vertical"></ion-icon>
+          </button>
+
+          <!-- Floating dropdown -->
+          <div class="card-dropdown" *ngIf="openMenuId === sc.id"
+               (click)="$event.stopPropagation()">
+            <button class="dd-item" (click)="menuAction('open', sc)">
+              <ion-icon name="eye-outline"></ion-icon> Open card
+            </button>
+            <button class="dd-item" (click)="menuAction('publish', sc)">
+              <ion-icon [name]="(sc.publishStatus ?? 'draft') !== 'draft' ? 'lock-closed-outline' : 'earth-outline'"></ion-icon>
+              {{ (sc.publishStatus ?? 'draft') !== 'draft' ? 'Move to Drafts' : 'Publish' }}
+            </button>
+            <button class="dd-item" (click)="menuAction('edit', sc)">
+              <ion-icon name="create-outline"></ion-icon> Edit
+            </button>
+            <div class="dd-divider"></div>
+            <button class="dd-item danger" (click)="menuAction('delete', sc)">
+              <ion-icon name="trash-outline"></ion-icon> Delete
+            </button>
+          </div>
+
+          <div class="private-badge" *ngIf="sc.publishStatus === 'private'">
+            <ion-icon name="link-outline"></ion-icon> Private
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div class="empty-state" *ngIf="filteredCards().length === 0">
+        <div class="empty-icon-wrap">
+          <ion-icon [name]="activeTab === 'draft' ? 'lock-closed-outline' : 'earth-outline'"></ion-icon>
+        </div>
+        <p class="empty-title">{{ activeTab === 'draft' ? 'No drafts yet' : 'Nothing published yet' }}</p>
+        <p class="empty-sub" *ngIf="activeTab === 'draft'">Generate stats — they'll appear here as private drafts</p>
+        <p class="empty-sub" *ngIf="activeTab === 'published'">Tap the lock badge on any draft card to publish it</p>
+        <button class="explore-btn" (click)="goExplore()" *ngIf="activeTab === 'draft'">
+          <ion-icon name="compass-outline"></ion-icon> Explore Stats
+        </button>
+        <button class="explore-btn" (click)="setTab('draft')" *ngIf="activeTab === 'published'">
+          <ion-icon name="lock-closed-outline"></ion-icon> View Drafts
+        </button>
+      </div>
+
+    </ng-container>
+
+  </ng-container>
+
+  <!-- ── Signed-out ────────────────────────────────────────────────────── -->
+  <ng-template #signedOutCard>
+    <div class="signed-out-hero">
+      <div class="signed-out-avatar">
+        <ion-icon name="person-circle-outline"></ion-icon>
+      </div>
+      <p class="signed-out-title">You're not signed in</p>
+      <p class="signed-out-sub">Sign in to save stats and see your profile</p>
+      <button class="signin-btn" (click)="signIn()">
+        <ion-icon name="log-in-outline"></ion-icon> Sign In
+      </button>
+    </div>
+  </ng-template>
+
+</ion-content>

@@ -1,0 +1,198 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="back()" aria-label="Back">
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-buttons slot="end">
+      <ion-button (click)="viewOnly ? presentViewActions() : presentActions()" *ngIf="card" aria-label="Options">
+        <ion-icon slot="icon-only" name="ellipsis-vertical-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- Loading -->
+  <div class="state" *ngIf="isLoading">
+    <ion-spinner name="dots"></ion-spinner>
+    <p class="status-msg">{{ statusMsg || 'Starting…' }}</p>
+    <div class="status-steps">
+      <div class="step" [class.active]="statusMsg.includes('Searching')">
+        <ion-icon name="search-outline"></ion-icon> Searching web
+      </div>
+      <div class="step" [class.active]="statusMsg.includes('Building')">
+        <ion-icon name="construct-outline"></ion-icon> Building card
+      </div>
+      <div class="step" [class.active]="statusMsg.includes('Almost')">
+        <ion-icon name="checkmark-outline"></ion-icon> Saving
+      </div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="state" *ngIf="errorMsg && !isLoading">
+    <ion-icon name="alert-circle-outline"></ion-icon>
+    <p>{{ errorMsg }}</p>
+  </div>
+
+  <!-- Card -->
+  <ng-container *ngIf="card && !isLoading">
+
+    <!-- Main full card -->
+    <div class="main-card-wrap">
+      <ng-container [ngSwitch]="card.cardType">
+        <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>
+        <app-card-kpi     *ngSwitchCase="'kpi'"     [card]="card" size="full" [kpiStyle]="selectedKpiStyle"></app-card-kpi>
+        <app-card-table   *ngSwitchCase="'table'"   [card]="card" size="full" [tableStyle]="selectedTableStyle"></app-card-table>
+        <app-card-versus  *ngSwitchCase="'versus'"  [card]="card" size="full" [versusStyle]="selectedVersusStyle"></app-card-versus>
+        <app-card-map     *ngSwitchCase="'map'"     [card]="card" size="full" [mapStyle]="selectedMapStyle"></app-card-map>
+        <app-weird-card   *ngSwitchDefault           [card]="card" size="full" [fontSize]="factFontSize"></app-weird-card>
+      </ng-container>
+    </div>
+
+    <!-- Alternatives: KPI card -->
+    <div class="alts-section" *ngIf="card.cardType === 'kpi' && !viewOnly">
+      <p class="alts-label">Alternatives</p>
+      <div class="alts-hscroll">
+        <div class="rank-alt-wrap"
+             *ngFor="let s of kpiAltStyles; trackBy: trackByKey"
+             [class.selected]="selectedKpiStyle === s.key"
+             (click)="selectKpiAlt(s.key)">
+          <p class="alt-type-label">{{ s.label }}</p>
+          <app-card-kpi [card]="card" size="alt" [kpiStyle]="s.key"></app-card-kpi>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alternatives: map card -->
+    <div class="alts-section" *ngIf="card.cardType === 'map' && !viewOnly">
+      <p class="alts-label">Alternatives</p>
+      <div class="alts-hscroll">
+        <div class="rank-alt-wrap"
+             *ngFor="let s of mapAltStyles; trackBy: trackByKey"
+             [class.selected]="selectedMapStyle === s.key"
+             (click)="selectMapAlt(s.key)">
+          <p class="alt-type-label">{{ s.label }}</p>
+          <app-card-map [card]="card" size="alt" [mapStyle]="s.key"></app-card-map>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alternatives: versus card -->
+    <div class="alts-section" *ngIf="card.cardType === 'versus' && !viewOnly">
+      <p class="alts-label">Alternatives</p>
+      <div class="alts-hscroll">
+        <div class="rank-alt-wrap"
+             *ngFor="let s of versusAltStyles; trackBy: trackByKey"
+             [class.selected]="selectedVersusStyle === s.key"
+             (click)="selectVersusAlt(s.key)">
+          <p class="alt-type-label">{{ s.label }}</p>
+          <app-card-versus [card]="card" size="alt" [versusStyle]="s.key"></app-card-versus>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alternatives: ranking card -->
+    <div class="alts-section" *ngIf="card.cardType === 'ranking' && !viewOnly">
+      <p class="alts-label">Alternatives</p>
+      <div class="alts-hscroll">
+        <div class="rank-alt-wrap"
+             *ngFor="let s of rankAltStyles; trackBy: trackByKey"
+             [class.selected]="selectedRankStyle === s.key"
+             (click)="selectRankAlt(s.key)">
+          <p class="alt-type-label">{{ s.label }}</p>
+          <app-card-ranking [card]="card" size="alt" [rankStyle]="s.key"></app-card-ranking>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alternatives: table card -->
+    <div class="alts-section" *ngIf="card.cardType === 'table' && !viewOnly">
+      <p class="alts-label">Alternatives</p>
+      <div class="alts-hscroll">
+        <div class="rank-alt-wrap"
+             *ngFor="let s of tableAltStyles; trackBy: trackByKey"
+             [class.selected]="selectedTableStyle === s.key"
+             (click)="selectTableAlt(s.key)">
+          <p class="alt-type-label">{{ s.label }}</p>
+          <app-card-table [card]="card" size="alt" [tableStyle]="s.key"></app-card-table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alternatives: chart card -->
+    <div class="alts-section" *ngIf="card.cardType === 'chart' && !viewOnly">
+      <p class="alts-label">Alternatives</p>
+      <div class="alts-row">
+        <div
+          class="alt-wrap"
+          [class.selected]="selectedAltType === t"
+          *ngFor="let t of altTypes"
+          (click)="selectAlt(t)">
+          <p class="alt-type-label">{{ t }}</p>
+          <app-card-chart [card]="card" size="alt" [forceType]="t"></app-card-chart>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit panel: fact cards -->
+    <div class="edit-panel fact-edit-panel" *ngIf="card.cardType === 'fact' && !viewOnly">
+      <p class="edit-label">Font size</p>
+      <div class="font-size-btns">
+        <button
+          *ngFor="let f of fontSizeOptions"
+          class="font-size-btn"
+          [class.active]="factFontSize === f.key"
+          (click)="setFactFontSize(f.key)">{{ f.label }}</button>
+      </div>
+
+      <p class="edit-label">Accent color</p>
+      <div class="swatches">
+        <button
+          *ngFor="let hex of accentOptions"
+          class="swatch"
+          [class.active]="card.uiMeta.accentColor === hex"
+          [style.background]="hex"
+          (click)="setAccent(hex)"
+          [attr.aria-label]="hex"></button>
+      </div>
+
+      <p class="edit-label">Badge</p>
+      <div class="badge-chips">
+        <button
+          *ngFor="let b of badgeOptions"
+          class="badge-opt"
+          [class.active]="card.uiMeta.insightBadge === b"
+          (click)="setBadge(b)">{{ b }}</button>
+      </div>
+    </div>
+
+    <!-- Edit panel (shown when editing or saved card) -->
+    <div class="edit-panel" *ngIf="(editing || isSaved) && card.cardType !== 'fact' && !viewOnly">
+      <p class="edit-label">Accent color</p>
+      <div class="swatches">
+        <button
+          *ngFor="let hex of accentOptions"
+          class="swatch"
+          [class.active]="card.uiMeta.accentColor === hex"
+          [style.background]="hex"
+          (click)="setAccent(hex)"
+          [attr.aria-label]="hex"></button>
+      </div>
+
+      <p class="edit-label">Badge</p>
+      <div class="badge-chips">
+        <button
+          *ngFor="let b of badgeOptions"
+          class="badge-opt"
+          [class.active]="card.uiMeta.insightBadge === b"
+          (click)="setBadge(b)">{{ b }}</button>
+      </div>
+    </div>
+
+  </ng-container>
+
+</ion-content>

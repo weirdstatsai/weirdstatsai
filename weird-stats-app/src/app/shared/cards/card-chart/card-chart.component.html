@@ -1,0 +1,18 @@
+<div class="wcard" [class.full]="size==='full'" [class.alt]="size==='alt'" [style.--accent]="accent" [style.--grad-from]="gradFrom" [style.--grad-to]="gradTo">
+
+  <!-- Feed / Full: show full header + title -->
+  <ng-container *ngIf="size !== 'alt'">
+    <span class="wcard-bg-icon" *ngIf="bgSvg && size==='full'" [innerHTML]="bgSvg"></span>
+  <div class="wcard-head">
+      <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.icon }} {{ card.uiMeta.category }}</span>
+      <span class="weird-badge" *ngIf="card.uiMeta?.insightBadge">{{ card.uiMeta.insightBadge }}</span>
+    </div>
+    <p class="wcard-title">{{ card.title }}</p>
+  </ng-container>
+
+  <div class="chart-wrap" *ngIf="chartConfig">
+    <app-chart [config]="$any(chartConfig)" [height]="chartHeight"></app-chart>
+  </div>
+
+  <p class="wcard-insight" *ngIf="card.insight && size !== 'alt'">{{ card.insight }}</p>
+</div>

@@ -1,0 +1,26 @@
+# Secrets — NEVER commit
+**/.env
+**/firebase-adminsdk.json
+**/*-firebase-adminsdk*.json
+**/google-services.json
+**/GoogleService-Info.plist
+
+# Node
+node_modules/
+dist/
+.angular/
+weird-stats-app/www/
+
+# Python
+**/.venv/
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+
+# OS
+.DS_Store
+*.swp
+
+# IDE
+.idea/
+.vscode/

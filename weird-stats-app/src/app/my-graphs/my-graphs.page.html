@@ -1,0 +1,60 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>My Cards</ion-title>
+  </ion-toolbar>
+  <ion-toolbar>
+    <ion-searchbar
+      [(ngModel)]="searchQuery"
+      placeholder="Search cards…"
+      [debounce]="200">
+    </ion-searchbar>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- Type filter chips -->
+  <div class="type-chips">
+    <div
+      *ngFor="let t of tabs"
+      class="type-chip"
+      [class.active]="activeTab === t.id"
+      (click)="setTab(t.id)">
+      {{ t.emoji }} {{ t.label }}
+    </div>
+  </div>
+
+  <!-- Loading skeleton -->
+  <div class="feed" *ngIf="isLoading">
+    <div class="skeleton-card" *ngFor="let _ of [1,2,3,4]"></div>
+  </div>
+
+  <!-- Cards feed -->
+  <ng-container *ngIf="!isLoading">
+    <div class="feed" *ngIf="filteredCards.length > 0; else empty">
+      <div
+        class="card-wrap"
+        *ngFor="let card of filteredCards; trackBy: trackById"
+        (click)="open(card)">
+        <app-weird-card [card]="card.data" size="feed"></app-weird-card>
+        <button class="delete-btn" (click)="confirmDelete($event, card)">
+          <ion-icon name="trash-outline"></ion-icon>
+        </button>
+      </div>
+    </div>
+
+    <ng-template #empty>
+      <div class="empty-state">
+        <ion-icon name="layers-outline"></ion-icon>
+        <p *ngIf="searchQuery">No cards match "{{ searchQuery }}"</p>
+        <p *ngIf="!searchQuery && activeTab !== 'all'">No {{ activeTab }} cards yet.</p>
+        <p *ngIf="!searchQuery && activeTab === 'all'">No cards yet. Generate your first one!</p>
+        <ion-button fill="outline" color="primary" size="small" (click)="goGenerate()">
+          <ion-icon name="sparkles-outline" slot="start"></ion-icon>
+          Generate a card
+        </ion-button>
+      </div>
+    </ng-template>
+  </ng-container>
+
+</ion-content>

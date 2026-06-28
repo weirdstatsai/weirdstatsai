@@ -1,0 +1,64 @@
+.loading-state {
+  display: flex; justify-content: center; padding: 80px;
+}
+
+.pub-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px 20px;
+  text-align: center;
+}
+
+.pub-avatar {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6C5CE7, #378ADD);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 700; color: #fff;
+  margin-bottom: 14px;
+}
+
+.pub-name {
+  font-size: 22px; font-weight: 800;
+  color: var(--ion-color-dark);
+  margin: 0 0 4px; letter-spacing: -0.4px;
+}
+
+.pub-meta {
+  font-size: 13px; color: var(--ion-color-medium);
+  margin: 0 0 10px;
+}
+
+.pub-view-badge {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600;
+  color: #6C5CE7;
+  background: rgba(108,92,231,0.1);
+  padding: 4px 12px; border-radius: 20px;
+  ion-icon { font-size: 13px; }
+}
+
+.pub-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 12px 32px;
+}
+
+.pub-card-wrap {
+  cursor: pointer;
+  border-radius: 16px;
+  overflow: hidden;
+  aspect-ratio: 3 / 4;
+  transition: transform 0.15s;
+  &:active { transform: scale(0.97); }
+  app-weird-card { display: block; width: 100%; height: 100%; }
+}
+
+.pub-empty {
+  display: flex; flex-direction: column;
+  align-items: center; padding: 60px 24px;
+  ion-icon { font-size: 48px; color: rgba(0,0,0,0.2); margin-bottom: 12px; }
+  p { font-size: 14px; color: var(--ion-color-medium); margin: 0; }
+}

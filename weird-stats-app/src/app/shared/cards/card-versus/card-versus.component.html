@@ -1,0 +1,123 @@
+<div class="wcard"
+     [class.full]="size==='full'"
+     [class.alt]="size==='alt'"
+     [attr.data-style]="versusStyle"
+     [style.--accent]="accent"
+     [style.--accent-b]="accentB"
+     [style.--grad-from]="gradFrom"
+     [style.--grad-to]="gradTo">
+
+  <span class="wcard-bg-icon" *ngIf="bgSvg && size==='full'" [innerHTML]="bgSvg"></span>
+
+  <div class="wcard-head">
+    <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.icon }} {{ card.uiMeta.category }}</span>
+    <span class="weird-badge" *ngIf="card.uiMeta?.insightBadge">{{ card.uiMeta.insightBadge }}</span>
+  </div>
+
+  <p class="wcard-title">{{ card.title }}</p>
+
+  <!-- DEFAULT style -->
+  <ng-container *ngIf="versusStyle === 'default'">
+    <div class="vs-numbers" *ngIf="pair.length === 2">
+      <div class="vs-side">
+        <p class="vs-value a">{{ fmt(pair[0].value) }}</p>
+        <p class="vs-lbl">{{ pair[0].label }}</p>
+      </div>
+      <div class="vs-circle">VS</div>
+      <div class="vs-side right">
+        <p class="vs-value b">{{ fmt(pair[1].value) }}</p>
+        <p class="vs-lbl">{{ pair[1].label }}</p>
+      </div>
+    </div>
+    <div class="vs-bars" *ngIf="pair.length === 2">
+      <div class="vs-bar a" [style.width.%]="pctA"></div>
+      <div class="vs-bar b" [style.width.%]="pctB"></div>
+    </div>
+    <div class="vs-pcts" *ngIf="pair.length === 2">
+      <span class="vs-pct a">{{ pctA }}%</span>
+      <span class="vs-pct b">{{ pctB }}%</span>
+    </div>
+  </ng-container>
+
+  <!-- MIRROR style -->
+  <ng-container *ngIf="versusStyle === 'mirror' && pair.length === 2">
+    <div class="mirror-halves">
+      <div class="mirror-side a">
+        <p class="mirror-value a">{{ fmt(pair[0].value) }}</p>
+        <p class="mirror-lbl">{{ pair[0].label }}</p>
+      </div>
+      <div class="mirror-vs">VS</div>
+      <div class="mirror-side b">
+        <p class="mirror-value b">{{ fmt(pair[1].value) }}</p>
+        <p class="mirror-lbl">{{ pair[1].label }}</p>
+      </div>
+    </div>
+    <div class="vs-bars">
+      <div class="vs-bar a" [style.width.%]="pctA"></div>
+      <div class="vs-bar b" [style.width.%]="pctB"></div>
+    </div>
+    <div class="vs-pcts">
+      <span class="vs-pct a">{{ pctA }}%</span>
+      <span class="vs-pct b">{{ pctB }}%</span>
+    </div>
+  </ng-container>
+
+  <!-- PROGRESS style -->
+  <ng-container *ngIf="versusStyle === 'progress' && pair.length === 2">
+    <div class="prog-rows">
+      <div class="prog-row">
+        <div class="prog-meta">
+          <span class="prog-lbl">{{ pair[0].label }}</span>
+          <span class="prog-val a">{{ fmt(pair[0].value) }}<span class="prog-unit" *ngIf="card.metric?.unit"> {{ card.metric.unit }}</span></span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill a" [style.width.%]="pctA"></div>
+        </div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-meta">
+          <span class="prog-lbl">{{ pair[1].label }}</span>
+          <span class="prog-val b">{{ fmt(pair[1].value) }}<span class="prog-unit" *ngIf="card.metric?.unit"> {{ card.metric.unit }}</span></span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill b" [style.width.%]="pctB"></div>
+        </div>
+      </div>
+    </div>
+    <div class="prog-delta">
+      <span class="prog-delta-label">{{ winner?.label }} leads by {{ fmt(delta) }}</span>
+    </div>
+  </ng-container>
+
+  <!-- WINNER style -->
+  <ng-container *ngIf="versusStyle === 'winner' && pair.length === 2">
+    <div class="win-row">
+      <div class="win-side a" [class.win-active]="pair[0].value >= pair[1].value">
+        <div class="win-badge" *ngIf="pair[0].value >= pair[1].value">
+          <ion-icon name="trophy-outline"></ion-icon> Winner
+        </div>
+        <p class="win-value a">{{ fmt(pair[0].value) }}</p>
+        <p class="win-lbl">{{ pair[0].label }}</p>
+      </div>
+      <div class="win-vs">VS</div>
+      <div class="win-side b" [class.win-active]="pair[1].value > pair[0].value">
+        <div class="win-badge" *ngIf="pair[1].value > pair[0].value">
+          <ion-icon name="trophy-outline"></ion-icon> Winner
+        </div>
+        <p class="win-value b">{{ fmt(pair[1].value) }}</p>
+        <p class="win-lbl">{{ pair[1].label }}</p>
+      </div>
+    </div>
+    <div class="vs-bars" style="margin-top:10px;">
+      <div class="vs-bar a" [style.width.%]="pctA"></div>
+      <div class="vs-bar b" [style.width.%]="pctB"></div>
+    </div>
+    <div class="vs-pcts">
+      <span class="vs-pct a">{{ pctA }}%</span>
+      <span class="vs-pct b">{{ pctB }}%</span>
+    </div>
+  </ng-container>
+
+  <p class="wcard-insight" *ngIf="card.insight && size === 'full' && versusStyle === 'default'">{{ card.insight }}</p>
+
+</div>

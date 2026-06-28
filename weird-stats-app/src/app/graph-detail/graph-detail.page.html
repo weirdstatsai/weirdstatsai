@@ -1,0 +1,112 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/home" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-buttons slot="end">
+      <ion-button *ngIf="graph?.saved" (click)="share()" aria-label="Share">
+        <ion-icon slot="icon-only" name="share-outline" color="medium"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <div class="kebab-wrap" slot="end" *ngIf="graph">
+      <button class="kebab-btn" (click)="toggleMenu($event)" aria-label="More options">
+        <ion-icon name="ellipsis-vertical"></ion-icon>
+      </button>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<!-- Loading state -->
+<ion-content class="ion-padding" *ngIf="isGenerating">
+  <div class="loading-state">
+    <ion-spinner name="dots"></ion-spinner>
+    <p>Crunching the weird numbers…</p>
+  </div>
+</ion-content>
+
+<!-- Error state -->
+<ion-content class="ion-padding" *ngIf="errorMsg && !isGenerating">
+  <div class="error-banner">
+    <ion-icon name="alert-circle-outline"></ion-icon>
+    {{ errorMsg }}
+  </div>
+  <ion-button fill="clear" color="primary" (click)="generate()">Try again</ion-button>
+</ion-content>
+
+<!-- Main content -->
+<ng-container *ngIf="graph && !isGenerating">
+  <ion-content class="ion-padding">
+
+    <!-- Title + meta -->
+    <h1 class="graph-title">{{ graph.title }}</h1>
+    <div class="meta-row">
+      <span class="chip chip-type">{{ graph.type }}</span>
+      <span class="chip chip-weird" *ngIf="graph.weirdScore >= 7">
+        {{ weirdStars(graph.weirdScore) }} {{ graph.weirdScore }}/10 weird
+      </span>
+      <span class="time">{{ graph.createdAt | date:'mediumDate' }}</span>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-wrap">
+      <app-chart [config]="graph.config" [height]="chartHeight"></app-chart>
+    </div>
+
+    <!-- Insight -->
+    <div class="ai-insight">
+      <ion-icon name="sparkles-outline"></ion-icon>
+      <span>{{ graph.insight }}</span>
+    </div>
+
+    <!-- Kebab menu (fixed, inside ion-content so it renders) -->
+    <div class="kebab-backdrop" *ngIf="menuOpen" (click)="closeMenu()"></div>
+    <div class="kebab-menu" *ngIf="menuOpen">
+      <button class="kebab-item" (click)="save()" *ngIf="!graph.saved">
+        <ion-icon name="bookmark-outline"></ion-icon> Save
+      </button>
+      <button class="kebab-item" (click)="sendToDraft()" *ngIf="graph.saved">
+        <ion-icon name="document-outline"></ion-icon> Send to Draft
+      </button>
+      <button class="kebab-item kebab-item-danger" (click)="deleteGraph()">
+        <ion-icon name="trash-outline"></ion-icon> Delete
+      </button>
+    </div>
+
+    <!-- Pick your take (always shown if alternatives exist) -->
+    <ng-container *ngIf="alternatives.length > 0">
+      <p class="section-title takes-title">Pick your take</p>
+      <div class="takes-grid">
+        <div
+          *ngFor="let alt of alternatives; let i = index"
+          class="take-card"
+          [class.selected]="graph.type === alt.type"
+          (click)="selectAlternative(alt)">
+          <div class="take-chart">
+            <app-chart [config]="alt.config" [height]="130" [mini]="true"></app-chart>
+          </div>
+          <div class="take-meta">
+            <span class="take-type">{{ alt.type }}</span>
+            <ion-icon
+              *ngIf="graph.type === alt.type"
+              name="checkmark-circle"
+              class="take-check">
+            </ion-icon>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+  </ion-content>
+
+</ng-container>
+
+<!-- Not found fallback -->
+<ng-container *ngIf="!graph && !isGenerating && !errorMsg">
+  <ion-content class="ion-padding ion-text-center">
+    <div style="padding-top: 80px;">
+      <ion-icon name="alert-circle-outline" style="font-size: 48px; color: var(--ion-color-medium);"></ion-icon>
+      <p style="margin-top: 12px; color: var(--ion-color-medium);">Graph not found</p>
+      <ion-button fill="clear" routerLink="/tabs/home">Go home</ion-button>
+    </div>
+  </ion-content>
+</ng-container>

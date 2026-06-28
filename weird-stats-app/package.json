@@ -1,0 +1,41 @@
+{
+  "name": "weird-stats",
+  "version": "1.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve --open",
+    "build": "ng build",
+    "test": "ng test"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^16.2.0",
+    "@angular/common": "^16.2.0",
+    "@angular/compiler": "^16.2.0",
+    "@angular/core": "^16.2.0",
+    "@angular/fire": "^7.6.1",
+    "@angular/forms": "^16.2.0",
+    "@angular/platform-browser": "^16.2.0",
+    "@angular/platform-browser-dynamic": "^16.2.0",
+    "@angular/router": "^16.2.0",
+    "@ionic/angular": "^7.5.0",
+    "@types/topojson-client": "^3.1.5",
+    "chart.js": "^4.4.0",
+    "chartjs-chart-geo": "^4.3.6",
+    "dom-to-image-more": "^3.10.0",
+    "firebase": "^9.23.0",
+    "html2canvas": "^1.4.1",
+    "ionicons": "^7.2.0",
+    "rxjs": "~7.8.0",
+    "topojson-client": "^3.1.0",
+    "tslib": "^2.6.0",
+    "zone.js": "~0.13.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^16.2.0",
+    "@angular/cli": "~16.2.0",
+    "@angular/compiler-cli": "^16.2.0",
+    "@ionic/angular-toolkit": "^9.0.0",
+    "typescript": "~5.1.0"
+  }
+}

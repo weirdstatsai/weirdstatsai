@@ -1,0 +1,70 @@
+@use '../card-base' as *;
+
+.fact-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  align-content: flex-start;
+}
+
+.fact-content {
+  flex: 1;
+  min-width: 0;
+
+  .wcard-title {
+    font-size: 18px;
+    line-height: 1.4;
+  }
+}
+
+.fact-illus {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.full .fact-illus, .alt .fact-illus { display: flex; }
+
+.illus-emoji {
+  font-size: 34px;
+  line-height: 1;
+}
+
+.alt .fact-illus { width: 44px; height: 44px; }
+.alt .illus-emoji { font-size: 22px; }
+
+.full .fact-illus { width: 88px; height: 88px; }
+.full .illus-emoji { font-size: 52px; }
+
+.fact-body {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.5;
+  margin: 6px 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.full .fact-body {
+  font-size: 16px;
+  color: #444;
+  line-height: 1.6;
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+// ── Font size variants (full view only) ───────────────────────────────────
+.full.fs-small .fact-content .wcard-title { font-size: 15px; }
+.full.fs-small .fact-body                 { font-size: 13px; }
+
+.full.fs-large .fact-content .wcard-title { font-size: 22px; }
+.full.fs-large .fact-body                 { font-size: 19px; }

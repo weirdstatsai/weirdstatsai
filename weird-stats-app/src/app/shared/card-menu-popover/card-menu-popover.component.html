@@ -1,0 +1,19 @@
+<div class="menu">
+  <button class="menu-item" (click)="pick('open')">
+    <ion-icon name="eye-outline"></ion-icon>
+    <span>Open card</span>
+  </button>
+  <button class="menu-item" (click)="pick('publish')">
+    <ion-icon [name]="isPublished ? 'lock-closed-outline' : 'earth-outline'"></ion-icon>
+    <span>{{ isPublished ? 'Move to Drafts' : 'Publish' }}</span>
+  </button>
+  <button class="menu-item" (click)="pick('edit')">
+    <ion-icon name="create-outline"></ion-icon>
+    <span>Edit</span>
+  </button>
+  <div class="divider"></div>
+  <button class="menu-item danger" (click)="pick('delete')">
+    <ion-icon name="trash-outline"></ion-icon>
+    <span>Delete</span>
+  </button>
+</div>
