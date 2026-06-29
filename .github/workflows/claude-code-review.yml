@@ -1,0 +1,46 @@
+name: Claude Code Review
+
+# Automatically review every pull request opened or updated against any branch.
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+# Also let a human re-trigger Claude by commenting "@claude" on a PR or issue.
+  issue_comment:
+    types: [created]
+
+jobs:
+  claude-review:
+    # On comment events, only run when someone actually mentions @claude.
+    if: >
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review this pull request as a senior engineer. Focus on, in order:
+            1. Correctness bugs (logic errors, null/undefined, wrong conditions,
+               broken call sites, dropped error handling).
+            2. Security issues (leaked secrets, missing auth checks, injection).
+            3. Maintainability and simplification opportunities.
+
+            This is an Ionic 7 + Angular 16 + Firebase app with a FastAPI +
+            OpenAI backend under services/backend. Be concrete and concise —
+            cite file and line, and skip nitpicks. Post your findings as a PR
+            review using the GitHub tools available to you. If the PR looks
+            good, say so briefly.
+          claude_args: '--allowedTools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),mcp__github_inline_comment__create_inline_comment"'
