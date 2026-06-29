@@ -94,9 +94,12 @@ app-weird-card {
   &::-webkit-scrollbar { display: none; }
 }
 
+// Tile width tracks the viewport on real phones but is capped so it never blows
+// up inside the fixed-width mobile frame on desktop (where 45vw would be huge).
+$alt-tile-w: min(45vw, 190px);
 .rank-alt-wrap {
-  flex: 0 0 calc(45vw - 12px);
-  height: calc((45vw - 12px) * 4 / 3);
+  flex: 0 0 $alt-tile-w;
+  height: calc(#{$alt-tile-w} * 4 / 3);
   cursor: pointer;
   border-radius: 16px;
   opacity: 0.6;
@@ -109,7 +112,10 @@ app-weird-card {
   app-card-ranking,
   app-card-kpi,
   app-card-table,
-  app-card-chart {
+  app-card-chart,
+  app-card-map,
+  app-card-versus,
+  app-card-fact {
     display: block;
     flex: 1;
     min-height: 0;
