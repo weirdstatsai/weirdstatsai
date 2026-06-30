@@ -115,6 +115,10 @@ export class ProfilePage implements OnInit, OnDestroy {
   ionViewWillEnter(): void {
     // Refresh local drafts each time the page is shown
     if (this.currentUid) this.draftCards = this.drafts.list(this.currentUid);
+    // Open straight to a specific tab when navigated with a hint (e.g. Back from
+    // a freshly generated draft → Drafts tab).
+    const tab = (history.state as { tab?: 'saved' | 'draft' } | undefined)?.tab;
+    if (tab === 'saved' || tab === 'draft') this.activeTab = tab;
   }
 
   ngOnDestroy(): void { this.sub?.unsubscribe(); }

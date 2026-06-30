@@ -35,6 +35,9 @@ export class CardDetailPage implements OnInit {
   isSaved = false;
   isAdminView = false;
   returnUrl = '';
+  // True right after a fresh generation — the card is auto-saved as a draft,
+  // so Back/exit should land on the Drafts tab.
+  fromGenerate = false;
 
   // Inline share (view-only): watermark capture frame + premium flag
   @ViewChild('shareArea') shareArea?: ElementRef<HTMLElement>;
@@ -183,6 +186,7 @@ export class CardDetailPage implements OnInit {
     this.viewOnly = !!state?.viewOnly;
     this.isAdminView = !!state?.isAdminView;
     this.returnUrl = state?.returnUrl ?? '';
+    this.fromGenerate = false;
 
     // View-only cards show inline share — watermark hidden for premium users
     if (this.viewOnly) {
@@ -278,7 +282,10 @@ export class CardDetailPage implements OnInit {
               }
               this.isLoading = false;
               this.statusMsg = '';
-              this.router.navigate(['/tabs/profile']);
+              // Stay on the detail page so the user sees the generated card and
+              // can edit / save it. It's already stored as a draft above, so
+              // Back/exit lands on the Drafts tab (see back()).
+              this.fromGenerate = true;
             } else if (event.type === 'error') {
               this.errorMsg = event.message;
               this.isLoading = false;
@@ -606,10 +613,16 @@ export class CardDetailPage implements OnInit {
   }
 
   back(): void {
-    // Admin flow targets a specific page; everyone else returns along the real
-    // navigation stack, so Back mirrors how the user actually arrived
-    // (Home, Profile, Explore, a public profile…) instead of a hardcoded guess.
+    // Admin flow targets a specific page.
     if (this.returnUrl) { this.router.navigateByUrl(this.returnUrl); return; }
+    // A freshly generated card was auto-saved as a draft — send the user to the
+    // Drafts tab so they can find it.
+    if (this.fromGenerate) {
+      this.router.navigate(['/tabs/profile'], { state: { tab: 'draft' } });
+      return;
+    }
+    // Everyone else returns along the real navigation stack, so Back mirrors how
+    // the user actually arrived (Home, Profile, Explore, a public profile…).
     this.navCtrl.back();
   }
 

@@ -25,6 +25,10 @@ import os
 _default_origins = [
     "http://localhost:4200", "http://localhost:8100",
     "http://localhost:8080", "capacitor://localhost", "ionic://localhost",
+    # Custom domain + new project hosting
+    "https://weirdstats.ai", "https://www.weirdstats.ai",
+    "https://weirdstats-ai.web.app", "https://weirdstats-ai.firebaseapp.com",
+    # Legacy project (kept until fully retired)
     "https://weirdstatsai-aaaf7.web.app",
     "https://weirdstatsai-aaaf7.firebaseapp.com",
 ]
@@ -79,14 +83,21 @@ async def generate_stream(req: GenerateRequest) -> StreamingResponse:
             yield _sse("error", {"message": "Research failed. Try again."})
             return
 
-        # Step 2: format
+        # Step 2: format — retry once before surfacing an error, since the
+        # format/validate step occasionally fails transiently on the first try.
         yield _sse("status", {"message": "Building your card…", "step": 2})
         try:
             raw = await format_agent(brief)
             card = validate_card(raw)
-        except Exception as e:
-            yield _sse("error", {"message": "Could not format card. Try again."})
-            return
+        except Exception:
+            logger.warning("Stream format failed, retrying once", exc_info=True)
+            try:
+                raw = await format_agent(brief)
+                card = validate_card(raw)
+            except Exception:
+                logger.warning("Stream format failed twice", exc_info=True)
+                yield _sse("error", {"message": "Could not format card. Try again."})
+                return
 
         # Step 3: save a cache-only copy (not user-owned) + return.
         # Drafts live on the device; a card only enters a user's collection
