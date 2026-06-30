@@ -1,8 +1,11 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, NgZone, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { HttpClient } from '@angular/common/http';
-import { ActionSheetController, AlertController, ToastController } from '@ionic/angular';
+import { ActionSheetController, AlertController, ToastController, LoadingController, NavController } from '@ionic/angular';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const domtoimage = require('dom-to-image-more');
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { WeirdCard, StoredStatCard, ACCENT_COLORS } from '../models/weird-card.model';
@@ -32,6 +35,13 @@ export class CardDetailPage implements OnInit {
   isSaved = false;
   isAdminView = false;
   returnUrl = '';
+
+  // Inline share (view-only): watermark capture frame + premium flag
+  @ViewChild('shareArea') shareArea?: ElementRef<HTMLElement>;
+  isPremium = false;
+  get canNativeShare(): boolean {
+    return !!(navigator as any).share && !!(navigator as any).canShare;
+  }
 
   altTypes: Array<'bar' | 'line' | 'doughnut'> = ['bar', 'line', 'doughnut'];
   selectedAltType?: 'bar' | 'line' | 'doughnut';
@@ -101,6 +111,8 @@ export class CardDetailPage implements OnInit {
     private actionSheetCtrl: ActionSheetController,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
+    private loadingCtrl: LoadingController,
+    private navCtrl: NavController,
     private ngZone: NgZone,
     private membership: MembershipService,
     private drafts: DraftService,
@@ -171,6 +183,12 @@ export class CardDetailPage implements OnInit {
     this.viewOnly = !!state?.viewOnly;
     this.isAdminView = !!state?.isAdminView;
     this.returnUrl = state?.returnUrl ?? '';
+
+    // View-only cards show inline share — watermark hidden for premium users
+    if (this.viewOnly) {
+      this.isPremium = false;
+      this.membership.isPremium().then((p) => (this.isPremium = p)).catch(() => {});
+    }
 
     if (state?.fromSaved) this.isSaved = true;
 
@@ -279,22 +297,108 @@ export class CardDetailPage implements OnInit {
   }
 
   async presentViewActions(): Promise<void> {
+    // Sharing now lives inline on the page; the menu is just Report + Cancel.
     const sheet = await this.actionSheetCtrl.create({
       buttons: [
         {
-          text: 'Share card',
-          icon: 'share-social-outline',
-          handler: () => { setTimeout(() => this.goShare(), 250); },
-        },
-        {
           text: 'Report',
           icon: 'flag-outline',
+          role: 'destructive',
           handler: () => { setTimeout(() => this._reportCard(), 250); },
         },
         { text: 'Cancel', role: 'cancel', icon: 'close' },
       ],
     });
     await sheet.present();
+  }
+
+  // ── Inline share (view-only) ────────────────────────────────────────────
+  /** Deep-link URL for this card */
+  private cardUrl(): string {
+    const base = window.location.origin;
+    const id = this.storedCard?.id;
+    return id ? `${base}/card-detail/${id}` : base;
+  }
+
+  /** Render the watermarked share frame to a PNG data URL */
+  private async renderPng(): Promise<string | null> {
+    const el = this.shareArea?.nativeElement;
+    if (!el) return null;
+    return domtoimage.toPng(el, { bgcolor: '#ffffff', scale: 2 });
+  }
+
+  private dataUrlToFile(dataUrl: string, filename: string): File {
+    const [header, data] = dataUrl.split(',');
+    const mime = header.match(/:(.*?);/)![1];
+    const bytes = atob(data);
+    const arr = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    return new File([arr], filename, { type: mime });
+  }
+
+  private slug(): string {
+    return (this.card?.title ?? 'weirdstats').replace(/\s+/g, '-').slice(0, 40);
+  }
+
+  /** Share the watermarked card image directly — native sheet on mobile, URL on desktop */
+  async shareTo(network: string): Promise<void> {
+    if (!this.card) return;
+    const loading = await this.loadingCtrl.create({ message: 'Preparing…', duration: 8000 });
+    await loading.present();
+    try {
+      const dataUrl = await this.renderPng();
+      const cardUrl = this.cardUrl();
+
+      if (dataUrl && this.canNativeShare) {
+        const file = this.dataUrlToFile(dataUrl, `${this.slug()}.png`);
+        if ((navigator as any).canShare({ files: [file] })) {
+          await loading.dismiss();
+          try {
+            await (navigator as any).share({ files: [file], url: cardUrl, title: this.card.title });
+          } catch { /* user cancelled */ }
+          return;
+        }
+      }
+
+      await loading.dismiss();
+      const url = this.shareUrl(network);
+      if (url && url !== '#') window.open(url, '_blank', 'noopener');
+    } catch {
+      await loading.dismiss();
+      this.toast('Something went wrong.');
+    }
+  }
+
+  /** Platform share URL (desktop fallback / href) */
+  shareUrl(network: string): string {
+    const enc = encodeURIComponent;
+    const url = this.cardUrl();
+    const map: Record<string, string> = {
+      whatsapp: `https://wa.me/?text=${enc(url)}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${enc(url)}`,
+      twitter:  `https://twitter.com/intent/tweet?url=${enc(url)}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${enc(url)}`,
+    };
+    return map[network] ?? '#';
+  }
+
+  /** Save the watermarked card as a PNG */
+  async download(): Promise<void> {
+    const loading = await this.loadingCtrl.create({ message: 'Saving image…', duration: 8000 });
+    await loading.present();
+    try {
+      const dataUrl = await this.renderPng();
+      await loading.dismiss();
+      if (!dataUrl) return;
+      const link = document.createElement('a');
+      link.download = `${this.slug()}.png`;
+      link.href = dataUrl;
+      link.click();
+      this.toast('Image saved!');
+    } catch {
+      await loading.dismiss();
+      this.toast('Could not save image.');
+    }
   }
 
   private async _reportCard(): Promise<void> {
@@ -502,8 +606,11 @@ export class CardDetailPage implements OnInit {
   }
 
   back(): void {
+    // Admin flow targets a specific page; everyone else returns along the real
+    // navigation stack, so Back mirrors how the user actually arrived
+    // (Home, Profile, Explore, a public profile…) instead of a hardcoded guess.
     if (this.returnUrl) { this.router.navigateByUrl(this.returnUrl); return; }
-    this.router.navigate([this.isSaved ? '/tabs/profile' : '/tabs/explore']);
+    this.navCtrl.back();
   }
 
   private async toast(msg: string): Promise<void> {
