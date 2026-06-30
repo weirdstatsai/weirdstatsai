@@ -63,7 +63,7 @@
       <a class="see-all" routerLink="/tabs/explore">Explore all</a>
     </div>
     <div class="home-grid">
-      <div class="home-card" *ngFor="let card of recentCards" (click)="open(card)">
+      <div class="home-card" [class.span-full]="isFullWidth(card)" *ngFor="let card of recentCards" (click)="open(card)">
         <app-weird-card [card]="card.data" size="feed"></app-weird-card>
       </div>
     </div>

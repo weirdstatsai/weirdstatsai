@@ -157,6 +157,7 @@
         <div class="grid-card-wrap"
              [class.is-public]="sc.publishStatus === 'published'"
              [class.is-private]="sc.publishStatus === 'private'"
+             [class.span-full]="isFullWidth(sc)"
              *ngFor="let sc of filteredCards()"
              (click)="openCard(sc)">
           <app-weird-card [card]="sc.data" size="feed"></app-weird-card>

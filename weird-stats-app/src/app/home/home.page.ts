@@ -130,4 +130,9 @@ export class HomePage implements OnInit, OnDestroy {
     // View-only: no edit panel, no alternatives
     this.router.navigate(['/card'], { state: { card, viewOnly: true } });
   }
+
+  // Map cards need horizontal room to read — span both grid columns.
+  isFullWidth(card: StoredStatCard): boolean {
+    return card.data?.cardType === 'map';
+  }
 }

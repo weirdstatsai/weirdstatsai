@@ -158,6 +158,11 @@ export class ProfilePage implements OnInit, OnDestroy {
     return cards;
   }
 
+  // Map cards need width to read clearly — span both grid columns.
+  isFullWidth(card: StoredStatCard): boolean {
+    return card.data?.cardType === 'map';
+  }
+
   selectDraft(card: StoredStatCard): void {
     if (this.selectedDraft?.id === card.id) {
       this.selectedDraft = undefined;

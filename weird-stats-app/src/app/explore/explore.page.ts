@@ -10,8 +10,8 @@ interface ExploreCategory {
   emoji: string;
 }
 
-// Fact cards span full width — all others are 3:4 portrait tiles
-const FULL_WIDTH_TYPES: CardType[] = ['fact'];
+// Fact and map cards span full width — all others are 3:4 portrait tiles
+const FULL_WIDTH_TYPES: CardType[] = ['fact', 'map'];
 
 @Component({
   selector: 'app-explore',

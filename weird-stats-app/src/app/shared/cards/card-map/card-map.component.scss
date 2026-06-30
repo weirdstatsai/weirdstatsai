@@ -49,6 +49,20 @@
   margin: 4px 0 8px;
 }
 
+// Full-width tiles (map cards span both grid columns on feed pages) — use the
+// extra horizontal room instead of a single cramped column.
+:host-context(.span-full) .unmapped-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 20px;
+}
+
+:host-context(.span-full) .bubble-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 20px;
+}
+
 .unmapped-item {
   display: flex;
   align-items: center;

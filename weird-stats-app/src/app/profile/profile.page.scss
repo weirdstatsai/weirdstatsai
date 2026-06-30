@@ -284,6 +284,14 @@ ion-toolbar {
   &.is-private { box-shadow: 0 0 0 2.5px $purple; }
 
   &:active { opacity: 0.9; }
+
+  // Map cards need width to read clearly — span both grid columns.
+  &.span-full {
+    grid-column: 1 / -1;
+    aspect-ratio: unset;
+
+    app-weird-card { height: auto; }
+  }
 }
 
 // ── Status badge (Public / Private) ───────────────────────────────────────
