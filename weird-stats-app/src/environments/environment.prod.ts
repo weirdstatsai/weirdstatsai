@@ -1,15 +1,15 @@
-// Firebase project: weirdstatsai-aaaf7
+// Firebase project: weirdstats-ai
 export const environment = {
   production: true,
-  // FastAPI backend hosted on Render (free tier — first request after idle ~50s cold start).
-  apiUrl: 'https://weirdstatsai.onrender.com',
+  // FastAPI backend on Cloud Run (weirdstats-ai project).
+  apiUrl: 'https://weirdstats-api-636419392315.us-central1.run.app',
   firebaseConfig: {
-    apiKey: 'AIzaSyBwxDDGX392lTqGPYOSmD7MfC_IK9EIpkw',
-    authDomain: 'weirdstatsai-aaaf7.firebaseapp.com',
-    projectId: 'weirdstatsai-aaaf7',
-    storageBucket: 'weirdstatsai-aaaf7.firebasestorage.app',
-    messagingSenderId: '1065102964533',
-    appId: '1:1065102964533:web:0a6636eb4b091fdab67e7c',
-    measurementId: 'G-3KEMVG76WD',
+    apiKey: 'AIzaSyA13uLXDzYLHZxP0I-9N-T7m1sFuzIIGiE',
+    authDomain: 'weirdstats-ai.firebaseapp.com',
+    projectId: 'weirdstats-ai',
+    storageBucket: 'weirdstats-ai.firebasestorage.app',
+    messagingSenderId: '636419392315',
+    appId: '1:636419392315:web:2c13c88eeff8ad2218ed1e',
+    measurementId: 'G-TL5FZD25Z6',
   },
 };
