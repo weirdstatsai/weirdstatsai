@@ -35,6 +35,15 @@
       <ion-icon name="sparkles-outline"></ion-icon>
       Generate
     </button>
+
+    <!-- Reset holder — free-plan usage + daily-reset countdown -->
+    <div class="usage-chip" *ngIf="usage && !usage.isPremium" [class.depleted]="usage.remaining === 0">
+      <ion-icon name="albums-outline"></ion-icon>
+      <span class="usage-text">{{ usage.remaining }} of {{ usage.limit }} cards left today</span>
+      <span class="usage-dot" *ngIf="usageCountdown">·</span>
+      <span class="usage-reset" *ngIf="usageCountdown">Resets in {{ usageCountdown }}</span>
+      <button class="usage-upgrade" (click)="openUpgrade()">Go Premium</button>
+    </div>
   </div>
 
   <!-- Suggestions — shown when no recent cards -->
