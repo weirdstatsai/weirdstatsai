@@ -340,9 +340,11 @@ $app-frame-width: 480px;
 }
 
 // ── Desktop shell (≥850px) ──────────────────────────────────────────────────
-// ion-app fills the viewport; TabsPage supplies its own fixed left rail +
+// ion-app fills the viewport; AppComponent supplies its own fixed left rail +
 // top-right nav + right gutter around the (still independently scrolling)
-// tab content — see tabs.page.scss.
+// content outlet — see app.component.scss.
+$desktop-content-max: 1040px;
+
 @media (min-width: 850px) {
   body {
     background: #fff;
@@ -351,6 +353,17 @@ $app-frame-width: 480px;
     max-width: none !important;
     margin: 0 !important;
     box-shadow: none !important;
+  }
+
+  // Cap every page's content to a readable column and centre it, instead of
+  // letting cards/maps sprawl across the full monitor width. Uses ion-content's
+  // own horizontal padding: as the content box grows past $desktop-content-max,
+  // the extra width is split evenly into left/right padding (a fluid margin),
+  // so the actual content never exceeds the cap. Falls back to a 24px gutter on
+  // narrower desktops where there's no excess to absorb.
+  ion-content {
+    --padding-start: max(24px, calc((100% - #{$desktop-content-max}) / 2)) !important;
+    --padding-end:   max(24px, calc((100% - #{$desktop-content-max}) / 2)) !important;
   }
 }
 
