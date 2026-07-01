@@ -1,29 +1,3 @@
-<!-- Desktop shell (≥850px only — hidden on mobile via CSS). Fixed left rail:
-     logo + legal links. Fixed top-right bar: primary nav + auth action. -->
-<div class="desktop-rail">
-  <div class="rail-logo" routerLink="/tabs/home">
-    <span class="rail-logo-mark"></span>
-    <span class="rail-logo-text">WeirdStats<span class="accent">.ai</span></span>
-  </div>
-  <div class="rail-links">
-    <a routerLink="/contact">Contact us</a>
-    <a routerLink="/terms">Terms and conditions</a>
-    <a routerLink="/privacy">Privacy policy</a>
-  </div>
-</div>
-
-<div class="desktop-topnav">
-  <a routerLink="/tabs/home" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">Home</a>
-  <a routerLink="/tabs/explore" routerLinkActive="active">Explore</a>
-  <a class="profile-link" *ngIf="isLoggedIn" routerLink="/tabs/profile" routerLinkActive="active">
-    <span class="profile-avatar">{{ userEmoji || '🙂' }}</span>
-    Profile
-  </a>
-  <button class="login-btn" *ngIf="!isLoggedIn" (click)="openLogin()">Log in / Sign up</button>
-</div>
-
-<div class="desktop-right-gutter"></div>
-
 <ion-tabs>
   <ion-tab-bar slot="bottom">
     <ion-tab-button tab="home" href="/tabs/home">
