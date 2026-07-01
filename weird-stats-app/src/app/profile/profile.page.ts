@@ -84,14 +84,25 @@ export class ProfilePage implements OnInit, OnDestroy {
   isAdmin = false;
 
   ngOnInit(): void {
-    this.adminService.isAdmin().then(v => {
-      this.isAdmin = v;
-      this.cdr.detectChanges();
-    });
     this.sub = this.user$.pipe(
       switchMap(user => {
         this.currentUid = user?.uid ?? '';
         this.draftCards = user ? this.drafts.list(user.uid) : [];
+
+        // Re-check admin status on every auth resolution, not just once at
+        // mount — on a cold app load, auth's persisted session can still be
+        // restoring when ngOnInit fires, so a one-shot check at mount time
+        // can race and lock in "not admin". Driving this off the same
+        // user$ stream the rest of the page already uses avoids that race.
+        if (user) {
+          this.adminService.isAdmin(user.uid).then(v => {
+            this.isAdmin = v;
+            this.cdr.detectChanges();
+          });
+        } else {
+          this.isAdmin = false;
+        }
+
         if (!user) return of([] as StoredStatCard[]);
         return this.afs
           .collection<StoredStatCard>('stats', ref =>
