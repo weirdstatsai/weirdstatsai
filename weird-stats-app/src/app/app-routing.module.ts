@@ -46,6 +46,21 @@ const routes: Routes = [
     path: 'seed-data',
     loadChildren: () => import('./seed-data/seed-data.module').then(m => m.SeedDataPageModule),
   },
+  {
+    path: 'contact',
+    data: { slug: 'contact' },
+    loadChildren: () => import('./static-page/static-page.module').then(m => m.StaticPagePageModule),
+  },
+  {
+    path: 'terms',
+    data: { slug: 'terms' },
+    loadChildren: () => import('./static-page/static-page.module').then(m => m.StaticPagePageModule),
+  },
+  {
+    path: 'privacy',
+    data: { slug: 'privacy' },
+    loadChildren: () => import('./static-page/static-page.module').then(m => m.StaticPagePageModule),
+  },
 ];
 
 @NgModule({

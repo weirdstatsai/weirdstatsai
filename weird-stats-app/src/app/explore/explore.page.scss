@@ -117,6 +117,11 @@ $yellow: #BA7517;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   padding: 4px 16px 32px;
+
+  @media (min-width: 850px) {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
 }
 
 // Card tile wrapper (includes card + creator badge)

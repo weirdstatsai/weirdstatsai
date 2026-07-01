@@ -321,12 +321,12 @@ ion-content {
   }
 }
 
-// ── Fixed mobile frame on larger screens ───────────────────────────────────
-// Keeps WeirdStats looking like a phone app when opened on desktop/web.
+// ── Fixed mobile frame on mid-size screens ─────────────────────────────────
+// Keeps WeirdStats looking like a phone app between 600 and 850px.
 // Change $app-frame-width below to widen/narrow the frame.
 $app-frame-width: 480px;
 
-@media (min-width: 600px) {
+@media (min-width: 600px) and (max-width: 849.98px) {
   body {
     background: #e7e7ec;
   }
@@ -337,7 +337,26 @@ $app-frame-width: 480px;
     right: 0 !important;
     box-shadow: 0 0 60px rgba(0, 0, 0, 0.14);
   }
-  // Keep modals/popovers/action-sheets within the frame too
+}
+
+// ── Desktop shell (≥850px) ──────────────────────────────────────────────────
+// ion-app fills the viewport; TabsPage supplies its own fixed left rail +
+// top-right nav + right gutter around the (still independently scrolling)
+// tab content — see tabs.page.scss.
+@media (min-width: 850px) {
+  body {
+    background: #fff;
+  }
+  ion-app {
+    max-width: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
+// Modals/popovers/action-sheets stay phone-width and centered at any width
+// ≥600px — only the main tab content gets the wider desktop treatment.
+@media (min-width: 600px) {
   ion-modal,
   ion-action-sheet,
   ion-popover,

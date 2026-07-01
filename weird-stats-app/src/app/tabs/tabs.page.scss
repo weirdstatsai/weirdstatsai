@@ -1,0 +1,162 @@
+$rail-width: 84px;
+$topnav-height: 48px;
+$right-gutter: 48px;
+
+// Hidden by default (mobile) — shown only at the desktop breakpoint below.
+.desktop-rail,
+.desktop-topnav,
+.desktop-right-gutter {
+  display: none;
+}
+
+@media (min-width: 850px) {
+
+  // ── Fixed left rail — logo + legal links, never scrolls ──────────────────
+  .desktop-rail {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: $rail-width;
+    padding: 20px 8px;
+    background: #fff;
+    border-right: 0.5px solid rgba(0, 0, 0, 0.08);
+    z-index: 20;
+    box-sizing: border-box;
+  }
+
+  .rail-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .rail-logo-mark {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #6C5CE7 0%, #8C7BFF 100%);
+  }
+
+  .rail-logo-text {
+    font-size: 10px;
+    font-weight: 700;
+    color: #1a1a2e;
+    text-align: center;
+    line-height: 1.3;
+    .accent { color: #6C5CE7; }
+  }
+
+  .rail-links {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+
+    a {
+      font-size: 10px;
+      color: #999;
+      text-align: center;
+      line-height: 1.35;
+      text-decoration: none;
+      &:hover { color: #6C5CE7; }
+    }
+  }
+
+  // ── Fixed top bar — primary nav, right-aligned ────────────────────────────
+  .desktop-topnav {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 24px;
+    position: fixed;
+    top: 0;
+    left: $rail-width;
+    right: $right-gutter;
+    height: $topnav-height;
+    padding: 0 24px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
+    z-index: 20;
+    box-sizing: border-box;
+
+    a {
+      font-size: 13px;
+      font-weight: 600;
+      color: #666;
+      text-decoration: none;
+      &.active { color: #6C5CE7; }
+      &:hover { color: #6C5CE7; }
+    }
+  }
+
+  .profile-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .profile-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(108, 92, 231, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+  }
+
+  .login-btn {
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #6C5CE7 0%, #8C7BFF 100%);
+    border: none;
+    border-radius: 20px;
+    padding: 7px 16px;
+    cursor: pointer;
+    &:active { opacity: 0.9; }
+  }
+
+  // ── Right gutter — empty breathing room, fixed so it never scrolls ───────
+  .desktop-right-gutter {
+    display: block;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: $right-gutter;
+    background: #fff;
+    border-left: 0.5px solid rgba(0, 0, 0, 0.08);
+    z-index: 20;
+  }
+
+  // ── Push the tab content into the space between the rail/topnav/gutter —
+  // each page's own ion-content still scrolls independently within this box.
+  ion-tab-bar {
+    display: none;
+  }
+
+  ion-tabs {
+    position: fixed !important;
+    top: $topnav-height;
+    left: $rail-width;
+    right: $right-gutter;
+    bottom: 0;
+    // Ionic's own shadow styles set width/height: 100% on the host, which
+    // wins over the browser's auto-from-offsets sizing for a fixed element
+    // with both left and right set — force it back to auto so the explicit
+    // offsets above are what actually determines the box.
+    width: auto !important;
+    height: auto !important;
+  }
+}
