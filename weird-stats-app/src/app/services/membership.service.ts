@@ -82,7 +82,11 @@ export class MembershipService {
   // "X of 3 cards left today" usage chip and the upgrade prompt.
   async getUsage(): Promise<UsageInfo> {
     const userPlan = await this.getUserPlan();
-    if (!userPlan) {
+    // No plan doc yet, or a doc that predates the membership fields (e.g. one
+    // freshly created by sign-in, before onboarding/the first generation ever
+    // wrote windowStart) — treat as "hasn't started a window yet", not as a
+    // usable window, or the Invalid Date math below produces NaN everywhere.
+    if (!userPlan || !userPlan.windowStart) {
       return { isPremium: false, limit: FREE_WINDOW_LIMIT, remaining: FREE_WINDOW_LIMIT, resetAt: null };
     }
     if (userPlan.plan === 'premium') {
@@ -103,7 +107,7 @@ export class MembershipService {
     }
     return {
       isPremium: false, limit: FREE_WINDOW_LIMIT,
-      remaining: Math.max(0, FREE_WINDOW_LIMIT - userPlan.windowCount),
+      remaining: Math.max(0, FREE_WINDOW_LIMIT - (userPlan.windowCount ?? 0)),
       resetAt,
     };
   }
