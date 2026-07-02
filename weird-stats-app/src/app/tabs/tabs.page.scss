@@ -1,7 +1,20 @@
+// TabsPage is an .ion-page (absolute, flex column) — the outlet wrapper takes
+// all space above the bar, and ion-router-outlet inside fills it (Ionic's
+// structure.css makes the outlet position: absolute; inset: 0).
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+.tabs-outlet {
+  position: relative;
+  flex: 1;
+  contain: layout size style;
+}
+
 // Desktop shell (rail/top-nav) lives at the app root (app.component.scss) so
 // it wraps every route, not just these tabs. Here we only need to hide the
-// mobile bottom tab bar at that breakpoint — ion-tabs itself just fills
-// whatever space the root shell already reserved for it.
+// mobile bottom tab bar at that breakpoint.
 @media (min-width: 850px) {
   ion-tab-bar {
     display: none;

@@ -92,7 +92,7 @@ export class MyGraphsPage implements OnInit, OnDestroy {
   }
 
   goGenerate(): void {
-    this.router.navigate(['/tabs/home']);
+    this.router.navigate(['/home']);
   }
 
   trackById(_i: number, card: StoredStatCard): string {

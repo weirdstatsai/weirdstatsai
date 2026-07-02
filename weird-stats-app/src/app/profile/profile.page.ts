@@ -377,7 +377,7 @@ export class ProfilePage implements OnInit, OnDestroy {
   }
 
   goExplore(): void {
-    this.router.navigate(['/tabs/explore']);
+    this.router.navigate(['/explore']);
   }
 
   async openAvatarPicker(uid: string): Promise<void> {

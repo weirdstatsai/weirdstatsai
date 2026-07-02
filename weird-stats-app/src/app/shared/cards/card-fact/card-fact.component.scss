@@ -12,27 +12,32 @@
   flex: 1;
   min-width: 0;
 
+  // Feed tiles can be a narrow half-column — keep the title compact there;
+  // the detail (full) view gets the large headline.
   .wcard-title {
-    font-size: 18px;
-    line-height: 1.4;
+    font-size: 14px;
+    line-height: 1.35;
   }
+}
+
+.full .fact-content .wcard-title {
+  font-size: 18px;
+  line-height: 1.4;
 }
 
 .fact-illus {
   flex-shrink: 0;
-  width: 64px;
-  height: 64px;
+  width: 40px;
+  height: 40px;
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   border-radius: 50%;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.full .fact-illus, .alt .fact-illus { display: flex; }
-
 .illus-emoji {
-  font-size: 34px;
+  font-size: 22px;
   line-height: 1;
 }
 
@@ -61,6 +66,17 @@
   -webkit-line-clamp: unset;
   overflow: visible;
 }
+
+// "Read more" tail — feed tile only; detail view shows the full text.
+.fact-readmore {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.full .fact-readmore, .alt .fact-readmore { display: none; }
 
 // ── Font size variants (full view only) ───────────────────────────────────
 .full.fs-small .fact-content .wcard-title { font-size: 15px; }

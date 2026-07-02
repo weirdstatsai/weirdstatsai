@@ -27,7 +27,7 @@ export class AdminPage implements OnInit {
 
   async ngOnInit(): Promise<void> {
     const isAdmin = await this.adminService.isAdmin();
-    if (!isAdmin) { this.router.navigate(['/tabs/home']); return; }
+    if (!isAdmin) { this.router.navigate(['/home']); return; }
     await this.loadUsers();
     await this.loadFlagged();
     this.isLoading = false;
@@ -97,5 +97,5 @@ export class AdminPage implements OnInit {
     await t.present();
   }
 
-  back(): void { this.router.navigate(['/tabs/profile']); }
+  back(): void { this.router.navigate(['/profile']); }
 }

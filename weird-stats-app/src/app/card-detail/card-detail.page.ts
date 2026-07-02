@@ -513,7 +513,7 @@ export class CardDetailPage implements OnInit {
       message: 'Create a free account to save cards to your profile.',
       buttons: [
         { text: 'Cancel', role: 'cancel' },
-        { text: 'Sign In', handler: () => this.router.navigate(['/tabs/profile']) },
+        { text: 'Sign In', handler: () => this.router.navigate(['/profile']) },
       ],
     });
     await alert.present();
@@ -537,7 +537,7 @@ export class CardDetailPage implements OnInit {
       await this.afs.doc(`stats/${id}`).set(doc);
       this.isSaved = true;
       this.toast('Saved to your profile!');
-      this.router.navigate(['/tabs/profile']);
+      this.router.navigate(['/profile']);
     } catch {
       this.toast('Save failed.');
     }
@@ -618,7 +618,7 @@ export class CardDetailPage implements OnInit {
     // A freshly generated card was auto-saved as a draft — send the user to the
     // Drafts tab so they can find it.
     if (this.fromGenerate) {
-      this.router.navigate(['/tabs/profile'], { state: { tab: 'draft' } });
+      this.router.navigate(['/profile'], { state: { tab: 'draft' } });
       return;
     }
     // Everyone else returns along the real navigation stack, so Back mirrors how

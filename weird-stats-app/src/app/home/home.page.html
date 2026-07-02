@@ -4,8 +4,8 @@
       <span class="logo">WeirdStats<span class="logo-accent">.ai</span></span>
     </ion-buttons>
     <ion-buttons slot="end">
-      <ion-button routerLink="/tabs/explore">
-        <ion-icon slot="icon-only" name="compass-outline"></ion-icon>
+      <ion-button (click)="openNotifications()">
+        <ion-icon slot="icon-only" name="notifications-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
@@ -52,7 +52,7 @@
   <ng-container *ngIf="recentCards.length === 0 && !isLoading">
     <div class="section-header">
       <p class="section-title">Try these</p>
-      <a class="see-all" routerLink="/tabs/explore">See all</a>
+      <a class="see-all" routerLink="/explore" routerDirection="root">See all</a>
     </div>
     <div class="suggestions-scroll">
       <div
@@ -71,7 +71,7 @@
   <ng-container *ngIf="recentCards.length > 0">
     <div class="section-header">
       <p class="section-title">Featured</p>
-      <a class="see-all" routerLink="/tabs/explore">Explore all</a>
+      <a class="see-all" routerLink="/explore" routerDirection="root">Explore all</a>
     </div>
     <div class="home-grid">
       <div class="home-card" [class.span-full]="isFullWidth(card)" *ngFor="let card of recentCards" (click)="open(card)">

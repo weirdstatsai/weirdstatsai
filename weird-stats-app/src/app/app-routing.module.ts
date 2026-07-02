@@ -6,6 +6,11 @@ const routes: Routes = [
     path: '',
     loadChildren: () => import('./tabs/tabs.module').then(m => m.TabsPageModule),
   },
+  // Legacy /tabs/* URLs (old shared links, bookmarks) → clean equivalents.
+  { path: 'tabs/home', redirectTo: '/home' },
+  { path: 'tabs/explore', redirectTo: '/explore' },
+  { path: 'tabs/profile', redirectTo: '/profile' },
+  { path: 'tabs', redirectTo: '/home', pathMatch: 'full' },
   {
     path: 'card',
     loadChildren: () => import('./card-detail/card-detail.module').then(m => m.CardDetailPageModule),
@@ -31,14 +36,6 @@ const routes: Routes = [
     loadChildren: () => import('./admin-user/admin-user.module').then(m => m.AdminUserPageModule),
   },
   {
-    path: 'graph-detail',
-    loadChildren: () => import('./graph-detail/graph-detail.module').then(m => m.GraphDetailPageModule),
-  },
-  {
-    path: 'graph-detail/:id',
-    loadChildren: () => import('./graph-detail/graph-detail.module').then(m => m.GraphDetailPageModule),
-  },
-  {
     path: 'share/:id',
     loadChildren: () => import('./share/share.module').then(m => m.SharePageModule),
   },
@@ -61,6 +58,8 @@ const routes: Routes = [
     data: { slug: 'privacy' },
     loadChildren: () => import('./static-page/static-page.module').then(m => m.StaticPagePageModule),
   },
+  // Anything unmatched (removed legacy routes, typos, stale links) → home.
+  { path: '**', redirectTo: '/home' },
 ];
 
 @NgModule({

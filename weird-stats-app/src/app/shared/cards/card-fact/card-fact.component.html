@@ -9,6 +9,7 @@
     <div class="fact-content">
       <p class="wcard-title">{{ card.title }}</p>
       <p class="fact-body" *ngIf="card.insight">{{ card.insight }}</p>
+      <span class="fact-readmore" *ngIf="card.insight">Read more</span>
     </div>
     <div class="fact-illus" *ngIf="card.uiMeta?.icon">
       <span class="illus-emoji">{{ card.uiMeta.icon }}</span>

@@ -3,7 +3,7 @@
        route (not just /tabs/*), so card-detail, admin, contact/terms/privacy
        etc. all get the fixed rail + top nav too. -->
   <div class="desktop-rail">
-    <a class="rail-logo" routerLink="/tabs/home">
+    <a class="rail-logo" routerLink="/home" routerDirection="root">
       <span class="rail-logo-mark"></span>
       <span class="rail-logo-text">WeirdStats<span class="accent">.ai</span></span>
     </a>
@@ -15,9 +15,9 @@
   </div>
 
   <div class="desktop-topnav">
-    <a routerLink="/tabs/home" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">Home</a>
-    <a routerLink="/tabs/explore" routerLinkActive="active">Explore</a>
-    <a class="profile-link" *ngIf="isLoggedIn" routerLink="/tabs/profile" routerLinkActive="active">
+    <a routerLink="/home" routerDirection="root" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">Home</a>
+    <a routerLink="/explore" routerDirection="root" routerLinkActive="active">Explore</a>
+    <a class="profile-link" *ngIf="isLoggedIn" routerLink="/profile" routerDirection="root" routerLinkActive="active">
       <span class="profile-avatar">{{ userEmoji || '🙂' }}</span>
       Profile
     </a>

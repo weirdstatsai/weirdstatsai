@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
-import { ModalController } from '@ionic/angular';
+import { ModalController, ToastController } from '@ionic/angular';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { StoredStatCard } from '../models/weird-card.model';
 import { MembershipService, UsageInfo } from '../services/membership.service';
@@ -44,8 +44,19 @@ export class HomePage implements OnInit, OnDestroy {
     private afs: AngularFirestore,
     private afAuth: AngularFireAuth,
     private modalCtrl: ModalController,
+    private toastCtrl: ToastController,
     private membership: MembershipService,
   ) {}
+
+  async openNotifications(): Promise<void> {
+    const toast = await this.toastCtrl.create({
+      message: 'Notifications — coming soon!',
+      duration: 1800,
+      position: 'top',
+      icon: 'notifications-outline',
+    });
+    await toast.present();
+  }
 
   ionViewWillEnter(): void {
     const state = history.state as { prefillQuery?: string } | undefined;
