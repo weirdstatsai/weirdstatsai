@@ -217,6 +217,9 @@
 .home-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  // Full-width cards (map/fact) break the row; dense packing pulls the next
+  // half-width tile up into the hole instead of leaving a gap.
+  grid-auto-flow: dense;
   gap: 10px;
   padding-bottom: 32px;
 

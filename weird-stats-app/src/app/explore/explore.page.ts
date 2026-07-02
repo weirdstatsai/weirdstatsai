@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Subscription } from 'rxjs';
 import { StoredStatCard, CardType } from '../models/weird-card.model';
-import { isStandaloneInGrid } from '../shared/feed-grid';
 
 interface ExploreCategory {
   id: string;
@@ -77,9 +76,6 @@ export class ExplorePage implements OnInit, OnDestroy {
     return FULL_WIDTH_TYPES.includes(card.data?.cardType);
   }
 
-  isStandalone(card: StoredStatCard, index: number): boolean {
-    return isStandaloneInGrid(this.filteredCards, index, c => this.isFullWidth(c));
-  }
 
   get filteredCards(): StoredStatCard[] {
     const q = this.searchQuery.trim().toLowerCase();
