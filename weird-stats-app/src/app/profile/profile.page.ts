@@ -423,10 +423,36 @@ export class ProfilePage implements OnInit, OnDestroy {
 
   async changeDisplayName(): Promise<void> {
     const current = this.authService.getCurrentUser()?.displayName || '';
-    const name = window.prompt('Enter new display name:', current);
-    if (!name || !name.trim()) return;
+    const alert = await this.alertCtrl.create({
+      header: 'Change display name',
+      inputs: [
+        {
+          name: 'name',
+          type: 'text',
+          value: current,
+          placeholder: 'Your display name',
+          attributes: { maxlength: 30, autocapitalize: 'words' },
+        },
+      ],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Save',
+          handler: (data: { name?: string }) => {
+            const name = (data.name ?? '').trim();
+            if (!name) return false; // keep the dialog open on empty input
+            this.saveDisplayName(name);
+            return true;
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  private async saveDisplayName(name: string): Promise<void> {
     try {
-      await this.authService.updateDisplayName(name.trim());
+      await this.authService.updateDisplayName(name);
       const t = await this.toastCtrl.create({ message: 'Name updated!', duration: 1500, color: 'success' });
       await t.present();
     } catch {
