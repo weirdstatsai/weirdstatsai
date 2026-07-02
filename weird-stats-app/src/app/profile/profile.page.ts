@@ -395,29 +395,33 @@ export class ProfilePage implements OnInit, OnDestroy {
 
   async openMenu(): Promise<void> {
     const user = this.authService.getCurrentUser();
-    const sheet = await this.actionSheetCtrl.create({
-      buttons: [
-        {
-          text: 'Change Display Name',
-          icon: 'person-outline',
-          handler: () => this.changeDisplayName(),
-        },
-        {
-          text: 'Account: ' + (user?.email || user?.phoneNumber || '—'),
-          icon: 'mail-outline',
-          handler: () => false,
-        },
-        { text: 'Help & Support', icon: 'help-circle-outline', handler: () => this.showComingSoon() },
-        { text: 'Sign Out', icon: 'log-out-outline', role: 'destructive', handler: () => this.signOut() },
-        { text: 'Cancel', role: 'cancel', icon: 'close' },
-      ],
-    });
+    // Signed-out visitors get sign-in/help only — no account actions.
+    const buttons = user
+      ? [
+          {
+            text: 'Change Display Name',
+            icon: 'person-outline',
+            handler: () => this.changeDisplayName(),
+          },
+          {
+            text: 'Account: ' + (user.email || user.phoneNumber || '—'),
+            icon: 'mail-outline',
+            handler: () => false,
+          },
+          { text: 'Help & Support', icon: 'help-circle-outline', handler: () => this.showComingSoon() },
+          { text: 'Sign Out', icon: 'log-out-outline', role: 'destructive', handler: () => this.signOut() },
+          { text: 'Cancel', role: 'cancel', icon: 'close' },
+        ]
+      : [
+          { text: 'Log in / Sign up', icon: 'log-in-outline', handler: () => this.signIn() },
+          { text: 'Help & Support', icon: 'help-circle-outline', handler: () => this.showComingSoon() },
+          { text: 'Cancel', role: 'cancel', icon: 'close' },
+        ];
+    const sheet = await this.actionSheetCtrl.create({ buttons });
     await sheet.present();
   }
 
   async changeDisplayName(): Promise<void> {
-    const alert = await (await import('@ionic/angular')).AlertController.prototype.constructor;
-    // Use action sheet with input workaround — prompt via a simple approach
     const current = this.authService.getCurrentUser()?.displayName || '';
     const name = window.prompt('Enter new display name:', current);
     if (!name || !name.trim()) return;
