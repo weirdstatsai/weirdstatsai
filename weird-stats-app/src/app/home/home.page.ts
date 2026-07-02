@@ -6,6 +6,7 @@ import { ModalController, ToastController } from '@ionic/angular';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { StoredStatCard } from '../models/weird-card.model';
 import { MembershipService, UsageInfo } from '../services/membership.service';
+import { isStandaloneInGrid } from '../shared/feed-grid';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 
 const SUGGESTIONS = [
@@ -192,5 +193,13 @@ export class HomePage implements OnInit, OnDestroy {
   // Map cards need horizontal room to read — span both grid columns.
   isFullWidth(card: StoredStatCard): boolean {
     return card.data?.cardType === 'map';
+  }
+
+  // A half-width card stranded in the left column (because the next card is
+  // full-width, or it's the last card) stretches to fill the row — no gap.
+  // Walks the grid tracking the column, since full-width AND standalone cards
+  // both consume the entire row.
+  isStandalone(card: StoredStatCard, index: number): boolean {
+    return isStandaloneInGrid(this.recentCards, index, c => this.isFullWidth(c));
   }
 }

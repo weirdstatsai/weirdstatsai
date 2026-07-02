@@ -46,7 +46,7 @@
   <div class="feed" *ngIf="!isLoading && filteredCards.length > 0; else noResults">
     <div class="card-tile"
          *ngFor="let card of filteredCards; let i = index"
-         [class.span-full]="isFullWidth(card)"
+         [class.span-full]="isFullWidth(card) || isStandalone(card, i)"
          (click)="open(card)">
       <app-weird-card [card]="card.data" size="feed"></app-weird-card>
       <div class="card-creator" *ngIf="card.createdByName">

@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Subscription } from 'rxjs';
 import { StoredStatCard, CardType } from '../models/weird-card.model';
+import { isStandaloneInGrid } from '../shared/feed-grid';
 
 interface ExploreCategory {
   id: string;
@@ -77,20 +78,7 @@ export class ExplorePage implements OnInit, OnDestroy {
   }
 
   isStandalone(card: StoredStatCard, index: number): boolean {
-    if (this.isFullWidth(card)) return false;
-    const cards = this.filteredCards;
-
-    // Count non-full-width cards before to get this card's grid column position
-    let gridPos = 0;
-    for (let i = 0; i < index; i++) {
-      if (!this.isFullWidth(cards[i])) gridPos++;
-    }
-    // Only cards in the left column (even gridPos) can be standalone
-    if (gridPos % 2 !== 0) return false;
-
-    // Standalone if: no next card, OR next card is span-full (forces a row break)
-    const nextCard = cards[index + 1];
-    return !nextCard || this.isFullWidth(nextCard);
+    return isStandaloneInGrid(this.filteredCards, index, c => this.isFullWidth(c));
   }
 
   get filteredCards(): StoredStatCard[] {
