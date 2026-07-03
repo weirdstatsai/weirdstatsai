@@ -51,10 +51,15 @@
 
 // Full-width tiles (map cards span both grid columns on feed pages) — use the
 // extra horizontal room instead of a single cramped column.
+// Full-width tiles: a single clean column keeps every row aligned and in
+// strict rank order. The 2-column grid coupled left/right row heights, so a
+// wrapping country name (e.g. "Democratic Republic of Congo") pushed the
+// neighbouring value out of line. Full-width rows are wide enough to fit the
+// name and value on one line.
 :host-context(.span-full) .unmapped-list {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 :host-context(.span-full) .bubble-legend {
@@ -69,24 +74,17 @@
   gap: 6px;
 }
 
-// Full-width tiles: each item sits in a ~150px-wide grid column, too narrow
-// for a country name AND a long value (e.g. "50.17 kg/person/year") on one
-// line — that squeeze was force-breaking labels mid-word ("Sri Lan" / "ka").
-// Let the value wrap onto its own line under the label instead.
+// Single-line rows: rank · dot · country (fills, ellipsis if huge) · value
+// (right-aligned). The label flex:1 (base) pushes the value to the right edge.
 :host-context(.span-full) .unmapped-item {
-  flex-wrap: wrap;
-  row-gap: 1px;
+  flex-wrap: nowrap;
 }
 
 :host-context(.span-full) .unmapped-label {
-  min-width: 60px;
-  word-break: normal;
-  overflow-wrap: break-word;
-}
-
-:host-context(.span-full) .unmapped-val {
-  flex-basis: 100%;
-  padding-left: 20px; // sits under the label, past the rank + dot
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .unmapped-rank {
@@ -116,6 +114,10 @@
   font-size: 11px;
   font-weight: 700;
   flex-shrink: 0;
+  // Keep "75.92 %" on one line — without this the unit wraps below the number
+  // in tight columns (e.g. the share frame) and overlaps the next row.
+  white-space: nowrap;
+  padding-left: 8px;
 }
 
 // ── Pin legend ────────────────────────────────────────────────────────────
@@ -219,4 +221,10 @@
   font-size: 11px;
   font-weight: 700;
   flex-shrink: 0;
+}
+
+// Wide 2-column feed tiles — the 13px base title reads too small at this
+// width (worse on mobile); .full detail view keeps its own 20px title.
+.wcard-title {
+  font-size: 17px;
 }

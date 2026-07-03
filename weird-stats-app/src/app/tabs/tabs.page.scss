@@ -12,11 +12,8 @@
   contain: layout size style;
 }
 
-// Desktop shell (rail/top-nav) lives at the app root (app.component.scss) so
-// it wraps every route, not just these tabs. Here we only need to hide the
-// mobile bottom tab bar at that breakpoint.
-@media (min-width: 850px) {
-  ion-tab-bar {
-    display: none;
-  }
+// Bottom tab bar hidden for now — navigation lives in the shared header
+// (app.component) at every breakpoint instead.
+ion-tab-bar {
+  display: none;
 }

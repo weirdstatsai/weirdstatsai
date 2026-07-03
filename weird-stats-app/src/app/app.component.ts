@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { NavigationEnd, Router } from '@angular/router';
+import { ModalController, ToastController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 import { AuthService } from './services/auth.service';
 
@@ -33,11 +34,17 @@ export class AppComponent implements OnInit, OnDestroy {
   // swap in the top nav.
   isLoggedIn = false;
   userEmoji = '';
+  // The fixed top nav only belongs to root pages; sub-pages (card detail,
+  // share, admin…) surface their own toolbar in the header space instead.
+  isRootPage = true;
   private authSub?: Subscription;
+  private routerSub?: Subscription;
 
   constructor(
     private modalCtrl: ModalController,
+    private toastCtrl: ToastController,
     private authService: AuthService,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -45,10 +52,29 @@ export class AppComponent implements OnInit, OnDestroy {
       this.isLoggedIn = !!user;
       this.userEmoji = user ? (localStorage.getItem(EMOJI_STORAGE_KEY + user.uid) ?? '') : '';
     });
+    this.routerSub = this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        const url = event.urlAfterRedirects.split(/[?#]/)[0];
+        this.isRootPage = ['/home', '/explore', '/profile'].some(
+          root => url === root || url.startsWith(root + '/'),
+        );
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.authSub?.unsubscribe();
+    this.routerSub?.unsubscribe();
+  }
+
+  async openNotifications(): Promise<void> {
+    const toast = await this.toastCtrl.create({
+      message: 'Notifications — coming soon!',
+      duration: 1800,
+      position: 'top',
+      icon: 'notifications-outline',
+    });
+    await toast.present();
   }
 
   async openLogin(): Promise<void> {

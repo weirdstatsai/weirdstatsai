@@ -11,20 +11,28 @@
 
   <div class="wcard-head">
     <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.icon }} {{ card.uiMeta.category }}</span>
-    <span class="weird-badge" *ngIf="card.uiMeta?.insightBadge">{{ card.uiMeta.insightBadge }}</span>
+    <span class="weird-badge">Versus card</span>
   </div>
 
-  <p class="wcard-title">{{ card.title }}</p>
+  <p class="wcard-title">{{ card.title | stripEmoji }}</p>
 
   <!-- DEFAULT style -->
   <ng-container *ngIf="versusStyle === 'default'">
     <div class="vs-numbers" *ngIf="pair.length === 2">
       <div class="vs-side">
+        <div class="vs-avatar a">
+          <span class="vs-avatar-emoji" *ngIf="sideEmojis[0]; else initialsA">{{ sideEmojis[0] }}</span>
+          <ng-template #initialsA><span class="vs-avatar-initials a">{{ initials(pair[0].label) }}</span></ng-template>
+        </div>
         <p class="vs-value a">{{ fmt(pair[0].value) }}</p>
         <p class="vs-lbl">{{ pair[0].label }}</p>
       </div>
       <div class="vs-circle">VS</div>
       <div class="vs-side right">
+        <div class="vs-avatar b">
+          <span class="vs-avatar-emoji" *ngIf="sideEmojis[1]; else initialsB">{{ sideEmojis[1] }}</span>
+          <ng-template #initialsB><span class="vs-avatar-initials b">{{ initials(pair[1].label) }}</span></ng-template>
+        </div>
         <p class="vs-value b">{{ fmt(pair[1].value) }}</p>
         <p class="vs-lbl">{{ pair[1].label }}</p>
       </div>
@@ -43,11 +51,19 @@
   <ng-container *ngIf="versusStyle === 'mirror' && pair.length === 2">
     <div class="mirror-halves">
       <div class="mirror-side a">
+        <div class="vs-avatar a">
+          <span class="vs-avatar-emoji" *ngIf="sideEmojis[0]; else mInitialsA">{{ sideEmojis[0] }}</span>
+          <ng-template #mInitialsA><span class="vs-avatar-initials a">{{ initials(pair[0].label) }}</span></ng-template>
+        </div>
         <p class="mirror-value a">{{ fmt(pair[0].value) }}</p>
         <p class="mirror-lbl">{{ pair[0].label }}</p>
       </div>
       <div class="mirror-vs">VS</div>
       <div class="mirror-side b">
+        <div class="vs-avatar b">
+          <span class="vs-avatar-emoji" *ngIf="sideEmojis[1]; else mInitialsB">{{ sideEmojis[1] }}</span>
+          <ng-template #mInitialsB><span class="vs-avatar-initials b">{{ initials(pair[1].label) }}</span></ng-template>
+        </div>
         <p class="mirror-value b">{{ fmt(pair[1].value) }}</p>
         <p class="mirror-lbl">{{ pair[1].label }}</p>
       </div>
@@ -96,6 +112,10 @@
         <div class="win-badge" *ngIf="pair[0].value >= pair[1].value">
           <ion-icon name="trophy-outline"></ion-icon> Winner
         </div>
+        <div class="vs-avatar a">
+          <span class="vs-avatar-emoji" *ngIf="sideEmojis[0]; else wInitialsA">{{ sideEmojis[0] }}</span>
+          <ng-template #wInitialsA><span class="vs-avatar-initials a">{{ initials(pair[0].label) }}</span></ng-template>
+        </div>
         <p class="win-value a">{{ fmt(pair[0].value) }}</p>
         <p class="win-lbl">{{ pair[0].label }}</p>
       </div>
@@ -103,6 +123,10 @@
       <div class="win-side b" [class.win-active]="pair[1].value > pair[0].value">
         <div class="win-badge" *ngIf="pair[1].value > pair[0].value">
           <ion-icon name="trophy-outline"></ion-icon> Winner
+        </div>
+        <div class="vs-avatar b">
+          <span class="vs-avatar-emoji" *ngIf="sideEmojis[1]; else wInitialsB">{{ sideEmojis[1] }}</span>
+          <ng-template #wInitialsB><span class="vs-avatar-initials b">{{ initials(pair[1].label) }}</span></ng-template>
         </div>
         <p class="win-value b">{{ fmt(pair[1].value) }}</p>
         <p class="win-lbl">{{ pair[1].label }}</p>

@@ -8,10 +8,10 @@
 
   <div class="wcard-head">
     <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.icon }} {{ card.uiMeta.category }}</span>
-    <span class="weird-badge" *ngIf="card.uiMeta?.insightBadge">{{ card.uiMeta.insightBadge }}</span>
+    <span class="weird-badge">Map card</span>
   </div>
 
-  <p class="wcard-title">{{ card.title }}</p>
+  <p class="wcard-title">{{ card.title | stripEmoji }}</p>
 
   <!-- CHOROPLETH style (default) -->
   <ng-container *ngIf="mapStyle === 'choropleth'">
@@ -55,7 +55,9 @@
         </div>
       </ng-container>
     </div>
-    <p class="map-insight" *ngIf="card.insight && size !== 'alt'">{{ card.insight }}</p>
+    <!-- Feed/alt tiles stay clean — insight shows only on the detail view
+         (where card-detail relocates it into the "story" block below). -->
+    <p class="map-insight" *ngIf="card.insight && size === 'full'">{{ card.insight }}</p>
   </ng-container>
 
   <!-- PINS style -->

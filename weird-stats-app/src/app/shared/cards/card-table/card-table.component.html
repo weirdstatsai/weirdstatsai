@@ -4,10 +4,10 @@
 
   <div class="wcard-head">
     <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.icon }} {{ card.uiMeta.category }}</span>
-    <span class="weird-badge" *ngIf="card.uiMeta?.insightBadge">{{ card.uiMeta.insightBadge }}</span>
+    <span class="weird-badge">Table card</span>
   </div>
 
-  <p class="wcard-title">{{ card.title }}</p>
+  <p class="wcard-title">{{ card.title | stripEmoji }}</p>
 
   <!-- ── Style: pill (bar inside value pill) ── -->
   <ng-container *ngIf="tableStyle === 'pill'">

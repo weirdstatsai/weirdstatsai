@@ -1,5 +1,11 @@
 @use '../card-base' as *;
 
+// Larger feed-tile title for chart cards (base feed title is 13px).
+.wcard:not(.full):not(.alt) .wcard-title {
+  font-size: 19px;
+  line-height: 1.3;
+}
+
 .chart-wrap {
   pointer-events: none;
   border-radius: 12px;

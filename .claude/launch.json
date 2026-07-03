@@ -4,9 +4,18 @@
     {
       "name": "weird-stats-app",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["ng", "serve", "--port", "4200"],
-      "port": 4200,
+      "runtimeArgs": ["ng", "serve", "--port", "$PORT"],
+      "port": 4202,
+      "autoPort": true,
       "cwd": "weird-stats-app"
+    },
+    {
+      "name": "weirdstats-api",
+      "runtimeExecutable": ".venv/bin/uvicorn",
+      "runtimeArgs": ["app.main:app", "--host", "0.0.0.0", "--port", "8000"],
+      "port": 8000,
+      "autoPort": false,
+      "cwd": "services/backend"
     }
   ]
 }

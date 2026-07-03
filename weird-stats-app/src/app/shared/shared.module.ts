@@ -19,6 +19,7 @@ import { CardMapComponent } from './cards/card-map/card-map.component';
 import { PlanModalComponent } from './plan-modal/plan-modal.component';
 import { PublishModalComponent } from './publish-modal/publish-modal.component';
 import { CardMenuPopoverComponent } from './card-menu-popover/card-menu-popover.component';
+import { StripEmojiPipe } from './strip-emoji.pipe';
 
 const CARD_COMPONENTS = [
   CardRankingComponent,
@@ -41,6 +42,7 @@ const CARD_COMPONENTS = [
     PlanModalComponent,
     PublishModalComponent,
     CardMenuPopoverComponent,
+    StripEmojiPipe,
     ...CARD_COMPONENTS,
   ],
   exports: [
@@ -52,6 +54,7 @@ const CARD_COMPONENTS = [
     PlanModalComponent,
     PublishModalComponent,
     CardMenuPopoverComponent,
+    StripEmojiPipe,
     ...CARD_COMPONENTS,
   ],
 })

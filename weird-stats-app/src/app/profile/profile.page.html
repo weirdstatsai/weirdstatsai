@@ -1,13 +1,3 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar>
-    <ion-buttons slot="end">
-      <ion-button (click)="openMenu()" fill="clear" class="menu-icon-btn">
-        <ion-icon slot="icon-only" name="menu-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content (click)="closeMenu()">
 
   <!-- ── Signed-in ─────────────────────────────────────────────────────── -->
@@ -34,20 +24,14 @@
       <p class="profile-bio">Collecting the world's weirdest stats 📊</p>
       <p class="profile-email">{{ user.email }}</p>
 
-      <div class="profile-stats-row">
-        <span class="profile-stat"><strong>{{ savedCount }}</strong> Saved</span>
-        <span class="profile-stat-sep">·</span>
-        <span class="profile-stat"><strong>{{ draftCount }}</strong> Drafts</span>
+      <div class="profile-actions">
+        <button class="action-btn secondary" (click)="openEditSheet()">
+          <ion-icon name="create-outline"></ion-icon> Edit
+        </button>
+        <button class="action-btn secondary" (click)="goAccount()">
+          <ion-icon name="person-circle-outline"></ion-icon> Account
+        </button>
       </div>
-    </div>
-
-    <!-- Admin entry — subtle row, only visible to admin -->
-    <div class="admin-entry" *ngIf="isAdmin" [routerLink]="['/admin']">
-      <div class="admin-entry-icon">
-        <ion-icon name="shield-checkmark-outline"></ion-icon>
-      </div>
-      <span class="admin-entry-label">Admin Panel</span>
-      <ion-icon name="chevron-forward-outline" class="admin-entry-arrow"></ion-icon>
     </div>
 
     <!-- Tab bar — Saved first, Drafts second -->
@@ -55,10 +39,12 @@
       <button class="status-tab" [class.active]="activeTab === 'saved'" (click)="setTab('saved')">
         <ion-icon name="bookmark-outline"></ion-icon>
         <span>Saved</span>
+        <span class="tab-count-badge">{{ savedCount }}</span>
       </button>
       <button class="status-tab" [class.active]="activeTab === 'draft'" (click)="setTab('draft')">
         <ion-icon name="document-text-outline"></ion-icon>
         <span>Drafts</span>
+        <span class="tab-count-badge">{{ draftCount }}</span>
       </button>
     </div>
 

@@ -1,0 +1,47 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="account-toolbar">
+    <ion-buttons slot="start">
+      <ion-button (click)="back()" class="back-btn">
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="account-title">Account</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="account-content">
+  <div class="account-card" *ngIf="user">
+    <div class="account-avatar">
+      <ion-icon name="person"></ion-icon>
+    </div>
+    <p class="account-name">{{ user.displayName || user.phoneNumber || 'WeirdStats User' }}</p>
+    <p class="account-detail" *ngIf="user.email">{{ user.email }}</p>
+    <p class="account-detail" *ngIf="!user.email && user.phoneNumber">{{ user.phoneNumber }}</p>
+    <span class="account-provider" *ngIf="signInMethod">{{ signInMethod }}</span>
+  </div>
+
+  <div class="account-section">
+    <div class="account-row" *ngIf="isAdmin" [routerLink]="['/admin']">
+      <div class="row-icon-wrap admin">
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+      </div>
+      <span class="row-label">Admin Panel</span>
+      <ion-icon name="chevron-forward-outline" class="row-arrow"></ion-icon>
+    </div>
+
+    <div class="account-row" (click)="showComingSoon()">
+      <div class="row-icon-wrap">
+        <ion-icon name="help-circle-outline"></ion-icon>
+      </div>
+      <span class="row-label">Help &amp; Support</span>
+      <ion-icon name="chevron-forward-outline" class="row-arrow"></ion-icon>
+    </div>
+
+    <div class="account-row danger" (click)="signOut()">
+      <div class="row-icon-wrap danger">
+        <ion-icon name="log-out-outline"></ion-icon>
+      </div>
+      <span class="row-label">Log Out</span>
+    </div>
+  </div>
+</ion-content>

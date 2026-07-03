@@ -81,27 +81,11 @@ export class ProfilePage implements OnInit, OnDestroy {
     private drafts: DraftService,
   ) {}
 
-  isAdmin = false;
-
   ngOnInit(): void {
     this.sub = this.user$.pipe(
       switchMap(user => {
         this.currentUid = user?.uid ?? '';
         this.draftCards = user ? this.drafts.list(user.uid) : [];
-
-        // Re-check admin status on every auth resolution, not just once at
-        // mount — on a cold app load, auth's persisted session can still be
-        // restoring when ngOnInit fires, so a one-shot check at mount time
-        // can race and lock in "not admin". Driving this off the same
-        // user$ stream the rest of the page already uses avoids that race.
-        if (user) {
-          this.adminService.isAdmin(user.uid).then(v => {
-            this.isAdmin = v;
-            this.cdr.detectChanges();
-          });
-        } else {
-          this.isAdmin = false;
-        }
 
         if (!user) return of([] as StoredStatCard[]);
         return this.afs
@@ -169,9 +153,10 @@ export class ProfilePage implements OnInit, OnDestroy {
     return cards;
   }
 
-  // Map cards need width to read clearly — span both grid columns.
+  // Wide card types span two grid columns — same set as home/explore.
   isFullWidth(card: StoredStatCard): boolean {
-    return card.data?.cardType === 'map';
+    const t = card.data?.cardType;
+    return t === 'map' || t === 'fact' || t === 'ranking' || t === 'table';
   }
 
   selectDraft(card: StoredStatCard): void {
@@ -303,7 +288,7 @@ export class ProfilePage implements OnInit, OnDestroy {
 
   private async _savePrivate(card: StoredStatCard): Promise<void> {
     // Premium members (and admins) save privately straight away — no upsell.
-    const allowed = this.isAdmin || await this.membership.isPremium();
+    const allowed = await this.adminService.isAdmin(this.currentUid) || await this.membership.isPremium();
     if (allowed) {
       await this._saveCard(card, 'private');
       return;
@@ -393,32 +378,22 @@ export class ProfilePage implements OnInit, OnDestroy {
     if (data) localStorage.setItem(EMOJI_STORAGE_KEY + uid, data);
   }
 
-  async openMenu(): Promise<void> {
-    const user = this.authService.getCurrentUser();
-    // Signed-out visitors get sign-in/help only — no account actions.
-    const buttons = user
-      ? [
-          {
-            text: 'Change Display Name',
-            icon: 'person-outline',
-            handler: () => this.changeDisplayName(),
-          },
-          {
-            text: 'Account: ' + (user.email || user.phoneNumber || '—'),
-            icon: 'mail-outline',
-            handler: () => false,
-          },
-          { text: 'Help & Support', icon: 'help-circle-outline', handler: () => this.showComingSoon() },
-          { text: 'Sign Out', icon: 'log-out-outline', role: 'destructive', handler: () => this.signOut() },
-          { text: 'Cancel', role: 'cancel', icon: 'close' },
-        ]
-      : [
-          { text: 'Log in / Sign up', icon: 'log-in-outline', handler: () => this.signIn() },
-          { text: 'Help & Support', icon: 'help-circle-outline', handler: () => this.showComingSoon() },
-          { text: 'Cancel', role: 'cancel', icon: 'close' },
-        ];
-    const sheet = await this.actionSheetCtrl.create({ buttons });
+  async openEditSheet(): Promise<void> {
+    const sheet = await this.actionSheetCtrl.create({
+      buttons: [
+        {
+          text: 'Change Display Name',
+          icon: 'person-outline',
+          handler: () => { setTimeout(() => this.changeDisplayName(), 250); },
+        },
+        { text: 'Cancel', role: 'cancel', icon: 'close' },
+      ],
+    });
     await sheet.present();
+  }
+
+  goAccount(): void {
+    this.router.navigate(['/account']);
   }
 
   async changeDisplayName(): Promise<void> {

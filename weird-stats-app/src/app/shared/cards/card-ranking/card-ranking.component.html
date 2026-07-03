@@ -6,10 +6,10 @@
   <span class="wcard-bg-icon" *ngIf="bgSvg && size==='full'" [innerHTML]="bgSvg"></span>
   <div class="wcard-head">
     <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.icon }} {{ card.uiMeta.category }}</span>
-    <span class="weird-badge" *ngIf="card.uiMeta?.insightBadge">{{ card.uiMeta.insightBadge }}</span>
+    <span class="weird-badge">Ranking card</span>
   </div>
 
-  <p class="wcard-title">{{ card.title }}</p>
+  <p class="wcard-title">{{ card.title | stripEmoji }}</p>
 
   <!-- ── Style: bars (default) ─────────────────────────────────────────── -->
   <ng-container *ngIf="rankStyle === 'bars'">

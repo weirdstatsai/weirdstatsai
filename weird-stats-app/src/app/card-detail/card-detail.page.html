@@ -56,6 +56,16 @@
       </ng-container>
     </div>
 
+    <!-- Insight moved out of the card — clean card, story below it. Fact cards
+         are excluded: their text IS the card, so it stays inside. -->
+    <div class="card-info" *ngIf="card.insight && card.cardType !== 'fact'">
+      <div class="card-info-head">
+        <ion-icon name="sparkles-outline"></ion-icon>
+        <span>The story</span>
+      </div>
+      <p class="card-info-text">{{ card.insight }}</p>
+    </div>
+
     <!-- View-only (Explore): inline share fills the space below the card -->
     <div class="share-inline" *ngIf="viewOnly">
 
@@ -63,22 +73,9 @@
       <div class="share-capture" #shareArea aria-hidden="true">
         <div class="card-wrap">
           <app-weird-card [card]="card" size="feed"></app-weird-card>
-          <div class="wm-overlay" *ngIf="!isPremium">
-            <svg class="wm-svg" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-              <defs>
-                <pattern id="wm-pattern" x="0" y="0" width="150" height="75" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
-                  <text x="0" y="18" class="wm-text">weirdstats.ai</text>
-                  <text x="0" y="52" class="wm-text">weirdstats.ai</text>
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#wm-pattern)"/>
-              <text x="10" y="96%" class="wm-corner">weirdstats.ai</text>
-            </svg>
-          </div>
         </div>
         <div class="brand-strip">
           <span class="brand-name">weirdstats<span class="brand-dot">.ai</span></span>
-          <span class="brand-tagline">Weird stats, real data</span>
         </div>
       </div>
 

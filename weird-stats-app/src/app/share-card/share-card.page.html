@@ -17,26 +17,11 @@
       <div class="card-wrap">
         <app-weird-card [card]="card" size="feed"></app-weird-card>
 
-        <!-- Diagonal tiled watermark — hidden for premium users -->
-        <div class="wm-overlay" aria-hidden="true" *ngIf="!isPremium">
-          <svg class="wm-svg" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-            <defs>
-              <pattern id="wm-pattern" x="0" y="0" width="150" height="75" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
-                <text x="0" y="18" class="wm-text">weirdstats.ai</text>
-                <text x="0" y="52" class="wm-text">weirdstats.ai</text>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#wm-pattern)"/>
-            <!-- Corner brand stamp -->
-            <text x="10" y="96%" class="wm-corner">weirdstats.ai</text>
-          </svg>
-        </div>
       </div>
 
       <!-- Bottom brand strip -->
       <div class="brand-strip">
         <span class="brand-name">weirdstats<span class="brand-dot">.ai</span></span>
-        <span class="brand-tagline">Weird stats, real data</span>
       </div>
     </div>
 

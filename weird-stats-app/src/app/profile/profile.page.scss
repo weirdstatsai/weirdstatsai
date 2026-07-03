@@ -4,25 +4,6 @@ $green:  #1D9E75;
 $red:    #D85A30;
 $yellow: #BA7517;
 
-// ── Toolbar ───────────────────────────────────────────────────────────────
-ion-toolbar {
-  --background: var(--ion-background-color, #F6F6F9);
-  --border-width: 0;
-}
-
-.toolbar-username {
-  font-size: 17px;
-  font-weight: 800;
-  color: var(--ion-color-dark);
-  letter-spacing: -0.3px;
-  padding-left: 16px;
-}
-
-.menu-icon-btn {
-  --color: var(--ion-color-dark);
-  font-size: 22px;
-}
-
 // ── Profile header ────────────────────────────────────────────────────────
 .profile-header {
   padding: 20px 16px 16px;
@@ -188,6 +169,22 @@ ion-toolbar {
   }
 }
 
+.tab-count-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: inherit;
+  background: rgba(0,0,0,0.06);
+  border-radius: 20px;
+  padding: 1px 7px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.status-tab.active .tab-count-badge {
+  background: rgba($purple, 0.12);
+  color: $purple;
+}
+
 // ── Loading state ─────────────────────────────────────────────────────────
 .loading-state {
   display: flex;
@@ -236,20 +233,6 @@ ion-toolbar {
   }
 }
 
-// ── Profile stats row ────────────────────────────────────────────────────
-.profile-stats-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 14px;
-  font-size: 14px;
-  color: var(--ion-color-medium);
-
-  strong { color: var(--ion-color-dark); font-weight: 800; }
-}
-
-.profile-stat-sep { opacity: 0.4; }
-
 // ── Vertical 2-column grid ────────────────────────────────────────────────
 .cards-grid {
   display: grid;
@@ -290,12 +273,11 @@ ion-toolbar {
 
   &:active { opacity: 0.9; }
 
-  // Map cards need width to read clearly — span both grid columns.
+  // Map cards need width to read clearly — span exactly two columns; 17:11
+  // matches the height of the 3:4 tiles beside them so rows line up.
   &.span-full {
-    grid-column: 1 / -1;
-    aspect-ratio: unset;
-
-    app-weird-card { height: auto; }
+    grid-column: span 2;
+    aspect-ratio: 17 / 11;
   }
 }
 
@@ -1094,28 +1076,3 @@ ion-toolbar {
   ion-icon { font-size: 15px; }
   &:active { opacity: 0.85; }
 }
-
-// ── Admin entry row ───────────────────────────────────────────────────────
-.admin-entry {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  margin: 0 0 12px;
-  background: rgba(108, 92, 231, 0.06);
-  border: 1px solid rgba(108, 92, 231, 0.15);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background 0.15s;
-  &:active { background: rgba(108, 92, 231, 0.12); }
-}
-.admin-entry-icon {
-  width: 28px; height: 28px; border-radius: 8px;
-  background: rgba(108, 92, 231, 0.12);
-  display: flex; align-items: center; justify-content: center;
-  ion-icon { font-size: 15px; color: #6C5CE7; }
-}
-.admin-entry-label {
-  flex: 1; font-size: 13px; font-weight: 600; color: #6C5CE7;
-}
-.admin-entry-arrow { font-size: 14px; color: rgba(108, 92, 231, 0.4); }

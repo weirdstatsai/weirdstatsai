@@ -1,7 +1,23 @@
 @use '../card-base' as *;
 
+// The card is the sizing container: cqw units scale type and chrome with the
+// card's rendered width, so the design tracks the viewport fluidly.
+.wcard {
+  container-type: inline-size;
+}
+
 // ── Shared row structure ──────────────────────────────────────────────────
-.rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+// The list owns all remaining tile height; space-evenly stretches few rows
+// apart and packs many rows tighter, so the bottom never sits empty.
+.rows {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  flex: 1;
+  min-height: 0;
+  gap: clamp(4px, 1.4cqw, 12px);
+  margin-bottom: 4px;
+}
 
 .row { display: flex; flex-direction: column; gap: 4px; }
 
@@ -12,15 +28,15 @@
 }
 
 .rank {
-  font-size: 10px;
+  font-size: clamp(10px, 2.2cqw, 14px);
   font-weight: 800;
   color: #bbb;
-  width: 12px;
+  width: clamp(12px, 3cqw, 18px);
   flex-shrink: 0;
 }
 
 .label {
-  font-size: 12px;
+  font-size: clamp(13px, 2.8cqw, 17px);
   font-weight: 700;
   color: #1a1a2e;
   flex: 1;
@@ -28,23 +44,23 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.full .label { font-size: 14px; }
+.full .label { font-size: 15px; }
 
 .value {
-  font-size: 12px;
+  font-size: clamp(13px, 2.8cqw, 17px);
   font-weight: 800;
   color: var(--accent);
   white-space: nowrap;
 }
 
-.unit { font-size: 10px; font-weight: 600; opacity: 0.7; }
+.unit { font-size: clamp(10px, 2cqw, 12px); font-weight: 600; opacity: 0.7; }
 
 .track {
-  height: 6px;
+  height: clamp(6px, 1.5cqw, 9px);
   background: rgba(0,0,0,0.07);
   border-radius: 6px;
   overflow: hidden;
-  margin-left: 18px;
+  margin-left: clamp(18px, 4cqw, 24px);
   max-width: 70%;
 }
 
@@ -58,11 +74,11 @@
 // ── Style: pill ────────────────────────────────────────────────────────────
 .pill-wrap {
   position: relative;
-  height: 28px;
+  height: clamp(26px, 6cqw, 36px);
   background: rgba(0,0,0,0.05);
   border-radius: 20px;
   overflow: hidden;
-  margin-left: 18px;
+  margin-left: clamp(18px, 4cqw, 24px);
   display: flex;
   align-items: center;
 }
@@ -79,7 +95,7 @@
 .pill-text {
   position: relative;
   z-index: 1;
-  font-size: 11px;
+  font-size: clamp(11px, 2.4cqw, 14px);
   font-weight: 800;
   color: #fff;
   padding: 0 10px;
@@ -96,11 +112,11 @@
 .pct-track {
   flex: 1;
   max-width: none;
-  margin-left: 18px;
+  margin-left: clamp(18px, 4cqw, 24px);
 }
 
 .pct-label {
-  font-size: 11px;
+  font-size: clamp(11px, 2.4cqw, 14px);
   font-weight: 800;
   color: var(--accent);
   min-width: 34px;
@@ -108,18 +124,21 @@
 }
 
 .vs-max {
-  font-size: 10px;
+  font-size: clamp(10px, 2cqw, 12px);
   color: #bbb;
   font-weight: 600;
-  margin-left: 18px;
+  margin-left: clamp(18px, 4cqw, 24px);
 }
 
 // ── Style: vertical ─────────────────────────────────────────────────────────
+// The column strip owns the remaining height and the bars stretch into it.
 .vert-cols {
   display: flex;
-  gap: 14px;
-  align-items: flex-start;
+  gap: clamp(10px, 3cqw, 20px);
+  align-items: stretch;
   justify-content: center;
+  flex: 1;
+  min-height: 0;
   margin-bottom: 4px;
   width: 100%;
 }
@@ -129,12 +148,12 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  width: 72px;
+  width: clamp(64px, 17cqw, 100px);
   flex-shrink: 0;
 }
 
 .vert-val {
-  font-size: 20px;
+  font-size: clamp(18px, 4.2cqw, 28px);
   font-weight: 900;
   color: var(--accent);
   text-align: center;
@@ -143,7 +162,7 @@
 }
 
 .vert-unit {
-  font-size: 10px;
+  font-size: clamp(10px, 2cqw, 12px);
   font-weight: 600;
   color: var(--accent);
   opacity: 0.75;
@@ -154,10 +173,11 @@
 
 .vert-bar-wrap {
   width: 100%;
-  height: 90px;
+  flex: 1;
+  min-height: 70px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: flex-end;
 }
 
 .vert-bar {
@@ -168,7 +188,7 @@
 }
 
 .vert-segment {
-  height: 7px;
+  height: clamp(7px, 1.6cqw, 10px);
   border-radius: 4px;
   background: rgba(0,0,0,0.08);
   transition: background 0.4s ease;
@@ -176,14 +196,14 @@
 }
 
 .vert-rank {
-  font-size: 11px;
+  font-size: clamp(11px, 2.2cqw, 13px);
   font-weight: 800;
   color: #bbb;
   text-align: center;
 }
 
 .vert-label {
-  font-size: 11px;
+  font-size: clamp(11px, 2.2cqw, 14px);
   font-weight: 700;
   color: #1a1a2e;
   text-align: center;
@@ -211,12 +231,12 @@
 }
 
 .circ-rank-badge {
-  width: 24px;
-  height: 24px;
+  width: clamp(24px, 5.5cqw, 32px);
+  height: clamp(24px, 5.5cqw, 32px);
   border-radius: 50%;
   background: var(--accent);
   color: #fff;
-  font-size: 11px;
+  font-size: clamp(11px, 2.4cqw, 14px);
   font-weight: 900;
   display: flex;
   align-items: center;
@@ -229,23 +249,25 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-  .label { font-size: 12px; white-space: normal; }
-  .circ-val { font-size: 11px; font-weight: 800; color: var(--accent); }
+  .label { font-size: clamp(12px, 2.6cqw, 15px); white-space: normal; }
+  .circ-val { font-size: clamp(11px, 2.4cqw, 14px); font-weight: 800; color: var(--accent); }
 }
 
 .circ-wrap {
   position: relative;
-  width: 56px;
-  height: 56px;
+  width: clamp(48px, 12cqw, 68px);
+  height: clamp(48px, 12cqw, 68px);
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  svg { width: 100%; height: 100%; }
 }
 
 .circ-pct {
   position: absolute;
-  font-size: 11px;
+  font-size: clamp(11px, 2.4cqw, 14px);
   font-weight: 900;
   color: var(--accent);
 }
@@ -255,20 +277,40 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: 18px;
+  margin-left: clamp(18px, 4cqw, 24px);
 }
 
 .sparkline {
-  width: 48px;
-  height: 24px;
+  width: clamp(48px, 11cqw, 64px);
+  height: clamp(24px, 5.5cqw, 32px);
   flex-shrink: 0;
 }
 
 .spark-track {
   flex: 1;
-  height: 6px;
+  height: clamp(6px, 1.5cqw, 9px);
   background: rgba(0,0,0,0.07);
   border-radius: 6px;
   overflow: hidden;
   max-width: 65%;
+}
+
+// Wide 2-column feed tiles get a fluid headline that tracks the card width;
+// .full detail view keeps its own (more specific) title size.
+.wcard-title {
+  font-size: clamp(18px, 4.2cqw, 26px);
+  line-height: 1.25;
+}
+
+// Compact tiles (mobile full-width, alt) can't fit five rows without the
+// last bar clipping at the tile edge — show four and let the detail page
+// carry the full list. Never applies to the .full detail view.
+@container (max-width: 420px) {
+  .wcard:not(.full) {
+    .row:nth-child(n+5),
+    .circ-row:nth-child(n+5),
+    .vert-col:nth-child(n+5) {
+      display: none;
+    }
+  }
 }
