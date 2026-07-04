@@ -11,6 +11,22 @@
     ],
     "rewrites": [
       {
+        "source": "/card/**",
+        "run": { "serviceId": "weirdstats-api", "region": "us-central1" }
+      },
+      {
+        "source": "/share/**",
+        "run": { "serviceId": "weirdstats-api", "region": "us-central1" }
+      },
+      {
+        "source": "/og/**",
+        "run": { "serviceId": "weirdstats-api", "region": "us-central1" }
+      },
+      {
+        "source": "/sitemap-cards.xml",
+        "run": { "serviceId": "weirdstats-api", "region": "us-central1" }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

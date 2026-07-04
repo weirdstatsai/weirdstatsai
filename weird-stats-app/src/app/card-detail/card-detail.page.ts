@@ -17,6 +17,7 @@ import { VersusStyle } from '../shared/cards/card-versus/card-versus.component';
 import { MapStyle } from '../shared/cards/card-map/card-map.component';
 import { MembershipService } from '../services/membership.service';
 import { DraftService } from '../services/draft.service';
+import { SeoService } from '../services/seo.service';
 import firebase from 'firebase/compat/app';
 
 @Component({
@@ -119,7 +120,26 @@ export class CardDetailPage implements OnInit {
     private ngZone: NgZone,
     private membership: MembershipService,
     private drafts: DraftService,
+    private seo: SeoService,
   ) {}
+
+  /**
+   * Set per-card title/description for JS-capable crawlers and browser tabs.
+   * Social scrapers get their preview from the backend bot-snapshot route
+   * instead (they never run this). Uses the default OG image until per-card
+   * images are generated.
+   */
+  private applyCardSeo(): void {
+    if (!this.card) return;
+    const id = this.route.snapshot.paramMap.get('id');
+    const plainTitle = (this.card.title ?? '').replace(/[\p{Extended_Pictographic}‍️]/gu, '').trim();
+    this.seo.update({
+      type: 'article',
+      title: plainTitle ? `${plainTitle} — WeirdStats.ai` : undefined,
+      description: this.card.insight || undefined,
+      url: id ? `/card/${id}` : undefined,
+    });
+  }
 
   private _buildAltStyles(): void {
     const ui = this.card?.uiMeta;
@@ -200,6 +220,7 @@ export class CardDetailPage implements OnInit {
       this.storedCard = state.card;
       this.card = state.card.data;
       this._buildAltStyles();
+      this.applyCardSeo();
     } else {
       const id = this.route.snapshot.paramMap.get('id');
       if (id) {
@@ -219,7 +240,7 @@ export class CardDetailPage implements OnInit {
       this.storedCard = snap?.data() ?? undefined;
       this.card = this.storedCard?.data;
       if (!this.card) this.errorMsg = 'Card not found.';
-      else this._buildAltStyles();
+      else { this._buildAltStyles(); this.applyCardSeo(); }
     } catch {
       this.errorMsg = 'Could not load this card.';
     } finally {
@@ -324,7 +345,32 @@ export class CardDetailPage implements OnInit {
   private cardUrl(): string {
     const base = window.location.origin;
     const id = this.storedCard?.id;
-    return id ? `${base}/card-detail/${id}` : base;
+    // /card/:id is the real route — and the URL the SEO bot-snapshot + rich
+    // link previews are served for. (/card-detail/:id does not exist and would
+    // redirect to home.)
+    return id ? `${base}/card/${id}` : base;
+  }
+
+  /** Copy the shareable card link to the clipboard. */
+  async copyLink(): Promise<void> {
+    const url = this.cardUrl();
+    try {
+      if ((navigator as any).clipboard?.writeText) {
+        await (navigator as any).clipboard.writeText(url);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      this.toast('Link copied!');
+    } catch {
+      this.toast('Could not copy link.');
+    }
   }
 
   /** Render the watermarked share frame to a PNG data URL */

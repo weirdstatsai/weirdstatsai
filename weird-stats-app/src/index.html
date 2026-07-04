@@ -2,8 +2,35 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Weird Stats</title>
+    <title>WeirdStats.ai — Ask something weird, get a chart worth sharing</title>
     <base href="/" />
+
+    <!-- ── SEO / social defaults ────────────────────────────────────────────
+         Site-level fallbacks baked into the static HTML so crawlers and social
+         scrapers (which do NOT run JavaScript) always see valid metadata. The
+         Angular SeoService overrides these per-route for JS-capable clients
+         (Google); per-card previews for scrapers are served by the backend
+         bot-snapshot route. Keep these values generic/site-level. -->
+    <meta name="description" content="Turn any curious question into surprising stats, rankings, and visual insights in seconds. WeirdStats.ai makes charts worth sharing." />
+    <link rel="canonical" href="https://weirdstats-ai.web.app/" />
+    <meta name="theme-color" content="#6C5CE7" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="WeirdStats.ai" />
+    <meta property="og:title" content="WeirdStats.ai — Ask something weird, get a chart worth sharing" />
+    <meta property="og:description" content="Turn any curious question into surprising stats, rankings, and visual insights in seconds." />
+    <meta property="og:url" content="https://weirdstats-ai.web.app/" />
+    <meta property="og:image" content="https://weirdstats-ai.web.app/assets/og/og-default.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="WeirdStats.ai — Ask something weird, get a chart worth sharing" />
+    <meta name="twitter:description" content="Turn any curious question into surprising stats, rankings, and visual insights in seconds." />
+    <meta name="twitter:image" content="https://weirdstats-ai.web.app/assets/og/og-default.png" />
+
     <meta name="color-scheme" content="light dark" />
     <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="format-detection" content="telephone=no" />
@@ -13,6 +40,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Pliant:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
     <link rel="icon" type="image/png" href="assets/icon/favicon.png" />
+    <link rel="apple-touch-icon" href="assets/icon/favicon.png" />
   </head>
   <body>
     <app-root></app-root>

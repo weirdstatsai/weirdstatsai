@@ -17,6 +17,7 @@ const routes: Routes = [
   },
   {
     path: 'card/:id',
+    data: { dynamicSeo: true },
     loadChildren: () => import('./card-detail/card-detail.module').then(m => m.CardDetailPageModule),
   },
   {
@@ -25,6 +26,7 @@ const routes: Routes = [
   },
   {
     path: 'public-profile/:uid',
+    data: { dynamicSeo: true },
     loadChildren: () => import('./public-profile/public-profile.module').then(m => m.PublicProfilePageModule),
   },
   {
@@ -49,17 +51,17 @@ const routes: Routes = [
   },
   {
     path: 'contact',
-    data: { slug: 'contact' },
+    data: { slug: 'contact', seo: { title: 'Contact — WeirdStats.ai', description: 'Get in touch with the WeirdStats.ai team.' } },
     loadChildren: () => import('./static-page/static-page.module').then(m => m.StaticPagePageModule),
   },
   {
     path: 'terms',
-    data: { slug: 'terms' },
+    data: { slug: 'terms', seo: { title: 'Terms & Conditions — WeirdStats.ai', description: 'Terms and conditions for using WeirdStats.ai.' } },
     loadChildren: () => import('./static-page/static-page.module').then(m => m.StaticPagePageModule),
   },
   {
     path: 'privacy',
-    data: { slug: 'privacy' },
+    data: { slug: 'privacy', seo: { title: 'Privacy Policy — WeirdStats.ai', description: 'How WeirdStats.ai handles your data.' } },
     loadChildren: () => import('./static-page/static-page.module').then(m => m.StaticPagePageModule),
   },
   // Anything unmatched (removed legacy routes, typos, stale links) → home.

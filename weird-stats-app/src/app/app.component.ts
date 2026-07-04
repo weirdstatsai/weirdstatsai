@@ -1,8 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { ModalController, ToastController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 import { AuthService } from './services/auth.service';
+import { SeoData, SeoService } from './services/seo.service';
 
 interface MenuItem {
   label: string;
@@ -45,6 +46,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private toastCtrl: ToastController,
     private authService: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
+    private seo: SeoService,
   ) {}
 
   ngOnInit(): void {
@@ -58,6 +61,7 @@ export class AppComponent implements OnInit, OnDestroy {
         this.isRootPage = ['/home', '/explore', '/profile'].some(
           root => url === root || url.startsWith(root + '/'),
         );
+        this.applyRouteSeo(url);
       }
     });
   }
@@ -65,6 +69,21 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.authSub?.unsubscribe();
     this.routerSub?.unsubscribe();
+  }
+
+  /**
+   * Apply per-route SEO from the deepest activated route's `data.seo`, falling
+   * back to site defaults. Pages with dynamic content (card detail, public
+   * profile) omit `data.seo` and call SeoService themselves once loaded.
+   */
+  private applyRouteSeo(url: string): void {
+    let r = this.route;
+    while (r.firstChild) r = r.firstChild;
+    const seo = r.snapshot.data['seo'] as SeoData | undefined;
+    const dynamic = r.snapshot.data['dynamicSeo'] as boolean | undefined;
+    if (dynamic) return; // page manages its own tags
+    if (seo) this.seo.update({ url, ...seo });
+    else this.seo.reset();
   }
 
   async openNotifications(): Promise<void> {
@@ -78,7 +97,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   async openLogin(): Promise<void> {
-    const modal = await this.modalCtrl.create({ component: (await import('./login/login.component')).LoginComponent });
+    const modal = await this.modalCtrl.create({ component: (await import('./login/login.component')).LoginComponent, cssClass: 'login-modal' });
     await modal.present();
   }
 }
