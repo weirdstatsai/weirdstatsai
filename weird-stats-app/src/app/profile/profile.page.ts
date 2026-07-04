@@ -437,7 +437,7 @@ export class ProfilePage implements OnInit, OnDestroy {
   }
 
   async signIn(): Promise<void> {
-    const modal = await this.modalCtrl.create({ component: LoginComponent });
+    const modal = await this.modalCtrl.create({ component: LoginComponent, cssClass: 'login-modal' });
     await modal.present();
   }
 

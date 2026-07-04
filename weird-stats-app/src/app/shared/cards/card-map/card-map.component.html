@@ -15,7 +15,7 @@
 
   <!-- CHOROPLETH style (default) -->
   <ng-container *ngIf="mapStyle === 'choropleth'">
-    <div class="map-wrap">
+    <div class="map-wrap" *ngIf="!allUnmapped">
       <svg class="world-svg" viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg">
         <path *ngFor="let c of countries"
               [attr.d]="c.d"
@@ -62,7 +62,7 @@
 
   <!-- PINS style -->
   <ng-container *ngIf="mapStyle === 'pins'">
-    <div class="map-wrap">
+    <div class="map-wrap" *ngIf="!allUnmapped">
       <svg class="world-svg" viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg">
         <path *ngFor="let c of countries"
               [attr.d]="c.d"
@@ -99,7 +99,7 @@
 
   <!-- BUBBLES style -->
   <ng-container *ngIf="mapStyle === 'bubbles'">
-    <div class="map-wrap">
+    <div class="map-wrap" *ngIf="!allUnmapped">
       <svg class="world-svg" viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg">
         <path *ngFor="let c of countries"
               [attr.d]="c.d"

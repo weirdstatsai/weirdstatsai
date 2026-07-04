@@ -50,5 +50,7 @@
     </div>
   </ng-container>
 
+  <p class="table-empty" *ngIf="!hasRows">No data available.</p>
+
   <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
 </div>

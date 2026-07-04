@@ -121,5 +121,7 @@
     </div>
   </ng-container>
 
+  <p class="rank-empty" *ngIf="!hasRows">No ranking data available.</p>
+
   <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
 </div>

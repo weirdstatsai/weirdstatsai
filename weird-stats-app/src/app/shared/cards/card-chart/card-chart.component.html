@@ -14,5 +14,18 @@
     <app-chart [config]="$any(chartConfig)" [height]="chartHeight"></app-chart>
   </div>
 
+  <!-- FALLBACK — no labels/datasets to chart (mis-tagged chart card, or the
+       AI didn't fill them in). Show the plain rows instead of a blank area. -->
+  <div class="chart-fallback-rows" *ngIf="!chartConfig && card.rows?.length">
+    <div class="chart-fallback-row" *ngFor="let row of card.rows">
+      <span class="chart-fallback-label">{{ row.label }}</span>
+      <div class="chart-fallback-track">
+        <div class="chart-fallback-bar" [style.width.%]="fallbackBarWidth(row.value)"></div>
+      </div>
+      <span class="chart-fallback-val">{{ fmt(row.value) }}<span *ngIf="row.unit"> {{ row.unit }}</span></span>
+    </div>
+  </div>
+  <p class="chart-fallback-empty" *ngIf="!chartConfig && !card.rows?.length">No data available.</p>
+
   <p class="wcard-insight" *ngIf="card.insight && size !== 'alt'">{{ card.insight }}</p>
 </div>

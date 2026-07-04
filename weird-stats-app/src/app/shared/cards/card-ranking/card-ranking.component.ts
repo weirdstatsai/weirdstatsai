@@ -37,6 +37,10 @@ export class CardRankingComponent implements OnChanges {
     return (this.card.rows ?? []).slice(0, this.size === 'full' ? 10 : 5);
   }
 
+  get hasRows(): boolean {
+    return this.rows.length > 0;
+  }
+
   private get maxVal(): number {
     return Math.max(...(this.card.rows ?? []).map(r => r.value), 1);
   }

@@ -24,7 +24,7 @@
     font-size: 30px;
     font-weight: 900;
     color: #14142b;
-    margin: 0 0 24px;
+    margin: 16px 0 24px;
     letter-spacing: -1px;
     line-height: 1.2;
 
@@ -95,6 +95,8 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
+  max-width: 250px;
+  margin: 0 auto;
   background: linear-gradient(135deg, #6C5CE7 0%, #8C7BFF 100%);
   color: #fff;
   border: none;
@@ -157,7 +159,7 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin: 20px 0 10px;
+  margin: 36px 0 10px;
 }
 
 .section-title {
@@ -221,12 +223,12 @@
   // Full-width cards (map/fact) break the row; dense packing pulls the next
   // half-width tile up into the hole instead of leaving a gap.
   grid-auto-flow: dense;
-  gap: 10px;
+  gap: 16px;
   padding-bottom: 32px;
 
   @media (min-width: 850px) {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
+    gap: 24px;
   }
 }
 

@@ -41,6 +41,21 @@ export class CardChartComponent implements OnChanges {
     return 120;
   }
 
+  /** Max value across fallback rows, for bar-width scaling. */
+  get fallbackMax(): number {
+    return Math.max(...(this.card.rows ?? []).map(r => r.value), 1);
+  }
+
+  fallbackBarWidth(value: number): number {
+    return Math.max(4, Math.round((value / this.fallbackMax) * 100));
+  }
+
+  fmt(v: number): string {
+    if (Math.abs(v) >= 1_000_000) return (v / 1_000_000).toFixed(1) + 'M';
+    if (Math.abs(v) >= 1_000) return (v / 1_000).toFixed(v >= 10_000 ? 0 : 1) + 'K';
+    return Number.isInteger(v) ? v.toString() : v.toFixed(1);
+  }
+
   buildConfig(overrideType?: 'bar' | 'line' | 'doughnut'): GraphConfig | undefined {
     const c = this.card;
     if (!c.labels?.length || !c.datasets?.length) return undefined;

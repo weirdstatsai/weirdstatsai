@@ -153,7 +153,32 @@
       "Bash(lsof -nP -iTCP:8000 -sTCP:LISTEN -t)",
       "Bash(xargs -r kill)",
       "Bash(grep -n \"isLoggedIn\\\\|loggedIn\\\\|isAuthenticated\\\\|currentUser\\\\|user\\\\$\\\\|authService\\\\|isLogin\" src/app/explore/explore.page.ts src/app/profile/profile.page.ts)",
-      "Bash(grep -n \"user\\\\$\\\\|isLoggedIn\\\\|authService\\\\|AuthService\" src/app/home/home.page.ts)"
+      "Bash(grep -n \"user\\\\$\\\\|isLoggedIn\\\\|authService\\\\|AuthService\" src/app/home/home.page.ts)",
+      "Bash(lsof -nP -iTCP -sTCP:LISTEN)",
+      "Bash(kill 59943 74558 75379 79574 80026)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" https://weirdstats-ai.web.app)",
+      "Bash(ls migration/)",
+      "Bash(python3 -c \"import firebase_admin\")",
+      "Bash(python3 -c \"import google.cloud.firestore\")",
+      "Bash(python3 \"/private/tmp/claude-501/-Users-nehemyamaddela-Claude-Projects-weird-stats/4f3aa281-56a2-42b2-a57e-46f2420e34e3/scratchpad/find_card.py\")",
+      "Bash(python3 \"/private/tmp/claude-501/-Users-nehemyamaddela-Claude-Projects-weird-stats/4f3aa281-56a2-42b2-a57e-46f2420e34e3/scratchpad/fix_card.py\")",
+      "Bash(CLOUDSDK_PYTHON=/opt/homebrew/opt/python@3.12/bin/python3.12 gcloud run deploy weirdstats-api --source . --region us-central1 --project weirdstats-ai --quiet)",
+      "Bash(curl -s -o /dev/null -w \"Frontend: HTTP %{http_code}\\\\n\" https://weirdstats-ai.web.app)",
+      "Bash(curl -s https://weirdstats-api-636419392315.us-central1.run.app/health -w \"\\\\nBackend HTTP %{http_code}\\\\n\")",
+      "Bash(python3 \"/private/tmp/claude-501/-Users-nehemyamaddela-Claude-Projects-weird-stats/4f3aa281-56a2-42b2-a57e-46f2420e34e3/scratchpad/find_versus_card.py\")",
+      "Bash(python3 \"/private/tmp/claude-501/-Users-nehemyamaddela-Claude-Projects-weird-stats/4f3aa281-56a2-42b2-a57e-46f2420e34e3/scratchpad/fix_versus_card.py\")",
+      "Bash(curl -s https://pypi.org/pypi/graphify/json)",
+      "Bash(curl -s https://pypi.org/pypi/graphifyy/json)",
+      "Bash(.venv/bin/python -m pip install graphifyy)",
+      "Bash(/opt/homebrew/opt/python@3.12/bin/python3.12 --version)",
+      "Bash(/opt/homebrew/opt/python@3.12/bin/python3.12 -m venv /private/tmp/claude-501/-Users-nehemyamaddela-Claude-Projects-weird-stats/4f3aa281-56a2-42b2-a57e-46f2420e34e3/scratchpad/graphify-venv)",
+      "Bash(/private/tmp/claude-501/-Users-nehemyamaddela-Claude-Projects-weird-stats/4f3aa281-56a2-42b2-a57e-46f2420e34e3/scratchpad/graphify-venv/bin/pip install *)",
+      "Bash(grep -rn \"kpiStyle\\\\|versusStyle\\\\|rankStyle\\\\|mapStyle\\\\b\" weird-card/weird-card.component.html)",
+      "Bash(grep -rn \"kpiStyle\\\\|versusStyle\\\\|rankStyle\\\\|mapStyle\\\\b\\\\|selectedStyle\" weird-card/weird-card.component.ts)",
+      "Bash(mkdir -p og)",
+      "Bash(magick -background none -density 96 \"/private/tmp/claude-501/-Users-nehemyamaddela-Claude-Projects-weird-stats/4f3aa281-56a2-42b2-a57e-46f2420e34e3/scratchpad/og-default.svg\" -resize 1200x630 og/og-default.png)",
+      "Bash(magick -size 1200x630 'gradient:#7B6BEF-#4285D6' -fill 'rgba\\(255,255,255,0.14\\)' -draw 'roundrectangle 100,148 220,268 34,34' -font Helvetica-Bold -gravity NorthWest -fill 'rgba\\(255,255,255,0.95\\)' -pointsize 58 -annotate +130+178 WS -fill 'rgba\\(255,255,255,0.9\\)' -pointsize 40 -annotate +250+188 WeirdStats.ai -fill white -pointsize 76 -annotate +100+320 'Ask something weird.' -fill 'rgba\\(255,255,255,0.92\\)' -pointsize 76 -annotate +100+415 'Get a chart worth sharing.' -fill 'rgba\\(255,255,255,0.82\\)' -font Helvetica -pointsize 30 -annotate +100+545 'Turn curious questions into surprising, shareable stats.' og-default.png)",
+      "Bash(magick og-default.png -background '#7B6BEF' -alpha remove -alpha off -depth 8 -strip og-default.png)"
     ]
   }
 }

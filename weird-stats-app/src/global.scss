@@ -383,3 +383,25 @@ $desktop-content-max: 1040px;
     right: 0 !important;
   }
 }
+
+// Login modal — a compact auto-height card floating in the middle of the
+// screen on tablet/desktop, instead of the phone-width full-height sheet
+// every other modal uses. Requires the `.ion-page` override below (Ionic's
+// documented recipe for auto-sizing modal content) since the wrapper
+// otherwise stretches to fill --height.
+@media (min-width: 768px) {
+  ion-modal.login-modal {
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    --width: 440px !important;
+    --height: 640px !important;
+    --max-height: 88vh !important;
+    --border-radius: 28px !important;
+    --box-shadow: 0 24px 70px rgba(20,20,43,0.28), 0 4px 16px rgba(0,0,0,0.08) !important;
+  }
+
+  ion-modal.login-modal .ion-page {
+    overflow-y: auto;
+  }
+}

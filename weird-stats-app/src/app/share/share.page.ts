@@ -108,7 +108,7 @@ export class SharePage implements OnInit {
       await action();
       return;
     }
-    const modal = await this.modalCtrl.create({ component: LoginComponent });
+    const modal = await this.modalCtrl.create({ component: LoginComponent, cssClass: 'login-modal' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data === true) {

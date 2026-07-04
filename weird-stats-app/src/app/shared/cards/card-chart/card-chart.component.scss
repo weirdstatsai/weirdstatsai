@@ -19,3 +19,54 @@
   padding: 10px 8px 4px;
   pointer-events: auto;
 }
+
+// ── Fallback rows — no labels/datasets to chart ─────────────────────────────
+.chart-fallback-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.chart-fallback-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-fallback-label {
+  flex: 0 0 30%;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ion-color-dark, #1a1a2e);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-fallback-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+
+.chart-fallback-bar {
+  height: 100%;
+  border-radius: 8px;
+  background: var(--accent);
+}
+
+.chart-fallback-val {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.chart-fallback-empty {
+  font-size: 13px;
+  color: #999;
+  margin: 0;
+}

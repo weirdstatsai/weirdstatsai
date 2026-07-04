@@ -123,7 +123,7 @@ export class HomePage implements OnInit, OnDestroy {
     // Must be logged in
     const user = await firstValueFrom(this.afAuth.authState);
     if (!user) {
-      const modal = await this.modalCtrl.create({ component: (await import('../login/login.component')).LoginComponent });
+      const modal = await this.modalCtrl.create({ component: (await import('../login/login.component')).LoginComponent, cssClass: 'login-modal' });
       await modal.present();
       return;
     }

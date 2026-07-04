@@ -237,12 +237,12 @@ $yellow: #BA7517;
 .cards-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 10px;
+  gap: 12px;
   padding: 12px 12px 0;
 
   @media (min-width: 850px) {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
+    gap: 12px;
   }
 }
 
