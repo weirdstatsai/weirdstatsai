@@ -46,6 +46,14 @@ const routes: Routes = [
     path: 'seed-data',
     loadChildren: () => import('./seed-data/seed-data.module').then(m => m.SeedDataPageModule),
   },
+  {
+    path: 'project/:id/import',
+    loadChildren: () => import('./project-import/project-import.module').then(m => m.ProjectImportPageModule),
+  },
+  {
+    path: 'project/:id',
+    loadChildren: () => import('./project-detail/project-detail.module').then(m => m.ProjectDetailPageModule),
+  },
 ];
 
 @NgModule({

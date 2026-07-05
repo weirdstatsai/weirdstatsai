@@ -35,6 +35,11 @@ export class DraftService {
     this._write(uid, drafts);
   }
 
+  /** Remove all local drafts for a user (used after one-time migration to Firestore). */
+  clearAll(uid: string): void {
+    try { localStorage.removeItem(this.key(uid)); } catch { /* ignore */ }
+  }
+
   get(uid: string, cardId: string): StoredStatCard | undefined {
     return this.list(uid).find(d => d.id === cardId);
   }

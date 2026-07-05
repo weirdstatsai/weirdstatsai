@@ -55,7 +55,7 @@ export class ShareCardPage implements OnInit {
   /** Build the deep-link URL for this card */
   private cardUrl(): string {
     const base = window.location.origin;
-    return this.cardId ? `${base}/card-detail/${this.cardId}` : base;
+    return this.cardId ? `${base}/card/${this.cardId}` : base;
   }
 
   /** Render the share frame to a PNG data URL */

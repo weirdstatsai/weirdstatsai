@@ -199,3 +199,13 @@
   </ng-container>
 
 </ion-content>
+
+<!-- Ask before saving: freshly generated cards aren't stored until saved -->
+<ion-footer class="ion-no-border save-footer" *ngIf="isUnsaved && !viewOnly && !isAdminView">
+  <div class="save-footer-inner">
+    <span class="save-hint">Not saved yet</span>
+    <button class="save-draft-btn" (click)="saveAsDraft()">
+      <ion-icon name="bookmark-outline"></ion-icon> Save to Drafts
+    </button>
+  </div>
+</ion-footer>

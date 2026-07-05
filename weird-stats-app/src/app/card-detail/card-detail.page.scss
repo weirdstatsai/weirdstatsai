@@ -256,3 +256,27 @@ app-weird-card {
   border-radius: 20px; pointer-events: none;
   ion-icon { font-size: 13px; }
 }
+
+// ── Ask-before-saving footer (fresh generated cards) ────────────────────────
+.save-footer {
+  ion-toolbar { --background: transparent; }
+}
+.save-footer-inner {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  background: #ffffff;
+  border-top: 0.5px solid rgba(0,0,0,0.08);
+  box-shadow: 0 -6px 20px rgba(0,0,0,0.06);
+}
+.save-hint {
+  font-size: 13px; color: #9a9aa2; font-weight: 500; flex-shrink: 0;
+}
+.save-draft-btn {
+  flex: 1; height: 46px; border: none; border-radius: 13px;
+  background: #14161f; color: #fff;
+  font-size: 15px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  cursor: pointer; font-family: inherit;
+  ion-icon { font-size: 18px; }
+  &:active { opacity: 0.85; }
+}

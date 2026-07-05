@@ -4,8 +4,9 @@
     {
       "name": "weird-stats-app",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["ng", "serve", "--port", "4200"],
-      "port": 4200,
+      "runtimeArgs": ["ng", "serve", "--port", "4300"],
+      "port": 4300,
+      "autoPort": false,
       "cwd": "weird-stats-app"
     }
   ]

@@ -8,7 +8,7 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content (click)="closeMenu()">
+<ion-content>
 
   <!-- ── Signed-in ─────────────────────────────────────────────────────── -->
   <ng-container *ngIf="user$ | async as user; else signedOutCard">
@@ -59,6 +59,10 @@
       <button class="status-tab" [class.active]="activeTab === 'draft'" (click)="setTab('draft')">
         <ion-icon name="document-text-outline"></ion-icon>
         <span>Drafts</span>
+      </button>
+      <button class="status-tab" *ngIf="showProjectsTab" [class.active]="activeTab === 'projects'" (click)="setTab('projects')">
+        <ion-icon name="folder-outline"></ion-icon>
+        <span>Projects</span>
       </button>
     </div>
 
@@ -153,38 +157,13 @@
       </div>
 
       <!-- Cards in vertical 2-column grid -->
-      <div class="cards-grid" *ngIf="filteredCards().length > 0">
+      <div class="cards-grid" *ngIf="activeTab !== 'projects' && filteredCards().length > 0">
         <div class="grid-card-wrap"
              [class.is-public]="sc.publishStatus === 'published'"
              [class.is-private]="sc.publishStatus === 'private'"
              *ngFor="let sc of filteredCards()"
              (click)="openCard(sc)">
           <app-weird-card [card]="sc.data" size="feed"></app-weird-card>
-
-          <!-- Floating 3-dot menu -->
-          <button class="card-menu-btn"
-                  (click)="$event.stopPropagation(); toggleCardMenu(sc.id)">
-            <ion-icon name="ellipsis-vertical"></ion-icon>
-          </button>
-
-          <!-- Floating dropdown -->
-          <div class="card-dropdown" *ngIf="openMenuId === sc.id"
-               (click)="$event.stopPropagation()">
-            <button class="dd-item" (click)="menuAction('open', sc)">
-              <ion-icon name="eye-outline"></ion-icon> Open card
-            </button>
-            <button class="dd-item" (click)="menuAction('publish', sc)">
-              <ion-icon [name]="activeTab === 'saved' ? 'document-text-outline' : 'bookmark-outline'"></ion-icon>
-              {{ activeTab === 'saved' ? 'Move to Drafts' : 'Save' }}
-            </button>
-            <button class="dd-item" (click)="menuAction('edit', sc)">
-              <ion-icon name="create-outline"></ion-icon> Edit
-            </button>
-            <div class="dd-divider"></div>
-            <button class="dd-item danger" (click)="menuAction('delete', sc)">
-              <ion-icon name="trash-outline"></ion-icon> Delete
-            </button>
-          </div>
 
           <!-- Status badge on saved cards -->
           <div class="status-badge public" *ngIf="sc.publishStatus === 'published'">
@@ -197,7 +176,7 @@
       </div>
 
       <!-- Empty state -->
-      <div class="empty-state" *ngIf="filteredCards().length === 0">
+      <div class="empty-state" *ngIf="activeTab !== 'projects' && filteredCards().length === 0">
         <div class="empty-icon-wrap">
           <ion-icon [name]="activeTab === 'saved' ? 'bookmark-outline' : 'document-text-outline'"></ion-icon>
         </div>
@@ -210,6 +189,48 @@
         <button class="explore-btn" (click)="setTab('draft')" *ngIf="activeTab === 'saved'">
           <ion-icon name="document-text-outline"></ion-icon> View Drafts
         </button>
+      </div>
+
+      <!-- ── Projects tab ── -->
+      <div class="projects-wrap" *ngIf="showProjectsTab && activeTab === 'projects'">
+
+        <!-- Empty: first appearance -->
+        <div class="proj-empty" *ngIf="projects.length === 0 && !isCreatingProject">
+          <div class="proj-empty-icon">
+            <ion-icon name="folder-open-outline"></ion-icon>
+          </div>
+          <p class="proj-empty-title">Start your first project</p>
+          <p class="proj-empty-sub">Group your stats into projects you can build on.</p>
+          <button class="proj-create-btn" (click)="openCreateProject()">
+            <ion-icon name="add"></ion-icon> Create project
+          </button>
+        </div>
+
+        <!-- List of projects -->
+        <div class="proj-list" *ngIf="projects.length > 0 || isCreatingProject">
+          <button class="proj-row" *ngFor="let p of projects" (click)="openProject(p)">
+            <div class="proj-thumb">{{ projectInitials(p.project_name) }}</div>
+            <div class="proj-meta">
+              <span class="proj-name">{{ p.project_name }}</span>
+              <span class="proj-sub">Project</span>
+            </div>
+            <ion-icon name="chevron-forward" class="proj-arrow"></ion-icon>
+          </button>
+
+          <!-- Wave skeleton for the incoming project -->
+          <div class="proj-row skeleton" *ngIf="isCreatingProject">
+            <div class="sk sk-thumb"></div>
+            <div class="proj-meta">
+              <span class="sk sk-line lg"></span>
+              <span class="sk sk-line sm"></span>
+            </div>
+          </div>
+
+          <!-- Add project tile -->
+          <button class="proj-add" (click)="openCreateProject()">
+            <ion-icon name="add"></ion-icon> Add project
+          </button>
+        </div>
       </div>
 
     </ng-container>
