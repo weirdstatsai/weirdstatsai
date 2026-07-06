@@ -223,3 +223,67 @@ ion-router-outlet#main-content {
     top: 0;
   }
 }
+
+// ── Cookie-consent banner ────────────────────────────────────────────────────
+.consent-banner {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 30000;
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 0.5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(20, 20, 43, 0.18);
+}
+
+.consent-text {
+  flex: 1 1 260px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #444;
+
+  a {
+    color: #6C5CE7;
+    font-weight: 600;
+    text-decoration: none;
+  }
+}
+
+.consent-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.consent-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+
+  &.decline {
+    background: rgba(0, 0, 0, 0.06);
+    color: #555;
+    &:active { background: rgba(0, 0, 0, 0.1); }
+  }
+
+  &.accept {
+    background: linear-gradient(135deg, #6C5CE7 0%, #8C7BFF 100%);
+    color: #fff;
+    &:active { opacity: 0.88; }
+  }
+}

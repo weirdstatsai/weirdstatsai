@@ -12,7 +12,7 @@ export interface SeoData {
 }
 
 const SITE = 'WeirdStats.ai';
-const ORIGIN = 'https://weirdstats-ai.web.app';
+const ORIGIN = 'https://weirdstats.ai';
 const DEFAULTS: Required<SeoData> = {
   title: `${SITE} — Ask something weird, get a chart worth sharing`,
   description:

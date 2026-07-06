@@ -34,4 +34,17 @@
   </div>
 
   <ion-router-outlet id="main-content" [class.no-topnav]="!isRootPage"></ion-router-outlet>
+
+  <!-- Cookie-consent banner — gates analytics (GA4 / Clarity / Hotjar) -->
+  <div class="consent-banner" *ngIf="showConsentBanner">
+    <p class="consent-text">
+      We use cookies and analytics (Google Analytics, Microsoft Clarity, Hotjar) to understand
+      how WeirdStats is used and improve it.
+      <a routerLink="/privacy" routerDirection="root">Privacy policy</a>
+    </p>
+    <div class="consent-actions">
+      <button class="consent-btn decline" (click)="declineConsent()">Decline</button>
+      <button class="consent-btn accept" (click)="acceptConsent()">Accept</button>
+    </div>
+  </div>
 </ion-app>

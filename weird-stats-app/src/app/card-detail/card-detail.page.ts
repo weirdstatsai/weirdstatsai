@@ -18,6 +18,7 @@ import { MapStyle } from '../shared/cards/card-map/card-map.component';
 import { MembershipService } from '../services/membership.service';
 import { DraftService } from '../services/draft.service';
 import { SeoService } from '../services/seo.service';
+import { AnalyticsService } from '../services/analytics.service';
 import firebase from 'firebase/compat/app';
 
 @Component({
@@ -121,7 +122,26 @@ export class CardDetailPage implements OnInit {
     private membership: MembershipService,
     private drafts: DraftService,
     private seo: SeoService,
+    private analytics: AnalyticsService,
   ) {}
+
+  /**
+   * Product-metrics event for opening a card. `entry` distinguishes a card
+   * opened from the in-app feed vs a shared/deep link. When the share UI is
+   * shown (view-only), also record a share-options impression.
+   */
+  private trackCardOpen(entry: 'in_app' | 'deep_link'): void {
+    if (!this.card) return;
+    const cardId = this.route.snapshot.paramMap.get('id') || this.storedCard?.id || '';
+    this.analytics.track('card_view', {
+      card_id: cardId,
+      card_type: this.card.cardType || '',
+      entry,
+    });
+    if (this.viewOnly) {
+      this.analytics.track('share_options_view', { card_id: cardId });
+    }
+  }
 
   /**
    * Set per-card title/description for JS-capable crawlers and browser tabs.
@@ -221,6 +241,7 @@ export class CardDetailPage implements OnInit {
       this.card = state.card.data;
       this._buildAltStyles();
       this.applyCardSeo();
+      this.trackCardOpen('in_app');
     } else {
       const id = this.route.snapshot.paramMap.get('id');
       if (id) {
@@ -240,7 +261,7 @@ export class CardDetailPage implements OnInit {
       this.storedCard = snap?.data() ?? undefined;
       this.card = this.storedCard?.data;
       if (!this.card) this.errorMsg = 'Card not found.';
-      else { this._buildAltStyles(); this.applyCardSeo(); }
+      else { this._buildAltStyles(); this.applyCardSeo(); this.trackCardOpen('deep_link'); }
     } catch {
       this.errorMsg = 'Could not load this card.';
     } finally {
@@ -367,6 +388,7 @@ export class CardDetailPage implements OnInit {
         document.execCommand('copy');
         document.body.removeChild(ta);
       }
+      this.analytics.track('share', { method: 'copy_link', card_id: this.storedCard?.id || '' });
       this.toast('Link copied!');
     } catch {
       this.toast('Could not copy link.');
@@ -396,6 +418,7 @@ export class CardDetailPage implements OnInit {
   /** Share the watermarked card image directly — native sheet on mobile, URL on desktop */
   async shareTo(network: string): Promise<void> {
     if (!this.card) return;
+    this.analytics.track('share', { method: network, card_id: this.storedCard?.id || '' });
     const loading = await this.loadingCtrl.create({ message: 'Preparing…', duration: 8000 });
     await loading.present();
     try {
@@ -437,6 +460,7 @@ export class CardDetailPage implements OnInit {
 
   /** Save the watermarked card as a PNG */
   async download(): Promise<void> {
+    this.analytics.track('share', { method: 'save_image', card_id: this.storedCard?.id || '' });
     const loading = await this.loadingCtrl.create({ message: 'Saving image…', duration: 8000 });
     await loading.present();
     try {

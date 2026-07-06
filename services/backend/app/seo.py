@@ -22,7 +22,7 @@ import httpx
 
 logger = logging.getLogger("uvicorn.error")
 
-ORIGIN = "https://weirdstats-ai.web.app"
+ORIGIN = "https://weirdstats.ai"
 SITE = "WeirdStats.ai"
 DEFAULT_TITLE = f"{SITE} — Ask something weird, get a chart worth sharing"
 DEFAULT_DESC = (

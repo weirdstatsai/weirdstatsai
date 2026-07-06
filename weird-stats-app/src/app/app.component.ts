@@ -4,6 +4,8 @@ import { ModalController, ToastController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { SeoData, SeoService } from './services/seo.service';
+import { ConsentService } from './services/consent.service';
+import { AnalyticsService } from './services/analytics.service';
 
 interface MenuItem {
   label: string;
@@ -38,6 +40,8 @@ export class AppComponent implements OnInit, OnDestroy {
   // The fixed top nav only belongs to root pages; sub-pages (card detail,
   // share, admin…) surface their own toolbar in the header space instead.
   isRootPage = true;
+  // Cookie-consent banner — shown until the visitor accepts or declines.
+  showConsentBanner = false;
   private authSub?: Subscription;
   private routerSub?: Subscription;
 
@@ -48,9 +52,17 @@ export class AppComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private seo: SeoService,
+    private consent: ConsentService,
+    private analytics: AnalyticsService,
   ) {}
 
   ngOnInit(): void {
+    // Consent: returning visitors who already accepted get analytics right away;
+    // undecided visitors see the banner. (analytics.init() is a no-op in dev.)
+    const status = this.consent.status();
+    if (status === 'granted') this.analytics.init();
+    else if (status === 'unset') this.showConsentBanner = true;
+
     this.authSub = this.authService.user$.subscribe(user => {
       this.isLoggedIn = !!user;
       this.userEmoji = user ? (localStorage.getItem(EMOJI_STORAGE_KEY + user.uid) ?? '') : '';
@@ -62,8 +74,20 @@ export class AppComponent implements OnInit, OnDestroy {
           root => url === root || url.startsWith(root + '/'),
         );
         this.applyRouteSeo(url);
+        this.analytics.trackPage(url); // no-op until analytics is initialised
       }
     });
+  }
+
+  acceptConsent(): void {
+    this.consent.grant();
+    this.showConsentBanner = false;
+    this.analytics.init();
+  }
+
+  declineConsent(): void {
+    this.consent.deny();
+    this.showConsentBanner = false;
   }
 
   ngOnDestroy(): void {

@@ -110,6 +110,16 @@ const PRIVACY: StaticPageContent = {
       ],
     },
     {
+      heading: 'Analytics and cookies',
+      body: [
+        'With your consent, we use Google Analytics 4, Microsoft Clarity, and Hotjar to understand how the app is '
+        + 'used — which pages are visited, and aggregated interaction and session-replay data — so we can improve it. '
+        + 'These services set cookies and may record anonymised interactions with the interface.',
+        'We ask for your consent on your first visit; nothing loads until you accept, and you can decline. We don\'t '
+        + 'use these tools to identify you personally or to sell your data.',
+      ],
+    },
+    {
       heading: 'Sharing',
       body: [
         'We don\'t sell your data. Cards you choose to publish are visible to other users by design. Private cards '

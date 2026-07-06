@@ -7,5 +7,5 @@ Disallow: /admin-user
 Disallow: /account
 Disallow: /seed-data
 
-Sitemap: https://weirdstats-ai.web.app/sitemap.xml
-Sitemap: https://weirdstats-ai.web.app/sitemap-cards.xml
+Sitemap: https://weirdstats.ai/sitemap.xml
+Sitemap: https://weirdstats.ai/sitemap-cards.xml
