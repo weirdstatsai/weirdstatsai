@@ -16,6 +16,14 @@
       "port": 8000,
       "autoPort": false,
       "cwd": "services/backend"
+    },
+    {
+      "name": "modest-elbakyan-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["ng", "serve", "--port", "4210"],
+      "port": 4210,
+      "autoPort": true,
+      "cwd": ".claude/worktrees/modest-elbakyan-741493/weird-stats-app"
     }
   ]
 }
