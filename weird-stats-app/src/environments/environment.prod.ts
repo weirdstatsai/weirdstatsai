@@ -1,7 +1,7 @@
-// Firebase project: weirdstats-ai
+// Firebase project: weirdstats-ai (production)
 export const environment = {
   production: true,
-  // FastAPI backend on Cloud Run (weirdstats-ai project).
+  // Hosted FastAPI backend on Google Cloud Run (weirdstats-ai project).
   apiUrl: 'https://weirdstats-api-636419392315.us-central1.run.app',
   firebaseConfig: {
     apiKey: 'AIzaSyA13uLXDzYLHZxP0I-9N-T7m1sFuzIIGiE',

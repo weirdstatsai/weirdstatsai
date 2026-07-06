@@ -405,3 +405,47 @@ $desktop-content-max: 1040px;
     overflow-y: auto;
   }
 }
+
+// ── Floating centered "New project" modal ───────────────────────────────────
+ion-modal.project-modal {
+  --width: 86%;
+  --max-width: 380px;
+  --height: auto;
+  --border-radius: 20px;
+  --box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  --backdrop-opacity: 0.45;
+  align-items: center;
+  justify-content: center;
+
+  &::part(content) {
+    border-radius: 20px;
+  }
+
+  // Auto-size the modal to its content height
+  .ion-page {
+    position: relative;
+    display: block;
+    contain: content;
+  }
+}
+
+// ── Elegant bottom sheet ("Add to project") ─────────────────────────────────
+ion-modal.add-sheet-modal {
+  --width: 100%;
+  --height: auto;
+  --border-radius: 26px 26px 0 0;
+  --box-shadow: 0 -10px 44px rgba(0, 0, 0, 0.22);
+  --backdrop-opacity: 0.45;
+  align-items: flex-end;
+  justify-content: center;
+
+  &::part(content) {
+    border-radius: 26px 26px 0 0;
+  }
+
+  .ion-page {
+    position: relative;
+    display: block;
+    contain: content;
+  }
+}

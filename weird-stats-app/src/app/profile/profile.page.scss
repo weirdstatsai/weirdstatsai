@@ -1076,3 +1076,90 @@ $yellow: #BA7517;
   ion-icon { font-size: 15px; }
   &:active { opacity: 0.85; }
 }
+
+// ── Projects tab ──────────────────────────────────────────────────────────
+.projects-wrap { padding: 8px 12px 32px; }
+
+.proj-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 46px 32px 20px;
+}
+.proj-empty-icon {
+  width: 60px; height: 60px; border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.1);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px;
+  ion-icon { font-size: 28px; color: #c4c4cc; }
+}
+.proj-empty-title {
+  font-size: 16px; font-weight: 600; color: #14161f; margin: 0 0 6px;
+}
+.proj-empty-sub {
+  font-size: 13px; color: var(--ion-color-medium); margin: 0 0 20px; line-height: 1.5;
+}
+.proj-create-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #14161f; color: #fff; border: none;
+  border-radius: 12px; padding: 12px 22px;
+  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+  ion-icon { font-size: 18px; }
+  &:active { opacity: 0.85; }
+}
+
+.proj-list { display: flex; flex-direction: column; gap: 8px; }
+
+.proj-row {
+  display: flex; align-items: center; gap: 11px;
+  width: 100%; text-align: left;
+  background: #fff; border: 0.5px solid rgba(0,0,0,0.07);
+  border-radius: 14px; padding: 10px; cursor: pointer;
+  font-family: inherit; transition: transform 0.12s, box-shadow 0.12s;
+  &:active { transform: scale(0.985); }
+}
+.proj-thumb {
+  width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #14161f; color: #fff;
+  font-size: 15px; font-weight: 600; letter-spacing: -0.3px;
+}
+.proj-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.proj-name {
+  font-size: 14px; font-weight: 600; color: #14161f; letter-spacing: -0.2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.proj-sub { font-size: 11px; color: var(--ion-color-medium); }
+.proj-arrow { font-size: 18px; color: rgba(0,0,0,0.22); flex-shrink: 0; }
+
+.proj-add {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; margin-top: 2px;
+  border: 1.5px dashed rgba(0,0,0,0.14);
+  background: transparent;
+  border-radius: 14px; padding: 13px;
+  color: #14161f; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  ion-icon { font-size: 17px; color: #14161f; }
+  &:active { background: rgba(0,0,0,0.03); }
+}
+
+// ── Wave skeleton (loading the incoming project) ──────────────────────────
+.proj-row.skeleton { cursor: default; &:active { transform: none; } }
+.sk {
+  background: #e9e9ef;
+  background-image: linear-gradient(90deg, #e9e9ef 0px, #f4f4f8 60px, #e9e9ef 120px);
+  background-size: 220px 100%;
+  animation: projWave 1.1s infinite linear;
+  border-radius: 8px;
+}
+.sk-thumb { width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; }
+.sk-line { display: block; height: 11px; border-radius: 6px; }
+.sk-line.lg { width: 68%; }
+.sk-line.sm { width: 38%; height: 9px; }
+
+@keyframes projWave {
+  0%   { background-position: -140px 0; }
+  100% { background-position: 200px 0; }
+}

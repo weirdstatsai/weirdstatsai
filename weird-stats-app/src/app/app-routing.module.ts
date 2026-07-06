@@ -64,6 +64,14 @@ const routes: Routes = [
     data: { slug: 'privacy', seo: { title: 'Privacy Policy — WeirdStats.ai', description: 'How WeirdStats.ai handles your data.' } },
     loadChildren: () => import('./static-page/static-page.module').then(m => m.StaticPagePageModule),
   },
+  {
+    path: 'project/:id/import',
+    loadChildren: () => import('./project-import/project-import.module').then(m => m.ProjectImportPageModule),
+  },
+  {
+    path: 'project/:id',
+    loadChildren: () => import('./project-detail/project-detail.module').then(m => m.ProjectDetailPageModule),
+  },
   // Anything unmatched (removed legacy routes, typos, stale links) → home.
   { path: '**', redirectTo: '/home' },
 ];

@@ -7,6 +7,10 @@ import { AuthService } from '../services/auth.service';
 import { LoginComponent } from '../login/login.component';
 import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.component';
 import { StoredStatCard } from '../models/weird-card.model';
+import { Project, projectInitials } from '../models/project.model';
+import { ProjectModalComponent } from '../shared/project-modal/project-modal.component';
+import { ProjectService } from '../services/project.service';
+import { AppConfigService } from '../services/app-config.service';
 import { MembershipService } from '../services/membership.service';
 import { AdminService } from '../services/admin.service';
 import { DraftService } from '../services/draft.service';
@@ -32,9 +36,12 @@ export class ProfilePage implements OnInit, OnDestroy {
   draftCards: StoredStatCard[] = [];   // from device localStorage
   isLoading = true;
   activeFilter: 'all' | 'chart' | 'map' | 'fact' = 'all';
-  activeTab: 'saved' | 'draft' = 'saved';
+  activeTab: 'saved' | 'draft' | 'projects' = 'saved';
+  projects: Project[] = [];
+  isCreatingProject = false;
   private currentUid = '';
   private sub?: Subscription;
+  private projSub?: Subscription;
 
   // Inline draft alternatives panel
   selectedDraft?: StoredStatCard;
@@ -79,7 +86,14 @@ export class ProfilePage implements OnInit, OnDestroy {
     private membership: MembershipService,
     private adminService: AdminService,
     private drafts: DraftService,
+    private projectService: ProjectService,
+    private appConfig: AppConfigService,
   ) {}
+
+  /** Projects tab is gated behind the `projects` feature flag. */
+  get showProjectsTab(): boolean {
+    return this.appConfig.isEnabled('projects');
+  }
 
   ngOnInit(): void {
     this.sub = this.user$.pipe(
@@ -105,6 +119,14 @@ export class ProfilePage implements OnInit, OnDestroy {
       },
       error: () => { this.savedCards = []; this.isLoading = false; },
     });
+
+    // Live stream of the user's projects (stored on their user doc)
+    this.projSub = this.user$.pipe(
+      switchMap(user => user ? this.projectService.projects$(user.uid) : of([] as Project[])),
+    ).subscribe(list => {
+      this.projects = [...list].sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+      this.cdr.detectChanges();
+    });
   }
 
   ionViewWillEnter(): void {
@@ -116,7 +138,7 @@ export class ProfilePage implements OnInit, OnDestroy {
     if (tab === 'saved' || tab === 'draft') this.activeTab = tab;
   }
 
-  ngOnDestroy(): void { this.sub?.unsubscribe(); }
+  ngOnDestroy(): void { this.sub?.unsubscribe(); this.projSub?.unsubscribe(); }
 
   getEmoji(uid: string): string | null {
     return localStorage.getItem(EMOJI_STORAGE_KEY + uid);
@@ -126,9 +148,51 @@ export class ProfilePage implements OnInit, OnDestroy {
     this.activeFilter = f;
   }
 
-  setTab(tab: 'saved' | 'draft'): void {
+  setTab(tab: 'saved' | 'draft' | 'projects'): void {
     this.activeTab = tab;
     this.selectedDraft = undefined;
+  }
+
+  // ── Projects ──────────────────────────────────────────────────────────────
+  projectInitials(name: string): string {
+    return projectInitials(name);
+  }
+
+  get projectCount(): number {
+    return this.projects.length;
+  }
+
+  async openCreateProject(): Promise<void> {
+    if (!this.currentUid) return;
+    const modal = await this.modalCtrl.create({
+      component: ProjectModalComponent,
+      cssClass: 'project-modal',
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss();
+    if (!data) return;
+    await this.createProject(data);
+  }
+
+  private async createProject(name: string): Promise<void> {
+    if (!this.currentUid) return;
+    this.activeTab = 'projects';
+    this.isCreatingProject = true;
+    this.cdr.detectChanges();
+    try {
+      await this.projectService.create(this.currentUid, name);
+      // The projects list refreshes via the live subscription.
+    } catch {
+      const t = await this.toastCtrl.create({ message: 'Could not create project', duration: 1500, color: 'danger' });
+      await t.present();
+    } finally {
+      // Keep the wave skeleton briefly so the incoming row animates in
+      setTimeout(() => { this.isCreatingProject = false; this.cdr.detectChanges(); }, 650);
+    }
+  }
+
+  openProject(project: Project): void {
+    this.router.navigate(['/project', project.project_id]);
   }
 
   get draftCount(): number {
