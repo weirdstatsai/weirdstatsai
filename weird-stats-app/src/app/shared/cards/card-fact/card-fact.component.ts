@@ -19,6 +19,15 @@ export class CardFactComponent implements OnChanges {
 
   constructor(private sanitizer: DomSanitizer) {}
 
+  /**
+   * The owner's saved font-size choice (uiMeta.factFontSize) wins over the
+   * `fontSize` input default, so a size picked on the detail page also shows
+   * on the small feed tile — falling back to the input when none was saved.
+   */
+  get effectiveFontSize(): 'small' | 'medium' | 'large' {
+    return this.card?.uiMeta?.factFontSize ?? this.fontSize;
+  }
+
   get bgSvg(): SafeHtml | null {
     const svg = getAnimalSvg(this.card?.uiMeta?.icon ?? '');
     return svg ? this.sanitizer.bypassSecurityTrustHtml(svg) : null;

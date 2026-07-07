@@ -102,7 +102,7 @@ export class CardDetailPage implements OnInit {
   setFactFontSize(size: 'small' | 'medium' | 'large'): void {
     this.factFontSize = size;
     if (this.card?.uiMeta) {
-      this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, factFontSize: size } as any };
+      this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, factFontSize: size } };
       this.persistCardEdits();
     }
   }
@@ -213,6 +213,9 @@ export class CardDetailPage implements OnInit {
       else if (ct === 'versus') this.selectedVersusStyle = saved as VersusStyle;
       else if (ct === 'map') this.selectedMapStyle = saved as MapStyle;
     }
+
+    // Restore a previously chosen fact-card font size
+    this.factFontSize = ui?.factFontSize ?? 'medium';
   }
 
   private _persistStyle(style: string): void {
