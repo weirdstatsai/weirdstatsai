@@ -4,7 +4,7 @@
        etc. all get the fixed rail + top nav too. -->
   <div class="desktop-rail">
     <a class="rail-logo" routerLink="/home" routerDirection="root">
-      <span class="rail-logo-mark">🐙</span>
+      <span class="rail-logo-mark"><span class="logo-emoji">🐙</span></span>
       <span class="rail-logo-text">WeirdStats<span class="accent">.ai</span></span>
     </a>
     <div class="rail-links">
@@ -15,7 +15,7 @@
   </div>
 
   <div class="desktop-topnav" *ngIf="isRootPage">
-    <a class="topnav-logo" routerLink="/home" routerDirection="root">🐙 WeirdStats<span class="accent">.ai</span></a>
+    <a class="topnav-logo" routerLink="/home" routerDirection="root"><span class="logo-emoji">🐙</span> WeirdStats<span class="accent">.ai</span></a>
     <nav class="topnav-links">
       <a routerLink="/home" routerDirection="root" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" aria-label="Home" title="Home">
         <ion-icon name="home-outline"></ion-icon>
