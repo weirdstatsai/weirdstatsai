@@ -1,11 +1,11 @@
 <ng-container [ngSwitch]="card.cardType">
-  <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" [size]="size"></app-card-ranking>
-  <app-card-kpi     *ngSwitchCase="'kpi'"     [card]="card" [size]="size"></app-card-kpi>
-  <app-card-versus  *ngSwitchCase="'versus'"  [card]="card" [size]="size"></app-card-versus>
+  <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" [size]="size" [rankStyle]="rankStyle"></app-card-ranking>
+  <app-card-kpi     *ngSwitchCase="'kpi'"     [card]="card" [size]="size" [kpiStyle]="kpiStyle"></app-card-kpi>
+  <app-card-versus  *ngSwitchCase="'versus'"  [card]="card" [size]="size" [versusStyle]="versusStyle"></app-card-versus>
   <app-card-fact    *ngSwitchCase="'fact'"    [card]="card" [size]="size" [fontSize]="fontSize"></app-card-fact>
   <app-card-chart   *ngSwitchCase="'chart'"   [card]="card" [size]="size"></app-card-chart>
-  <app-card-table   *ngSwitchCase="'table'"   [card]="card" [size]="size"></app-card-table>
-  <app-card-map     *ngSwitchCase="'map'"     [card]="card" [size]="size"></app-card-map>
+  <app-card-table   *ngSwitchCase="'table'"   [card]="card" [size]="size" [tableStyle]="tableStyle"></app-card-table>
+  <app-card-map     *ngSwitchCase="'map'"     [card]="card" [size]="size" [mapStyle]="mapStyle"></app-card-map>
   <!-- fallback for unknown types -->
   <app-card-fact *ngSwitchDefault [card]="card" [size]="size" [fontSize]="fontSize"></app-card-fact>
 </ng-container>

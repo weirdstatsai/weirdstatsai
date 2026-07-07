@@ -101,7 +101,10 @@ export class CardDetailPage implements OnInit {
 
   setFactFontSize(size: 'small' | 'medium' | 'large'): void {
     this.factFontSize = size;
-    if (this.card?.uiMeta) (this.card.uiMeta as any).factFontSize = size;
+    if (this.card?.uiMeta) {
+      this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, factFontSize: size } as any };
+      this.persistCardEdits();
+    }
   }
 
   readonly accentOptions = ACCENT_COLORS;
@@ -215,6 +218,26 @@ export class CardDetailPage implements OnInit {
   private _persistStyle(style: string): void {
     if (!this.card?.uiMeta) return;
     this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, selectedStyle: style } };
+    this.persistCardEdits();
+  }
+
+  /**
+   * Write the current in-memory edits (accent color, badge, font size, alt
+   * style) back to wherever this card actually lives, so leaving the page
+   * never loses a customization and Publish/Share always use what's on
+   * screen rather than the stale as-generated version.
+   *  - Draft (not yet saved, or saved as draft)  → device-local storage.
+   *  - Saved (private/published)                 → the Firestore doc in place.
+   */
+  private persistCardEdits(): void {
+    if (!this.card || !this.storedCard) return;
+    this.storedCard = { ...this.storedCard, data: this.card };
+    const card = this.storedCard;
+    if (this.isDraftCard()) {
+      this.uid().then(uid => { if (uid) this.drafts.add(uid, card); });
+    } else if (card.id) {
+      this.afs.doc(`stats/${card.id}`).update({ data: card.data }).catch(() => {});
+    }
   }
 
   ngOnInit(): void {
@@ -775,6 +798,7 @@ export class CardDetailPage implements OnInit {
     if (!this.card) return;
     this.selectedAltType = type;
     this.card = { ...this.card, chartType: type };
+    this.persistCardEdits();
   }
 
   private readonly accentGradients: Record<string, { from: string; to: string }> = {
@@ -797,11 +821,13 @@ export class CardDetailPage implements OnInit {
         gradientTo: grad.to,
       },
     };
+    this.persistCardEdits();
   }
 
   setBadge(badge: string): void {
     if (!this.card) return;
     this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, insightBadge: badge } };
+    this.persistCardEdits();
   }
 
   goShare(): void {
