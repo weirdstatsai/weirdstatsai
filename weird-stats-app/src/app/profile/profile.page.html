@@ -1,4 +1,4 @@
-<ion-content (click)="closeMenu()">
+<ion-content>
 
   <!-- ── Signed-in ─────────────────────────────────────────────────────── -->
   <ng-container *ngIf="user$ | async as user; else signedOutCard">
@@ -151,31 +151,6 @@
              *ngFor="let sc of filteredCards()"
              (click)="openCard(sc)">
           <app-weird-card [card]="sc.data" size="feed"></app-weird-card>
-
-          <!-- Floating 3-dot menu -->
-          <button class="card-menu-btn"
-                  (click)="$event.stopPropagation(); toggleCardMenu(sc.id)">
-            <ion-icon name="ellipsis-vertical"></ion-icon>
-          </button>
-
-          <!-- Floating dropdown -->
-          <div class="card-dropdown" *ngIf="openMenuId === sc.id"
-               (click)="$event.stopPropagation()">
-            <button class="dd-item" (click)="menuAction('open', sc)">
-              <ion-icon name="eye-outline"></ion-icon> Open card
-            </button>
-            <button class="dd-item" (click)="menuAction('publish', sc)">
-              <ion-icon [name]="activeTab === 'saved' ? 'document-text-outline' : 'bookmark-outline'"></ion-icon>
-              {{ activeTab === 'saved' ? 'Move to Drafts' : 'Save' }}
-            </button>
-            <button class="dd-item" (click)="menuAction('edit', sc)">
-              <ion-icon name="create-outline"></ion-icon> Edit
-            </button>
-            <div class="dd-divider"></div>
-            <button class="dd-item danger" (click)="menuAction('delete', sc)">
-              <ion-icon name="trash-outline"></ion-icon> Delete
-            </button>
-          </div>
 
           <!-- Status badge on saved cards -->
           <div class="status-badge public" *ngIf="sc.publishStatus === 'published'">

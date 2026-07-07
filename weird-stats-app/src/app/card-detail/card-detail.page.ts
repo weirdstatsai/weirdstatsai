@@ -2,7 +2,7 @@ import { Component, OnInit, NgZone, ViewChild, ElementRef } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { HttpClient } from '@angular/common/http';
-import { ActionSheetController, AlertController, ToastController, LoadingController, NavController } from '@ionic/angular';
+import { ActionSheetController, AlertController, ToastController, LoadingController, NavController, ModalController } from '@ionic/angular';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const domtoimage = require('dom-to-image-more');
@@ -16,9 +16,12 @@ import { KpiStyle } from '../shared/cards/card-kpi/card-kpi.component';
 import { VersusStyle } from '../shared/cards/card-versus/card-versus.component';
 import { MapStyle } from '../shared/cards/card-map/card-map.component';
 import { MembershipService } from '../services/membership.service';
+import { AdminService } from '../services/admin.service';
 import { DraftService } from '../services/draft.service';
 import { SeoService } from '../services/seo.service';
 import { AnalyticsService } from '../services/analytics.service';
+import { PublishModalComponent } from '../shared/publish-modal/publish-modal.component';
+import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 import firebase from 'firebase/compat/app';
 
 @Component({
@@ -118,12 +121,24 @@ export class CardDetailPage implements OnInit {
     private toastCtrl: ToastController,
     private loadingCtrl: LoadingController,
     private navCtrl: NavController,
+    private modalCtrl: ModalController,
     private ngZone: NgZone,
     private membership: MembershipService,
+    private adminService: AdminService,
     private drafts: DraftService,
     private seo: SeoService,
     private analytics: AnalyticsService,
   ) {}
+
+  private async uid(): Promise<string> {
+    const user = await firstValueFrom(this.authService.user$);
+    return user?.uid ?? '';
+  }
+
+  /** Stored card with no explicit status (or 'draft') is a draft. */
+  private isDraftCard(): boolean {
+    return (this.storedCard?.publishStatus ?? 'draft') === 'draft';
+  }
 
   /**
    * Product-metrics event for opening a card. `entry` distinguishes a card
@@ -311,7 +326,7 @@ export class CardDetailPage implements OnInit {
               this.membership.recordGeneration();
               // Store the new card as a device-local draft (not in Firestore)
               if (uid) {
-                this.drafts.add(uid, {
+                const draft: StoredStatCard = {
                   id: event.data.id,
                   status: 'completed',
                   publishStatus: 'draft',
@@ -320,7 +335,11 @@ export class CardDetailPage implements OnInit {
                   prompt,
                   promptHash: '',
                   data: event.data,
-                });
+                };
+                this.drafts.add(uid, draft);
+                // Track it so the options menu treats this as an existing
+                // draft (Publish/Delete) instead of offering to save it again.
+                this.storedCard = draft;
               }
               this.isLoading = false;
               this.statusMsg = '';
@@ -534,19 +553,27 @@ export class CardDetailPage implements OnInit {
   async presentActions(): Promise<void> {
     const user = await firstValueFrom(this.authService.user$);
     const buttons: any[] = [];
+    const hasStoredId = !!this.storedCard?.id;
 
-    if (user) {
-      buttons.push({
-        text: 'Save card',
-        icon: 'bookmark-outline',
-        handler: () => this.saveCard(),
-      });
-    } else {
-      buttons.push({
-        text: 'Sign in to save',
-        icon: 'log-in-outline',
-        handler: () => this.promptSignIn(),
-      });
+    if (!hasStoredId) {
+      // Freshly generated — nothing stored yet
+      if (user) {
+        buttons.push({ text: 'Save to Drafts', icon: 'bookmark-outline', handler: () => this.saveCard() });
+      } else {
+        buttons.push({ text: 'Sign in to save', icon: 'log-in-outline', handler: () => this.promptSignIn() });
+      }
+    } else if (this.isDraftCard()) {
+      buttons.push({ text: 'Publish…', icon: 'earth-outline', handler: () => this.publishFlow() });
+    } else if (this.storedCard?.publishStatus === 'private') {
+      buttons.push(
+        { text: 'Make public', icon: 'earth-outline', handler: () => this.makePublic() },
+        { text: 'Move to Drafts', icon: 'document-text-outline', handler: () => this.moveToDrafts() },
+      );
+    } else if (this.storedCard?.publishStatus === 'published') {
+      buttons.push(
+        { text: 'Make private', icon: 'lock-closed-outline', handler: () => this.makePrivate() },
+        { text: 'Move to Drafts', icon: 'document-text-outline', handler: () => this.moveToDrafts() },
+      );
     }
 
     buttons.push(
@@ -562,7 +589,7 @@ export class CardDetailPage implements OnInit {
       },
     );
 
-    if (user && this.storedCard?.id) {
+    if (user && hasStoredId) {
       buttons.push({
         text: 'Delete card',
         icon: 'trash-outline',
@@ -577,6 +604,104 @@ export class CardDetailPage implements OnInit {
     await sheet.present();
   }
 
+  /** Draft → choose public or private. */
+  private async publishFlow(): Promise<void> {
+    const modal = await this.modalCtrl.create({
+      component: PublishModalComponent,
+      breakpoints: [0, 1], initialBreakpoint: 1, handle: false,
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss();
+    if (!data?.choice) return;
+    if (data.choice === 'public') {
+      await this._promoteDraft('published', 'Saved publicly — live on Explore!');
+    } else {
+      await this._savePrivateFlow();
+    }
+  }
+
+  private async _savePrivateFlow(): Promise<void> {
+    const uid = await this.uid();
+    const allowed = (uid && await this.adminService.isAdmin(uid)) || await this.membership.isPremium();
+    if (allowed) { await this._promoteDraft('private', 'Saved privately'); return; }
+
+    const modal = await this.modalCtrl.create({
+      component: PlanModalComponent,
+      componentProps: { mode: 'limit' },
+      breakpoints: [0, 1], initialBreakpoint: 1, handle: false,
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss();
+    if (data?.plan === 'premium') await this._promoteDraft('private', 'Saved privately');
+  }
+
+  /** Promote a local draft into the user's Firestore collection. */
+  private async _promoteDraft(status: 'published' | 'private', msg: string): Promise<void> {
+    const uid = await this.uid();
+    const card = this.storedCard;
+    if (!card?.id || !uid) return;
+    try {
+      await this.afs.collection('stats').doc(card.id).set({
+        ...card,
+        publishStatus: status,
+        createdBy: uid,
+        createdAt: card.createdAt ?? new Date().toISOString(),
+      });
+      this.drafts.remove(uid, card.id);
+      this.storedCard = { ...card, publishStatus: status };
+      this.toast(msg);
+    } catch {
+      this.toast('Could not save card.');
+    }
+  }
+
+  private async makePublic(): Promise<void> {
+    await this._updateStatus('published', 'Now public — live on Explore!');
+  }
+
+  private async makePrivate(): Promise<void> {
+    const uid = await this.uid();
+    const allowed = (uid && await this.adminService.isAdmin(uid)) || await this.membership.isPremium();
+    if (allowed) { await this._updateStatus('private', 'Set to private'); return; }
+
+    const modal = await this.modalCtrl.create({
+      component: PlanModalComponent,
+      componentProps: { mode: 'limit' },
+      breakpoints: [0, 1], initialBreakpoint: 1, handle: false,
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss();
+    if (data?.plan === 'premium') await this._updateStatus('private', 'Set to private');
+  }
+
+  /** Update a saved card's visibility status in place. */
+  private async _updateStatus(status: 'private' | 'published', msg: string): Promise<void> {
+    const id = this.storedCard?.id;
+    if (!id) return;
+    try {
+      await this.afs.doc(`stats/${id}`).update({ publishStatus: status });
+      this.storedCard = { ...this.storedCard!, publishStatus: status };
+      this.toast(msg);
+    } catch {
+      this.toast('Could not update card.');
+    }
+  }
+
+  /** Move a saved card back to a device-local draft. */
+  private async moveToDrafts(): Promise<void> {
+    const uid = await this.uid();
+    const card = this.storedCard;
+    if (!card?.id || !uid) return;
+    try {
+      await this.afs.doc(`stats/${card.id}`).delete();
+      this.drafts.add(uid, { ...card, publishStatus: 'draft' });
+      this.storedCard = { ...card, publishStatus: 'draft' };
+      this.toast('Moved to Drafts');
+    } catch {
+      this.toast('Could not move card.');
+    }
+  }
+
   private async promptSignIn(): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: 'Sign in required',
@@ -589,28 +714,26 @@ export class CardDetailPage implements OnInit {
     await alert.present();
   }
 
+  /** Save a freshly generated card as a device-local draft (never Firestore). */
   async saveCard(): Promise<void> {
     if (!this.card) { this.toast('No card to save.'); return; }
     const user = await firstValueFrom(this.authService.user$);
     if (!user) { this.toast('Sign in to save cards.'); return; }
-    try {
-      const id = this.afs.createId();
-      const doc: StoredStatCard = {
-        id,
-        status: 'completed',
-        createdBy: user.uid,
-        createdAt: new Date().toISOString(),
-        prompt: this.storedCard?.prompt ?? '',
-        promptHash: this.storedCard?.promptHash ?? '',
-        data: this.card,
-      };
-      await this.afs.doc(`stats/${id}`).set(doc);
-      this.isSaved = true;
-      this.toast('Saved to your profile!');
-      this.router.navigate(['/profile']);
-    } catch {
-      this.toast('Save failed.');
-    }
+    const doc: StoredStatCard = {
+      id: this.storedCard?.id || this.afs.createId(),
+      status: 'completed',
+      publishStatus: 'draft',
+      createdBy: user.uid,
+      createdAt: this.storedCard?.createdAt ?? new Date().toISOString(),
+      prompt: this.storedCard?.prompt ?? '',
+      promptHash: this.storedCard?.promptHash ?? '',
+      data: this.card,
+    };
+    this.drafts.add(user.uid, doc);
+    this.isSaved = true;
+    this.storedCard = doc;
+    this.toast('Saved to Drafts!');
+    this.router.navigate(['/profile'], { state: { tab: 'draft' } });
   }
 
   private async confirmDelete(): Promise<void> {
@@ -626,9 +749,15 @@ export class CardDetailPage implements OnInit {
   }
 
   private async deleteCard(): Promise<void> {
-    if (!this.storedCard?.id) return;
+    const card = this.storedCard;
+    if (!card?.id) return;
     try {
-      await this.afs.doc(`stats/${this.storedCard.id}`).delete();
+      if (this.isDraftCard()) {
+        const uid = await this.uid();
+        if (uid) this.drafts.remove(uid, card.id);
+      } else {
+        await this.afs.doc(`stats/${card.id}`).delete();
+      }
       this.toast('Card deleted.');
       this.back();
     } catch {

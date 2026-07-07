@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { ModalController, ToastController, ActionSheetController, AlertController, PopoverController } from '@ionic/angular';
+import { ModalController, ToastController, ActionSheetController, AlertController } from '@ionic/angular';
 import { Observable, of, switchMap, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
@@ -16,7 +16,6 @@ import { AdminService } from '../services/admin.service';
 import { DraftService } from '../services/draft.service';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 import { PublishModalComponent } from '../shared/publish-modal/publish-modal.component';
-import { CardMenuPopoverComponent } from '../shared/card-menu-popover/card-menu-popover.component';
 import { RankStyle } from '../shared/cards/card-ranking/card-ranking.component';
 import { KpiStyle } from '../shared/cards/card-kpi/card-kpi.component';
 import { TableStyle } from '../shared/cards/card-table/card-table.component';
@@ -80,7 +79,6 @@ export class ProfilePage implements OnInit, OnDestroy {
     private modalCtrl: ModalController,
     private actionSheetCtrl: ActionSheetController,
     private alertCtrl: AlertController,
-    private popoverCtrl: PopoverController,
     private router: Router,
     private cdr: ChangeDetectorRef,
     private membership: MembershipService,
@@ -234,91 +232,6 @@ export class ProfilePage implements OnInit, OnDestroy {
     this.selectedTableStyle = 'pill';
     this.selectedChartType = (card.data?.chartType as any) ?? 'bar';
     this.cdr.detectChanges();
-  }
-
-  openMenuId: string | null = null;
-
-  toggleCardMenu(id: string): void {
-    this.openMenuId = this.openMenuId === id ? null : id;
-  }
-
-  closeMenu(): void { this.openMenuId = null; }
-
-  async menuAction(action: string, card: StoredStatCard): Promise<void> {
-    this.openMenuId = null;
-    switch (action) {
-      case 'open':    this.openCard(card); break;
-      case 'publish': await this.togglePublish(card); break;
-      case 'edit':    this.editCard(card); break;
-      case 'delete':  await this.deleteCard(card); break;
-    }
-  }
-
-  async showCardMenu(card: StoredStatCard, event: Event): Promise<void> {
-    const isPublished = (card.publishStatus ?? 'draft') !== 'draft';
-    const popover = await this.popoverCtrl.create({
-      component: CardMenuPopoverComponent,
-      componentProps: { isPublished },
-      event,
-      dismissOnSelect: true,
-      showBackdrop: true,
-      backdropDismiss: true,
-      cssClass: 'card-menu-pop',
-    });
-    await popover.present();
-    const { data } = await popover.onWillDismiss();
-    if (!data?.action) return;
-    switch (data.action) {
-      case 'open':    this.openCard(card); break;
-      case 'publish': await this.togglePublish(card); break;
-      case 'edit':    this.editCard(card); break;
-      case 'delete':  await this.deleteCard(card); break;
-    }
-  }
-
-  editCard(card: StoredStatCard): void {
-    this.router.navigate(['/card'], { state: { card, fromSaved: true } });
-  }
-
-  async deleteCard(card: StoredStatCard): Promise<void> {
-    if (!card.id) return;
-    try {
-      if (this.isDraft(card)) {
-        // Local draft — just remove from device
-        this.drafts.remove(this.currentUid, card.id);
-        this.draftCards = this.drafts.list(this.currentUid);
-      } else {
-        await this.afs.collection('stats').doc(card.id).delete();
-      }
-      const t = await this.toastCtrl.create({ message: 'Card deleted', duration: 1500, color: 'danger' });
-      await t.present();
-    } catch {
-      const t = await this.toastCtrl.create({ message: 'Could not delete', duration: 1500, color: 'danger' });
-      await t.present();
-    }
-  }
-
-  async openCardActions(card: StoredStatCard, event: Event): Promise<void> {
-    event.stopPropagation();
-    const status = card.publishStatus ?? 'draft';
-    const isPublished = status !== 'draft';
-    const sheet = await this.actionSheetCtrl.create({
-      header: card.data?.title?.slice(0, 50) ?? 'Card',
-      buttons: [
-        {
-          text: 'Open card',
-          icon: 'eye-outline',
-          handler: () => { setTimeout(() => this.openCard(card), 250); },
-        },
-        {
-          text: isPublished ? 'Move to Drafts' : 'Publish',
-          icon: isPublished ? 'lock-closed-outline' : 'earth-outline',
-          handler: () => { setTimeout(() => this.togglePublish(card), 250); },
-        },
-        { text: 'Cancel', role: 'cancel', icon: 'close' },
-      ],
-    });
-    await sheet.present();
   }
 
   private isDraft(card: StoredStatCard): boolean {
