@@ -309,6 +309,13 @@ export class CardDetailPage implements OnInit {
 
   private async loadById(id: string): Promise<void> {
     this.isLoading = true;
+    // A card reached by its /card/:id URL — a shared link, or a page refresh —
+    // is a PUBLIC view. Show the clean view-only share layout, never the
+    // owner's edit/alternatives UI. Owners edit from their profile/project,
+    // which navigate here with in-app state (and viewOnly stays false).
+    this.viewOnly = true;
+    this.isPremium = false;
+    this.membership.isPremium().then((p) => (this.isPremium = p)).catch(() => {});
     try {
       const snap = await firstValueFrom(this.afs.doc<StoredStatCard>(`stats/${id}`).get());
       this.storedCard = snap?.data() ?? undefined;
