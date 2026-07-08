@@ -75,11 +75,11 @@ $topnav-height: 48px;
   line-height: 1;
 }
 
-// Recolors the octopus emoji away from its native reddish tone toward the
-// brand purple — filters apply to the rendered glyph, not just images.
+// Recolors the octopus emoji to the brand red — filters apply to the
+// rendered glyph, not just images.
 .logo-emoji {
   display: inline-block;
-  filter: hue-rotate(220deg) saturate(1.3) brightness(0.95);
+  filter: hue-rotate(345deg) saturate(1.9) brightness(0.92);
 }
 
 .rail-logo-text {
@@ -88,7 +88,7 @@ $topnav-height: 48px;
   color: #1a1a2e;
   text-align: center;
   line-height: 1.3;
-  .accent { color: #6C5CE7; }
+  .accent { color: #E53935; }
 }
 
 .rail-links {
@@ -142,7 +142,7 @@ $topnav-height: 48px;
   letter-spacing: -0.5px;
   color: #1a1a2e !important;
   &:hover { color: #1a1a2e !important; }
-  .accent { color: #6C5CE7; }
+  .accent { color: #E53935; }
 
   // The rail (≥1024px) already carries the logo — avoid showing it twice.
   @media (min-width: 1024px) {
