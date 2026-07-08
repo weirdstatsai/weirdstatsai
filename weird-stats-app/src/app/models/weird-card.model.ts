@@ -134,6 +134,12 @@ export interface StoredStatCard {
   createdAt: string;
   prompt: string;
   promptHash: string;
+  /** Set when the card was generated inside a project ("Add a stat") — such
+   *  cards live in that project only, never in the profile Saved/Drafts tabs. */
+  projectId?: string;
+  /** Name of the document this card was bulk-imported from (absent for cards
+   *  generated from a typed prompt). Used to group a project's grid by source. */
+  importFile?: string;
   data: WeirdCard;
 }
 

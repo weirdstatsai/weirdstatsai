@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { RouterModule } from '@angular/router';
 import { SharedModule } from '../shared/shared.module';
-import { ProjectImportPage } from './project-import.page';
+import { ProjectGeneratePage } from './project-generate.page';
 
 @NgModule({
   imports: [
@@ -12,8 +12,8 @@ import { ProjectImportPage } from './project-import.page';
     FormsModule,
     IonicModule,
     SharedModule,
-    RouterModule.forChild([{ path: '', component: ProjectImportPage }]),
+    RouterModule.forChild([{ path: '', component: ProjectGeneratePage }]),
   ],
-  declarations: [ProjectImportPage],
+  declarations: [ProjectGeneratePage],
 })
-export class ProjectImportPageModule {}
+export class ProjectGeneratePageModule {}

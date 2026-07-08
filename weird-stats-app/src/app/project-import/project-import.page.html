@@ -10,18 +10,20 @@
 </ion-header>
 
 <ion-content>
-  <input #pdfInput type="file" accept="application/pdf,.pdf" hidden (change)="onFileSelected($event)" />
+  <input #pdfInput type="file"
+    accept=".pdf,.docx,.xlsx,.csv,.tsv,.txt,.md,application/pdf,text/csv,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    hidden (change)="onFileSelected($event)" />
 
   <!-- Upload / picked view -->
   <div class="import-body" *ngIf="!analyzing">
-    <h1 class="import-title">Import a PDF</h1>
-    <p class="import-sub">We'll read the PDF and turn its data into stat cards for this project.</p>
+    <h1 class="import-title">Import a document</h1>
+    <p class="import-sub">We'll read the file and turn its data into stat cards for this project.</p>
 
     <!-- Dropzone (empty) -->
     <div class="dropzone" *ngIf="!file" (click)="pdfInput.click()">
       <div class="dropzone-icon"><ion-icon name="cloud-upload-outline"></ion-icon></div>
       <p class="dropzone-title">Upload from your device</p>
-      <p class="dropzone-hint">PDF · up to 20 MB</p>
+      <p class="dropzone-hint">PDF, Word, Excel, CSV, TXT · up to 15 MB</p>
     </div>
 
     <button class="choose-btn" *ngIf="!file" (click)="pdfInput.click()">
@@ -41,15 +43,17 @@
         </button>
       </div>
 
-      <!-- Agent note (future fulfillment) -->
+      <!-- Agent note -->
       <div class="agent-note">
         <ion-icon name="sparkles-outline"></ion-icon>
-        <span>An AI agent will read this PDF and generate graphs automatically.</span>
+        <span>An AI agent reads this document and turns its data into stat cards.</span>
       </div>
 
       <button class="generate-btn" (click)="generate()">
         <ion-icon name="color-wand-outline"></ion-icon> Generate graphs
       </button>
+
+      <p class="import-error" *ngIf="errorMsg">{{ errorMsg }}</p>
     </ng-container>
   </div>
 
@@ -57,14 +61,26 @@
   <div class="analyzing" *ngIf="analyzing">
     <div class="analyzing-bar">
       <div class="spin"></div>
-      <span>Analyzing {{ file?.name }}…</span>
+      <span>{{ statusMsg || ('Analyzing ' + file?.name + '…') }}</span>
     </div>
-    <div class="graph-skeletons">
+
+    <p class="analyzing-progress" *ngIf="totalPlanned > 0">
+      {{ cards.length }} of {{ totalPlanned }} cards ready
+    </p>
+
+    <!-- Cards appear live as the agent builds them -->
+    <div class="import-grid" *ngIf="cards.length > 0">
+      <div class="import-card" *ngFor="let card of cards">
+        <app-weird-card [card]="card.data" size="feed"></app-weird-card>
+      </div>
+    </div>
+
+    <!-- Skeletons while nothing has landed yet -->
+    <div class="graph-skeletons" *ngIf="cards.length === 0">
       <div class="gsk" *ngFor="let n of [1,2,3,4]">
         <span class="gsk-line"></span>
         <span class="gsk-body"></span>
       </div>
     </div>
-    <p class="analyzing-caption">Generating stat cards…</p>
   </div>
 </ion-content>

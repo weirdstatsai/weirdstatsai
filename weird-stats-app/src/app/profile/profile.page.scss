@@ -193,43 +193,56 @@ $yellow: #BA7517;
 }
 
 // ── Action buttons ────────────────────────────────────────────────────────
+// Compact centered pills — solid ink primary, hairline-outline secondary —
+// matching the minimal-ink language of the project pages.
 .profile-actions {
   display: flex;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
   margin-bottom: 16px;
 }
 
 .action-btn {
-  flex: 1;
-  height: 34px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 700;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: -0.1px;
   border: none;
   cursor: pointer;
-  transition: opacity 0.15s ease;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
+  transition: transform 0.12s ease, background 0.15s ease;
 
-  &:active { opacity: 0.8; }
+  ion-icon { font-size: 15px; }
+  &:active { transform: scale(0.96); }
 
   &.primary {
-    background: rgba($purple, 0.1);
-    color: $purple;
+    background: #1a1a2e;
+    color: #fff;
+    ion-icon { color: rgba(255,255,255,0.85); }
   }
 
   &.secondary {
-    background: rgba(0,0,0,0.06);
-    color: var(--ion-color-dark);
+    background: #fff;
+    color: #1a1a2e;
+    border: 1px solid rgba(0,0,0,0.12);
+    ion-icon { color: rgba(0,0,0,0.45); }
+    &:active { background: #f6f6f9; }
   }
 
   &.icon-btn {
-    flex: 0 0 34px;
-    background: rgba(0,0,0,0.06);
-    color: var(--ion-color-dark);
-    ion-icon { font-size: 18px; }
+    flex: 0 0 36px;
+    width: 36px;
+    padding: 0;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.12);
+    color: #1a1a2e;
+    ion-icon { font-size: 17px; }
   }
 }
 
@@ -1035,14 +1048,26 @@ $yellow: #BA7517;
   &:active { opacity: 0.85; }
 }
 
-.proj-list { display: flex; flex-direction: column; gap: 8px; }
+// One column on phones, two on the ≥850px desktop shell — same hairline
+// tile language either way.
+.proj-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+
+  @media (min-width: 850px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+}
 
 .proj-row {
-  display: flex; align-items: center; gap: 11px;
+  display: flex; align-items: center; gap: 12px;
   width: 100%; text-align: left;
-  background: #fff; border: 0.5px solid rgba(0,0,0,0.07);
-  border-radius: 14px; padding: 10px; cursor: pointer;
-  font-family: inherit; transition: transform 0.12s, box-shadow 0.12s;
+  background: #fff; border: 0.5px solid rgba(0,0,0,0.08);
+  border-radius: 16px; padding: 12px; cursor: pointer;
+  font-family: inherit; transition: transform 0.12s, box-shadow 0.15s, border-color 0.15s;
+  &:hover { box-shadow: 0 4px 18px rgba(20,22,31,0.06); border-color: rgba(0,0,0,0.14); }
   &:active { transform: scale(0.985); }
 }
 .proj-thumb {
@@ -1055,19 +1080,22 @@ $yellow: #BA7517;
 .proj-name {
   font-size: 14px; font-weight: 600; color: #14161f; letter-spacing: -0.2px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-transform: capitalize;
 }
 .proj-sub { font-size: 11px; color: var(--ion-color-medium); }
 .proj-arrow { font-size: 18px; color: rgba(0,0,0,0.22); flex-shrink: 0; }
 
 .proj-add {
   display: flex; align-items: center; justify-content: center; gap: 6px;
-  width: 100%; margin-top: 2px;
+  width: 100%;
   border: 1.5px dashed rgba(0,0,0,0.14);
   background: transparent;
-  border-radius: 14px; padding: 13px;
+  border-radius: 16px; padding: 13px; min-height: 70px;
   color: #14161f; font-size: 13px; font-weight: 600;
   cursor: pointer; font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
   ion-icon { font-size: 17px; color: #14161f; }
+  &:hover { border-color: rgba(0,0,0,0.28); }
   &:active { background: rgba(0,0,0,0.03); }
 }
 

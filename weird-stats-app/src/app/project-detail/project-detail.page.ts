@@ -1,10 +1,11 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ModalController, ToastController } from '@ionic/angular';
-import { Subscription } from 'rxjs';
+import { ModalController } from '@ionic/angular';
+import { Subscription, of, switchMap } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { ProjectService } from '../services/project.service';
 import { Project } from '../models/project.model';
+import { StoredStatCard } from '../models/weird-card.model';
 import { ProjectAddSheetComponent } from '../shared/project-add-sheet/project-add-sheet.component';
 
 @Component({
@@ -16,8 +17,13 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
   project?: Project;
   loading = true;
   statCount = 0;
+  cards: StoredStatCard[] = [];
+  /** Cards grouped by source — one section per imported document, plus one
+   *  for individually added stats. Newest group first. */
+  groups: Array<{ label: string; icon: string; cards: StoredStatCard[] }> = [];
   private projectId = '';
   private sub?: Subscription;
+  private statsSub?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
@@ -25,7 +31,6 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     private authService: AuthService,
     private projectService: ProjectService,
     private modalCtrl: ModalController,
-    private toastCtrl: ToastController,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -37,9 +42,38 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
       this.loading = false;
       this.cdr.detectChanges();
     });
+
+    // Live stream of the stats generated inside this project.
+    this.statsSub = this.authService.user$.pipe(
+      switchMap(user => user
+        ? this.projectService.projectStats$(user.uid, this.projectId)
+        : of([] as StoredStatCard[])),
+    ).subscribe(cards => {
+      this.cards = cards;
+      this.statCount = cards.length;
+      this.groups = this.buildGroups(cards);
+      this.cdr.detectChanges();
+    });
   }
 
-  ngOnDestroy(): void { this.sub?.unsubscribe(); }
+  /** Split the (already newest-first) cards into per-source sections. */
+  private buildGroups(cards: StoredStatCard[]): Array<{ label: string; icon: string; cards: StoredStatCard[] }> {
+    const byKey = new Map<string, StoredStatCard[]>();
+    for (const c of cards) {
+      const key = c.importFile ?? '__added__';
+      if (!byKey.has(key)) byKey.set(key, []);
+      byKey.get(key)!.push(c);
+    }
+    // Map iteration preserves first-seen order — since cards arrive newest
+    // first, groups are ordered by their most recent card.
+    return [...byKey.entries()].map(([key, list]) => ({
+      label: key === '__added__' ? 'Added stats' : key,
+      icon: key === '__added__' ? 'sparkles-outline' : 'document-text-outline',
+      cards: list,
+    }));
+  }
+
+  ngOnDestroy(): void { this.sub?.unsubscribe(); this.statsSub?.unsubscribe(); }
 
   /** Monogram initials derived from the project name (e.g. "telangana stats" → "TS"). */
   get initials(): string {
@@ -74,12 +108,23 @@ export class ProjectDetailPage implements OnInit, OnDestroy {
     else if (data === 'bulk') this.addBulk();
   }
 
-  private async addSingle(): Promise<void> {
-    const t = await this.toastCtrl.create({ message: 'Single-stat add is coming soon', duration: 1600, color: 'primary' });
-    await t.present();
+  private addSingle(): void {
+    this.router.navigate(['/project', this.projectId, 'generate']);
   }
 
   private addBulk(): void {
     this.router.navigate(['/project', this.projectId, 'import']);
+  }
+
+  open(card: StoredStatCard): void {
+    this.router.navigate(['/card'], {
+      state: { card, fromSaved: true, returnUrl: `/project/${this.projectId}` },
+    });
+  }
+
+  // Same span rules as the home/profile feeds.
+  isFullWidth(card: StoredStatCard): boolean {
+    const t = card.data?.cardType;
+    return t === 'map' || t === 'fact' || t === 'ranking' || t === 'table';
   }
 }

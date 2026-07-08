@@ -3,9 +3,10 @@ import { Router } from '@angular/router';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { ModalController } from '@ionic/angular';
-import { Subscription, firstValueFrom } from 'rxjs';
+import { Subscription, firstValueFrom, of, switchMap } from 'rxjs';
 import { StoredStatCard } from '../models/weird-card.model';
 import { MembershipService, UsageInfo } from '../services/membership.service';
+import { EmojiService } from '../services/emoji.service';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 
 const SUGGESTIONS = [
@@ -37,6 +38,7 @@ export class HomePage implements OnInit, OnDestroy {
 
   private cardSub?: Subscription;
   private authSub?: Subscription;
+  private emojiSub?: Subscription;
   private usageTimer?: ReturnType<typeof setInterval>;
 
   constructor(
@@ -45,6 +47,7 @@ export class HomePage implements OnInit, OnDestroy {
     private afAuth: AngularFireAuth,
     private modalCtrl: ModalController,
     private membership: MembershipService,
+    private emojiService: EmojiService,
   ) {}
 
   ionViewWillEnter(): void {
@@ -62,15 +65,18 @@ export class HomePage implements OnInit, OnDestroy {
         this.userName = user.displayName
           ? user.displayName.split(' ')[0]
           : (user.email?.split('@')[0] ?? '');
-        this.userEmoji = localStorage.getItem('weird_stats_emoji_' + user.uid) ?? '';
         this.refreshUsage();
       } else {
         this.userName = '';
-        this.userEmoji = '';
         this.usage = null;
         this.usageCountdown = '';
       }
     });
+
+    // Avatar emoji follows the account (Firestore-synced).
+    this.emojiSub = this.afAuth.authState.pipe(
+      switchMap(user => user ? this.emojiService.emoji$(user.uid) : of('')),
+    ).subscribe(emoji => { this.userEmoji = emoji; });
 
     // Recompute the countdown text from the cached resetAt every minute —
     // no extra Firestore reads, just a local clock tick.
@@ -96,6 +102,7 @@ export class HomePage implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.cardSub?.unsubscribe();
     this.authSub?.unsubscribe();
+    this.emojiSub?.unsubscribe();
     if (this.usageTimer) clearInterval(this.usageTimer);
   }
 

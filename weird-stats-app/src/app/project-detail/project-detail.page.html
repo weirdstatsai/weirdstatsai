@@ -33,8 +33,23 @@
       </button>
     </div>
 
+    <!-- Stats generated in this project, one section per source -->
+    <ng-container *ngFor="let group of groups">
+      <div class="group-head">
+        <span class="group-icon"><ion-icon [name]="group.icon"></ion-icon></span>
+        <span class="group-label">{{ group.label }}</span>
+        <span class="group-count">{{ group.cards.length }}</span>
+        <span class="group-rule"></span>
+      </div>
+      <div class="proj-grid">
+        <div class="proj-card" [class.span-full]="isFullWidth(card)" *ngFor="let card of group.cards" (click)="open(card)">
+          <app-weird-card [card]="card.data" size="feed"></app-weird-card>
+        </div>
+      </div>
+    </ng-container>
+
     <!-- Empty state -->
-    <div class="body-empty">
+    <div class="body-empty" *ngIf="cards.length === 0">
       <div class="body-empty-icon"><ion-icon name="albums-outline"></ion-icon></div>
       <p class="body-empty-title">No stats yet</p>
       <p class="body-empty-text">Add a stat, or import a PDF to generate graphs in bulk.</p>

@@ -14,7 +14,7 @@ import { RankStyle } from '../shared/cards/card-ranking/card-ranking.component';
 import { TableStyle } from '../shared/cards/card-table/card-table.component';
 import { KpiStyle } from '../shared/cards/card-kpi/card-kpi.component';
 import { VersusStyle } from '../shared/cards/card-versus/card-versus.component';
-import { MapStyle } from '../shared/cards/card-map/card-map.component';
+import { MapStyle, hasMappableRows } from '../shared/cards/card-map/card-map.component';
 import { MembershipService } from '../services/membership.service';
 import { AdminService } from '../services/admin.service';
 import { DraftService } from '../services/draft.service';
@@ -196,12 +196,18 @@ export class CardDetailPage implements OnInit {
       .filter(s => this.versusStyleLabels[s])
       .map(s => ({ key: s as VersusStyle, label: this.versusStyleLabels[s] }));
 
-    // Map alts
-    const mapKeys = ui?.mapStyles?.length
-      ? ui.mapStyles : ['choropleth', 'pins', 'bubbles'];
-    this.mapAltStyles = (mapKeys as MapStyle[])
-      .filter(s => ['choropleth', 'pins', 'bubbles'].includes(s))
-      .map(s => this.mapAltStyles.find(a => a.key === s) ?? { key: s, label: s });
+    // Map alts — only when the world map can actually draw this card's rows.
+    // Sub-national rows (districts, states…) render an identical ranked-list
+    // fallback in every style, so offering "alternatives" is pure noise.
+    if (this.card?.cardType === 'map' && !hasMappableRows(this.card)) {
+      this.mapAltStyles = [];
+    } else {
+      const mapKeys = ui?.mapStyles?.length
+        ? ui.mapStyles : ['choropleth', 'pins', 'bubbles'];
+      this.mapAltStyles = (mapKeys as MapStyle[])
+        .filter(s => ['choropleth', 'pins', 'bubbles'].includes(s))
+        .map(s => this.mapAltStyles.find(a => a.key === s) ?? { key: s, label: s });
+    }
 
     // Restore previously selected style
     const saved = ui?.selectedStyle;
@@ -593,12 +599,12 @@ export class CardDetailPage implements OnInit {
     } else if (this.storedCard?.publishStatus === 'private') {
       buttons.push(
         { text: 'Make public', icon: 'earth-outline', handler: () => this.makePublic() },
-        { text: 'Move to Drafts', icon: 'document-text-outline', handler: () => this.moveToDrafts() },
+        { text: 'Duplicate card', icon: 'copy-outline', handler: () => this.duplicateCard() },
       );
     } else if (this.storedCard?.publishStatus === 'published') {
       buttons.push(
         { text: 'Make private', icon: 'lock-closed-outline', handler: () => this.makePrivate() },
-        { text: 'Move to Drafts', icon: 'document-text-outline', handler: () => this.moveToDrafts() },
+        { text: 'Duplicate card', icon: 'copy-outline', handler: () => this.duplicateCard() },
       );
     }
 
@@ -713,19 +719,28 @@ export class CardDetailPage implements OnInit {
     }
   }
 
-  /** Move a saved card back to a device-local draft. */
-  private async moveToDrafts(): Promise<void> {
+  /**
+   * Copy a saved card into a brand-new draft: fresh id, draft state, current
+   * on-screen edits included. The original stays saved and untouched; the
+   * copy lives in Drafts until the user explicitly saves/publishes it.
+   * Project/import linkage is intentionally NOT copied — the duplicate is a
+   * fresh personal draft.
+   */
+  private async duplicateCard(): Promise<void> {
     const uid = await this.uid();
-    const card = this.storedCard;
-    if (!card?.id || !uid) return;
-    try {
-      await this.afs.doc(`stats/${card.id}`).delete();
-      this.drafts.add(uid, { ...card, publishStatus: 'draft' });
-      this.storedCard = { ...card, publishStatus: 'draft' };
-      this.toast('Moved to Drafts');
-    } catch {
-      this.toast('Could not move card.');
-    }
+    if (!this.card || !uid) return;
+    const copy: StoredStatCard = {
+      id: this.afs.createId(),
+      status: 'completed',
+      publishStatus: 'draft',
+      createdBy: uid,
+      createdAt: new Date().toISOString(),
+      prompt: this.storedCard?.prompt ?? '',
+      promptHash: '',
+      data: JSON.parse(JSON.stringify(this.card)),
+    };
+    this.drafts.add(uid, copy);
+    this.toast('Copy added to your Drafts');
   }
 
   private async promptSignIn(): Promise<void> {

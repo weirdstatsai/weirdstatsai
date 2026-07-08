@@ -59,6 +59,7 @@ export interface AppConfig {
     freeSavedCards: number;
     maxProjectNameLength: number;
     maxBulkPdfSizeMb: number;
+    maxStatsPerProject: number;
   };
   featureFlags: FeatureFlags;
 }
@@ -97,6 +98,7 @@ export const APP_CONFIG: AppConfig = {
     freeSavedCards: 10,
     maxProjectNameLength: 60,
     maxBulkPdfSizeMb: 20,
+    maxStatsPerProject: 30,
   },
 
   // ── Toggle features here ──────────────────────────────────────────────────

@@ -1,18 +1,17 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { ModalController, ToastController } from '@ionic/angular';
-import { Subscription } from 'rxjs';
+import { Subscription, of, switchMap } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { SeoData, SeoService } from './services/seo.service';
 import { ConsentService } from './services/consent.service';
 import { AnalyticsService } from './services/analytics.service';
+import { EmojiService } from './services/emoji.service';
 
 interface MenuItem {
   label: string;
   icon: string;
 }
-
-const EMOJI_STORAGE_KEY = 'weird_stats_emoji_';
 
 @Component({
   selector: 'app-root',
@@ -54,6 +53,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private seo: SeoService,
     private consent: ConsentService,
     private analytics: AnalyticsService,
+    private emojiService: EmojiService,
   ) {}
 
   ngOnInit(): void {
@@ -63,10 +63,14 @@ export class AppComponent implements OnInit, OnDestroy {
     if (status === 'granted') this.analytics.init();
     else if (status === 'unset') this.showConsentBanner = true;
 
-    this.authSub = this.authService.user$.subscribe(user => {
-      this.isLoggedIn = !!user;
-      this.userEmoji = user ? (localStorage.getItem(EMOJI_STORAGE_KEY + user.uid) ?? '') : '';
-    });
+    // Avatar emoji follows the account (Firestore-synced) and updates live
+    // when the user picks a new one.
+    this.authSub = this.authService.user$.pipe(
+      switchMap(user => {
+        this.isLoggedIn = !!user;
+        return user ? this.emojiService.emoji$(user.uid) : of('');
+      }),
+    ).subscribe(emoji => { this.userEmoji = emoji; });
     this.routerSub = this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         const url = event.urlAfterRedirects.split(/[?#]/)[0];

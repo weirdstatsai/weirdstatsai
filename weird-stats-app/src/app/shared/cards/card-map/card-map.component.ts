@@ -7,6 +7,21 @@ import type { CountryFeature } from '../../../services/world-topo.service';
 
 export type MapStyle = 'choropleth' | 'pins' | 'bubbles';
 
+/**
+ * True when at least one row label resolves to a country the world map can
+ * actually draw. Mirrors the component's own marker/choropleth resolution —
+ * used by card-detail to hide map-style alternatives that would render empty
+ * (e.g. districts or states, which the world atlas doesn't contain).
+ */
+export function hasMappableRows(card: WeirdCard | undefined): boolean {
+  return (card?.rows ?? []).some(r => {
+    const key = (r.label || '').toLowerCase().trim();
+    const isoId = r.extra ? parseInt(r.extra, 10) : NaN;
+    const id = !isNaN(isoId) ? isoId : NAME_TO_ID[key];
+    return COUNTRY_COORDS[key] !== undefined || id !== undefined;
+  });
+}
+
 const NAME_TO_ID: Record<string, number> = {
   'afghanistan':2,'albania':8,'algeria':12,'angola':24,'argentina':32,
   'australia':36,'austria':40,'azerbaijan':31,'bangladesh':50,'belarus':112,

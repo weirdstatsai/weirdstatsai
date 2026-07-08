@@ -124,8 +124,8 @@
       </div>
     </div>
 
-    <!-- Alternatives: map card -->
-    <div class="alts-section" *ngIf="card.cardType === 'map' && !viewOnly">
+    <!-- Alternatives: map card (hidden when the rows can't render on the map) -->
+    <div class="alts-section" *ngIf="card.cardType === 'map' && !viewOnly && mapAltStyles.length > 0">
       <p class="alts-label">Alternatives</p>
       <div class="alts-hscroll">
         <div class="rank-alt-wrap"

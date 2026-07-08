@@ -1,0 +1,63 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <button class="nav-back" (click)="goBack()">
+        <ion-icon name="chevron-back"></ion-icon>
+        <span>{{ project?.project_name || 'Project' }}</span>
+      </button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <!-- Prompt hero — same ask experience as Home, scoped to this project -->
+  <div class="hero">
+    <h1>Add a stat to <span class="accent">{{ project?.project_name || 'this project' }}.</span></h1>
+
+    <div class="ask-card">
+      <ion-icon name="search-outline" class="ask-search-icon"></ion-icon>
+      <textarea
+        [(ngModel)]="prompt"
+        placeholder="Ask a question and we'll turn it into a single stat card for this project. e.g. Which district in Telangana has the highest literacy rate?"
+        class="ask-textarea"
+        rows="2"
+        [disabled]="isGenerating"
+        (keydown.enter)="$event.preventDefault(); generate()">
+      </textarea>
+    </div>
+    <button class="ask-btn" (click)="generate()" [disabled]="isGenerating || !prompt.trim()">
+      <ion-spinner *ngIf="isGenerating" name="crescent"></ion-spinner>
+      <ion-icon *ngIf="!isGenerating" name="sparkles-outline"></ion-icon>
+      {{ isGenerating ? (statusMsg || 'Generating…') : 'Generate' }}
+    </button>
+
+    <p class="error-msg" *ngIf="errorMsg">{{ errorMsg }}</p>
+  </div>
+
+  <!-- Only the stats generated through "Add a stat" in this project -->
+  <div class="section-header" *ngIf="cards.length > 0">
+    <p class="section-title">In this project</p>
+    <span class="section-count">{{ cards.length }}</span>
+  </div>
+
+  <div class="proj-grid" *ngIf="cards.length > 0">
+    <div class="proj-card" [class.span-full]="isFullWidth(card)" *ngFor="let card of cards" (click)="open(card)">
+      <app-weird-card [card]="card.data" size="feed"></app-weird-card>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div class="body-empty" *ngIf="!isLoadingCards && cards.length === 0 && !isGenerating">
+    <div class="body-empty-icon"><ion-icon name="sparkles-outline"></ion-icon></div>
+    <p class="body-empty-title">No stats yet</p>
+    <p class="body-empty-text">Ask a question above — every card you generate here stays in this project.</p>
+  </div>
+
+  <!-- Skeleton while the project's cards load -->
+  <div class="skeleton-row" *ngIf="isLoadingCards">
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+  </div>
+
+</ion-content>

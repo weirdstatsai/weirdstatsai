@@ -24,6 +24,20 @@ ion-content { --background: #ffffff; }
 // ── Identity ────────────────────────────────────────────────────────────────
 .hero { padding: 22px 22px 20px; }
 
+// Desktop shell: tile sits beside the name/meta column instead of stacked.
+@media (min-width: 850px) {
+  .hero {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 18px;
+    align-items: center;
+    padding-top: 30px;
+  }
+  .hero .mono-tile { grid-row: 1 / 3; margin-bottom: 0; }
+  .hero .proj-name { font-size: 26px; align-self: end; }
+  .hero .proj-meta { align-self: start; }
+}
+
 .mono-tile {
   width: 54px; height: 54px; border-radius: 15px;
   background: $ink; color: #fff;
@@ -35,6 +49,7 @@ ion-content { --background: #ffffff; }
 .proj-name {
   font-size: 22px; font-weight: 600; color: $ink;
   letter-spacing: -0.5px; line-height: 1.2; margin: 0;
+  text-transform: capitalize;
 }
 
 .proj-meta {
@@ -53,8 +68,66 @@ ion-content { --background: #ffffff; }
   background: $ink; color: #fff;
   font-size: 15px; font-weight: 600; letter-spacing: -0.2px;
   cursor: pointer; font-family: inherit;
+  transition: opacity 0.15s;
   ion-icon { font-size: 19px; }
+  &:hover { opacity: 0.9; }
   &:active { opacity: 0.85; }
+
+  // Desktop: a full-monitor-width button reads as a banner — cap it.
+  @media (min-width: 850px) {
+    max-width: 300px;
+  }
+}
+
+// ── Source separators ───────────────────────────────────────────────────────
+// One header per import batch / added-stats section, so cards from different
+// documents never visually mix.
+.group-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 22px 22px 0;
+}
+.group-icon {
+  width: 24px; height: 24px; border-radius: 7px; flex-shrink: 0;
+  border: 1px solid $hair;
+  display: flex; align-items: center; justify-content: center;
+  ion-icon { font-size: 13px; color: $muted; }
+}
+.group-label {
+  font-size: 12px; font-weight: 600; color: $ink; letter-spacing: 0.2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 60%;
+}
+.group-count {
+  font-size: 10.5px; font-weight: 700; color: $muted;
+  background: #f0f0f4; border-radius: 20px; padding: 1px 7px; flex-shrink: 0;
+}
+.group-rule { flex: 1; height: 1px; background: $hair; }
+
+// ── Project stats grid ──────────────────────────────────────────────────────
+.proj-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: dense;
+  gap: 12px;
+  padding: 14px 22px 8px;
+
+  @media (min-width: 850px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+.proj-grid:last-of-type { padding-bottom: 28px; }
+
+.proj-card {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  &:hover { transform: translateY(-2px); }
+  &.span-full { grid-column: 1 / -1; }
+
+  // Full-width card types stay 2-up columns wide on desktop, not banner-wide.
+  @media (min-width: 850px) {
+    &.span-full { grid-column: span 2; }
+  }
 }
 
 // ── Empty state ─────────────────────────────────────────────────────────────

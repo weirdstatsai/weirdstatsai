@@ -82,14 +82,14 @@
         <div class="skeleton-line"></div>
       </div>
     </div>
-    <div class="pin-legend" *ngIf="size !== 'alt'">
+    <div class="pin-legend" *ngIf="size !== 'alt' && !allUnmapped">
       <div class="legend-item" *ngFor="let m of legendRows">
         <span class="legend-dot" [style.background]="m.color"></span>
         <span class="legend-text">{{ m.label }}</span>
         <span class="legend-pct" [style.color]="m.color">{{ m.pct }}%</span>
       </div>
     </div>
-    <div class="pin-legend-mini" *ngIf="size === 'alt'">
+    <div class="pin-legend-mini" *ngIf="size === 'alt' && !allUnmapped">
       <div class="legend-mini-item" *ngFor="let m of legendRows">
         <span class="legend-dot-mini" [style.background]="m.color"></span>
         <span class="legend-mini-text">{{ m.pct }}%</span>
@@ -127,13 +127,28 @@
         <div class="skeleton-line"></div>
       </div>
     </div>
-    <div class="bubble-legend" *ngIf="size !== 'alt'">
+    <div class="bubble-legend" *ngIf="size !== 'alt' && !allUnmapped">
       <div class="bubble-legend-item" *ngFor="let m of legendRows">
         <span class="bubble-swatch" [style.background]="m.color"></span>
         <span class="bubble-label">{{ m.label }}</span>
         <span class="bubble-val" [style.color]="m.color">{{ fmt(m.value) }}{{ m.unit ? ' ' + m.unit : '' }}</span>
       </div>
     </div>
+  </ng-container>
+
+  <!-- No row matched the world map (districts, states, cities…): pins and
+       bubbles have nothing to draw, so show the ranked list instead of an
+       empty card. Choropleth already renders its own list above. -->
+  <ng-container *ngIf="allUnmapped && mapStyle !== 'choropleth'">
+    <div class="unmapped-list">
+      <div class="unmapped-item" *ngFor="let m of unmapped; let i = index">
+        <span class="unmapped-rank">{{ i + 1 }}</span>
+        <span class="unmapped-dot" [style.background]="m.color"></span>
+        <span class="unmapped-label">{{ m.label }}</span>
+        <span class="unmapped-val" [style.color]="accent">{{ fmt(m.value) }}{{ m.unit ? ' ' + m.unit : '' }}</span>
+      </div>
+    </div>
+    <p class="map-insight" *ngIf="card.insight && size === 'full'">{{ card.insight }}</p>
   </ng-container>
 
 </div>

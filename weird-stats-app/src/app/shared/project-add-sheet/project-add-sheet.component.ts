@@ -28,10 +28,10 @@ import { ModalController } from '@ionic/angular';
           <ion-icon name="document-text-outline"></ion-icon>
         </span>
         <span class="opt-text">
-          <span class="opt-title">Import a PDF
+          <span class="opt-title">Import a file
             <span class="opt-badge">Bulk</span>
           </span>
-          <span class="opt-sub">Let AI turn a document into graphs</span>
+          <span class="opt-sub">PDF, Word, Excel, or CSV → graphs</span>
         </span>
         <ion-icon class="opt-arrow" name="chevron-forward"></ion-icon>
       </button>

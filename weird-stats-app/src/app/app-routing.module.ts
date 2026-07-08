@@ -69,6 +69,10 @@ const routes: Routes = [
     loadChildren: () => import('./project-import/project-import.module').then(m => m.ProjectImportPageModule),
   },
   {
+    path: 'project/:id/generate',
+    loadChildren: () => import('./project-generate/project-generate.module').then(m => m.ProjectGeneratePageModule),
+  },
+  {
     path: 'project/:id',
     loadChildren: () => import('./project-detail/project-detail.module').then(m => m.ProjectDetailPageModule),
   },

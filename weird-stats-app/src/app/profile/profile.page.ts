@@ -19,8 +19,7 @@ import { PublishModalComponent } from '../shared/publish-modal/publish-modal.com
 import { RankStyle } from '../shared/cards/card-ranking/card-ranking.component';
 import { KpiStyle } from '../shared/cards/card-kpi/card-kpi.component';
 import { TableStyle } from '../shared/cards/card-table/card-table.component';
-
-const EMOJI_STORAGE_KEY = 'weird_stats_emoji_';
+import { EmojiService } from '../services/emoji.service';
 
 @Component({
   selector: 'app-profile',
@@ -37,10 +36,13 @@ export class ProfilePage implements OnInit, OnDestroy {
   activeFilter: 'all' | 'chart' | 'map' | 'fact' = 'all';
   activeTab: 'saved' | 'draft' | 'projects' = 'saved';
   projects: Project[] = [];
+  projectCounts: Record<string, number> = {};
   isCreatingProject = false;
+  userEmoji = '';
   private currentUid = '';
   private sub?: Subscription;
   private projSub?: Subscription;
+  private emojiSub?: Subscription;
 
   // Inline draft alternatives panel
   selectedDraft?: StoredStatCard;
@@ -86,6 +88,7 @@ export class ProfilePage implements OnInit, OnDestroy {
     private drafts: DraftService,
     private projectService: ProjectService,
     private appConfig: AppConfigService,
+    private emojiService: EmojiService,
   ) {}
 
   /** Projects tab is gated behind the `projects` feature flag. */
@@ -108,15 +111,30 @@ export class ProfilePage implements OnInit, OnDestroy {
       }),
     ).subscribe({
       next: docs => {
-        // Saved tab = published + private cards owned by the user
+        // Per-project stat counts for the Projects tab tiles.
+        const counts: Record<string, number> = {};
+        for (const d of docs) {
+          if (d.projectId) counts[d.projectId] = (counts[d.projectId] ?? 0) + 1;
+        }
+        this.projectCounts = counts;
+
+        // Saved tab = published + private cards owned by the user.
+        // Cards generated inside a project (projectId set) live in that
+        // project only — they never show in Saved.
         this.savedCards = docs
           .filter(d => d.data?.title && d.data?.cardType)
+          .filter(d => !d.projectId)
           .filter(d => ['published', 'private'].includes(d.publishStatus ?? 'draft'))
           .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
         this.isLoading = false;
       },
       error: () => { this.savedCards = []; this.isLoading = false; },
     });
+
+    // Avatar emoji follows the account (Firestore-synced).
+    this.emojiSub = this.user$.pipe(
+      switchMap(user => user ? this.emojiService.emoji$(user.uid) : of('')),
+    ).subscribe(emoji => { this.userEmoji = emoji; this.cdr.detectChanges(); });
 
     // Live stream of the user's projects (stored on their user doc)
     this.projSub = this.user$.pipe(
@@ -136,11 +154,7 @@ export class ProfilePage implements OnInit, OnDestroy {
     if (tab === 'saved' || tab === 'draft') this.activeTab = tab;
   }
 
-  ngOnDestroy(): void { this.sub?.unsubscribe(); this.projSub?.unsubscribe(); }
-
-  getEmoji(uid: string): string | null {
-    return localStorage.getItem(EMOJI_STORAGE_KEY + uid);
-  }
+  ngOnDestroy(): void { this.sub?.unsubscribe(); this.projSub?.unsubscribe(); this.emojiSub?.unsubscribe(); }
 
   setFilter(f: 'all' | 'chart' | 'map' | 'fact'): void {
     this.activeFilter = f;
@@ -154,6 +168,16 @@ export class ProfilePage implements OnInit, OnDestroy {
   // ── Projects ──────────────────────────────────────────────────────────────
   projectInitials(name: string): string {
     return projectInitials(name);
+  }
+
+  /** "3 stats · Jul 2026" tile subtitle. */
+  projectSub(p: Project): string {
+    const n = this.projectCounts[p.project_id] ?? 0;
+    const stats = `${n} ${n === 1 ? 'stat' : 'stats'}`;
+    if (!p.createdAt) return stats;
+    const d = new Date(p.createdAt);
+    if (isNaN(d.getTime())) return stats;
+    return `${stats} · ${d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}`;
   }
 
   get projectCount(): number {
@@ -345,14 +369,15 @@ export class ProfilePage implements OnInit, OnDestroy {
   async openAvatarPicker(uid: string): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: EmojiPickerComponent,
-      componentProps: { current: this.getEmoji(uid) },
+      componentProps: { current: this.userEmoji || null },
       breakpoints: [0, 0.6, 0.9],
       initialBreakpoint: 0.6,
       handle: true,
     });
     await modal.present();
     const { data } = await modal.onWillDismiss();
-    if (data) localStorage.setItem(EMOJI_STORAGE_KEY + uid, data);
+    // Saved to the account (Firestore) so the avatar follows every sign-in.
+    if (data) await this.emojiService.set(uid, data);
   }
 
   async openEditSheet(): Promise<void> {
