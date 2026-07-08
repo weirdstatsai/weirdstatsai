@@ -74,7 +74,16 @@
     <div class="og-capture" aria-hidden="true">
       <div class="og-frame" #ogArea [style.background]="ogGradient">
         <div class="og-tile">
-          <app-weird-card [card]="card" size="feed" [fontSize]="factFontSize"></app-weird-card>
+          <div class="og-card-full">
+            <ng-container [ngSwitch]="card.cardType">
+              <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>
+              <app-card-kpi     *ngSwitchCase="'kpi'"     [card]="card" size="full" [kpiStyle]="selectedKpiStyle"></app-card-kpi>
+              <app-card-table   *ngSwitchCase="'table'"   [card]="card" size="full" [tableStyle]="selectedTableStyle"></app-card-table>
+              <app-card-versus  *ngSwitchCase="'versus'"  [card]="card" size="full" [versusStyle]="selectedVersusStyle"></app-card-versus>
+              <app-card-map     *ngSwitchCase="'map'"     [card]="card" size="full" [mapStyle]="selectedMapStyle"></app-card-map>
+              <app-weird-card   *ngSwitchDefault           [card]="card" size="full" [fontSize]="factFontSize"></app-weird-card>
+            </ng-container>
+          </div>
           <div class="og-brand"><span class="og-logo">🐙</span> weirdstats<span class="og-accent">.ai</span></div>
         </div>
       </div>

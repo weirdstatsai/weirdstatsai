@@ -488,15 +488,24 @@ $alt-tile-w: min(45vw, 190px);
   overflow: hidden;
 }
 .og-tile {
-  width: 430px;
+  width: 720px;
   background: #fff;
-  border-radius: 26px;
-  padding: 22px 22px 16px;
+  border-radius: 28px;
+  padding: 30px 30px 20px;
   box-shadow: 0 20px 60px rgba(20, 22, 43, 0.14);
   display: flex;
   flex-direction: column;
 }
-.og-tile app-weird-card {
+// Render the rich full card (chart with axes/values), constrained to the tile.
+.og-card-full {
+  width: 100%;
+}
+.og-card-full app-card-ranking,
+.og-card-full app-card-kpi,
+.og-card-full app-card-table,
+.og-card-full app-card-versus,
+.og-card-full app-card-map,
+.og-card-full app-weird-card {
   display: block;
   width: 100%;
 }
