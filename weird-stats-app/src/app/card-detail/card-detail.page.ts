@@ -36,6 +36,9 @@ export class CardDetailPage implements OnInit {
   statusMsg = '';
   errorMsg = '';
   viewOnly = false;
+  // Logged-out visitor on a shared /card/:id link — drives the sign-in bar
+  // and the "make your own" acquisition CTA.
+  isGuest = false;
   editing = false;
   isSaved = false;
   isAdminView = false;
@@ -316,6 +319,7 @@ export class CardDetailPage implements OnInit {
     this.viewOnly = true;
     this.isPremium = false;
     this.membership.isPremium().then((p) => (this.isPremium = p)).catch(() => {});
+    this.refreshGuest();
     try {
       const snap = await firstValueFrom(this.afs.doc<StoredStatCard>(`stats/${id}`).get());
       this.storedCard = snap?.data() ?? undefined;
@@ -885,5 +889,29 @@ export class CardDetailPage implements OnInit {
   private async toast(msg: string): Promise<void> {
     const t = await this.toastCtrl.create({ message: msg, duration: 1800, position: 'bottom' });
     await t.present();
+  }
+
+  // ── Shared-link visitor (logged-out) acquisition ────────────────────────
+  private async refreshGuest(): Promise<void> {
+    const user = await firstValueFrom(this.authService.user$);
+    this.isGuest = !user;
+  }
+
+  /** Open the sign-in modal; re-check guest state afterwards so the bar/CTA
+   *  disappear the moment they sign in. */
+  async openLogin(): Promise<void> {
+    const { LoginComponent } = await import('../login/login.component');
+    const modal = await this.modalCtrl.create({ component: LoginComponent, cssClass: 'login-modal' });
+    await modal.present();
+    await modal.onWillDismiss();
+    await this.refreshGuest();
+    this.analytics.track('share_signin_click', { card_id: this.storedCard?.id || '' });
+  }
+
+  /** "Make your own" CTA on a shared card — guests sign in first. */
+  goCreate(): void {
+    this.analytics.track('share_cta_click', { card_id: this.storedCard?.id || '' });
+    if (this.isGuest) { this.openLogin(); return; }
+    this.router.navigate(['/home']);
   }
 }

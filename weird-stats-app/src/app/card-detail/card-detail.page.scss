@@ -391,3 +391,81 @@ $alt-tile-w: min(45vw, 190px);
     &:active { opacity: 0.8; }
   }
 }
+
+// ── Shared-link visitor: branded top bar + acquisition CTA ────────────────
+.share-brandbar-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: #1a1a2e;
+  text-decoration: none;
+  .logo-emoji {
+    display: inline-block;
+    font-size: 19px;
+    filter: hue-rotate(345deg) saturate(1.9) brightness(0.92);
+  }
+  .accent { color: #6C5CE7; }
+}
+
+.share-signin-btn {
+  margin-right: 12px;
+  height: 34px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: none;
+  background: #1a1a2e;
+  color: #fff;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s, opacity 0.15s;
+  &:hover { opacity: 0.9; }
+  &:active { transform: scale(0.96); }
+}
+
+.create-cta {
+  margin-top: 28px;
+  padding: 22px 20px;
+  border-radius: 18px;
+  text-align: center;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border: 1px solid rgba(108, 92, 231, 0.14);
+}
+.create-cta-title {
+  margin: 0 0 5px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1a1a2e;
+  letter-spacing: -0.3px;
+  .cta-spark { font-weight: 400; }
+}
+.create-cta-sub {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #6b6b76;
+  line-height: 1.5;
+}
+.create-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 28px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #6C5CE7 0%, #8C7BFF 100%);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(108, 92, 231, 0.35);
+  transition: transform 0.12s;
+  ion-icon { font-size: 17px; }
+  &:active { transform: scale(0.98); }
+}

@@ -1,5 +1,17 @@
 <ion-header class="ion-no-border">
-  <ion-toolbar>
+  <!-- Logged-out visitor on a shared link: branded bar with a sign-in button -->
+  <ion-toolbar *ngIf="viewOnly && isGuest">
+    <a class="share-brandbar-logo" slot="start" routerLink="/home" routerDirection="root">
+      <span class="logo-emoji">🐙</span>
+      <span class="brand-word">WeirdStats<span class="accent">.ai</span></span>
+    </a>
+    <ion-buttons slot="end">
+      <button class="share-signin-btn" (click)="openLogin()">Sign in</button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <!-- Owner / in-app view: back + options -->
+  <ion-toolbar *ngIf="!(viewOnly && isGuest)">
     <ion-buttons slot="start">
       <ion-button (click)="back()" aria-label="Back">
         <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
@@ -108,6 +120,15 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Save Image
       </button>
+
+      <!-- Acquisition CTA — only for logged-out visitors -->
+      <div class="create-cta" *ngIf="isGuest">
+        <p class="create-cta-title">Make your own weird stat <span class="cta-spark">✨</span></p>
+        <p class="create-cta-sub">Turn any question into a shareable card like this — free.</p>
+        <button class="create-cta-btn" (click)="goCreate()">
+          <ion-icon name="sparkles-outline"></ion-icon> Try it free
+        </button>
+      </div>
     </div>
 
     <!-- Alternatives: KPI card -->
