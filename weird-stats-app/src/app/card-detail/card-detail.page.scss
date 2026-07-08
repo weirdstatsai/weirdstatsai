@@ -523,3 +523,17 @@ $alt-tile-w: min(45vw, 190px);
   filter: hue-rotate(345deg) saturate(1.9) brightness(0.92);
 }
 .og-accent { color: #6C5CE7; }
+
+// ── Desktop: keep the single-card reading view a centered column ───────────
+// Without this the card, story, and share buttons stretch across the whole
+// desktop shell (buttons ~380px wide). Cap to a comfortable width, centered.
+@media (min-width: 850px) {
+  .main-card-wrap,
+  .card-info,
+  .share-inline,
+  .create-cta {
+    max-width: 560px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
