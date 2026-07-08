@@ -334,6 +334,10 @@ export class ProfilePage implements OnInit, OnDestroy {
 
   // Move a saved card back to device drafts
   private async _moveToDrafts(card: StoredStatCard): Promise<void> {
+    // A project card must never be pulled out of its project this way. This
+    // path isn't reachable for project cards today (they don't appear in the
+    // profile), but guard it so a future UI change can't regress it.
+    if (card.projectId) return;
     try {
       await this.afs.collection('stats').doc(card.id).delete();
       this.drafts.add(this.currentUid, { ...card, publishStatus: 'draft' });

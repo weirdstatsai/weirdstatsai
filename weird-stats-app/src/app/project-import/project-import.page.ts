@@ -76,6 +76,8 @@ export class ProjectImportPage implements OnInit {
 
     const user = await firstValueFrom(this.authService.user$);
     if (!user) { await this.toast('Sign in to import a PDF', 'danger'); return; }
+    // No project context → refuse, so imported cards always carry a projectId.
+    if (!this.projectId) { await this.toast('Missing project — reopen from your project.', 'danger'); return; }
     const canGenerate = await this.membership.canGenerate();
     if (!canGenerate) { await this.toast('Daily card limit reached — upgrade to import', 'warning'); return; }
 

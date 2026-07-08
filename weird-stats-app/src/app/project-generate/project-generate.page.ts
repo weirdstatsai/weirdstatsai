@@ -76,6 +76,9 @@ export class ProjectGeneratePage implements OnInit, OnDestroy {
     if (!prompt || this.isGenerating) return;
 
     if (!this.uid) { this.toast('Sign in to add stats.'); return; }
+    // No project context → refuse, so a card is never created without a
+    // projectId (which would land it in Saved instead of this project).
+    if (!this.projectId) { this.toast('Missing project — reopen from your project.'); return; }
 
     // Project cap — same limit the bulk import respects.
     if (this.cards.length >= APP_CONFIG.limits.maxStatsPerProject) {

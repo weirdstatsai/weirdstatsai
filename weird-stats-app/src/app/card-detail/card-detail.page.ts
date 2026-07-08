@@ -138,8 +138,14 @@ export class CardDetailPage implements OnInit {
     return user?.uid ?? '';
   }
 
-  /** Stored card with no explicit status (or 'draft') is a draft. */
+  /**
+   * Stored card with no explicit status (or 'draft') is a draft. A card that
+   * belongs to a project is NEVER a draft, regardless of status — this stops
+   * every draft-routing path (edit persistence, delete, the actions menu)
+   * from silently pulling a project card into device Drafts.
+   */
   private isDraftCard(): boolean {
+    if (this.storedCard?.projectId) return false;
     return (this.storedCard?.publishStatus ?? 'draft') === 'draft';
   }
 
