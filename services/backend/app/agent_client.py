@@ -15,12 +15,23 @@ from datetime import datetime, timezone
 
 from openai import AsyncOpenAI
 
-from app.prompts import RESEARCH_PROMPT, FORMAT_PROMPT
+import base64
+
+from app.prompts import RESEARCH_PROMPT, FORMAT_PROMPT, CLASSIFY_PROMPT, DOC_EXTRACT_PROMPT
 
 _client: AsyncOpenAI | None = None
 
 RESEARCH_MODEL = os.getenv("RESEARCH_MODEL", "gpt-4o")
 FORMAT_MODEL = os.getenv("FORMAT_MODEL", "gpt-4o-mini")
+CLASSIFY_MODEL = os.getenv("CLASSIFY_MODEL", "gpt-4o-mini")
+# Document extraction reads tables/charts/scans via native PDF (vision) input —
+# worth the bigger model. It runs once per import; the per-card formatting
+# stays on the cheap model.
+DOC_MODEL = os.getenv("DOC_MODEL", "gpt-4o")
+
+MAX_DOC_FINDINGS = int(os.getenv("MAX_DOC_FINDINGS", "8"))
+
+VALID_CARD_TYPES = {"chart", "ranking", "kpi", "versus", "fact", "table", "map"}
 
 
 def _get_client() -> AsyncOpenAI:
@@ -53,13 +64,53 @@ async def research_agent(prompt: str) -> str:
     return (response.output_text or "").strip()
 
 
-async def format_agent(brief: str) -> dict:
-    """Step 2 — turn the brief into strict WeirdCard JSON (no tools)."""
+async def classify_card_type(prompt: str, brief: str | None = None) -> str | None:
+    """Step 1.5 — dedicated cardType decision (temperature 0, tiny + cheap).
+
+    Splitting this out of the big Format prompt makes the type choice far more
+    reliable: one model, one job. Returns a valid cardType or None on any
+    failure — callers must treat None as "let the Format Agent decide" so the
+    pipeline never breaks on a classifier hiccup.
+    """
+    client = _get_client()
+    # The API requires the word "JSON" in the input when text.format is json_object.
+    user_msg = f"Classify into the cardType JSON.\nQ: {prompt.strip()}"
+    if brief:
+        # Give the classifier the researched row shape — row count and whether
+        # labels are geographic decide ranking vs table vs map.
+        user_msg += f"\n\nDATA (from research):\n{brief[:2000]}"
+    try:
+        response = await client.responses.create(
+            model=CLASSIFY_MODEL,
+            instructions=CLASSIFY_PROMPT,
+            input=user_msg,
+            temperature=0,
+            text={"format": {"type": "json_object"}},
+        )
+        card_type = _parse_json(response.output_text or "").get("cardType")
+        return card_type if card_type in VALID_CARD_TYPES else None
+    except Exception:
+        return None
+
+
+async def format_agent(brief: str, card_type: str | None = None) -> dict:
+    """Step 2 — turn the brief into strict WeirdCard JSON (no tools).
+
+    When the classify step supplied a cardType, it is passed as a constraint
+    rather than left to this agent's judgment.
+    """
     client = _get_client()
     user_msg = (
         "Here is the verified research brief. Turn it into one WeirdStats card as raw JSON.\n\n"
         f"<<<\n{brief}\n>>>"
     )
+    if card_type in VALID_CARD_TYPES:
+        user_msg += (
+            f"\n\nREQUIRED CARD TYPE: cardType MUST be \"{card_type}\" — it was chosen by a "
+            "dedicated classification step. Pick presentationType, chartType, and row count "
+            "consistent with it. Deviate ONLY if the brief's data makes this type impossible "
+            "(and then follow the ROW-COUNT and MAP rules)."
+        )
 
     response = await client.responses.create(
         model=FORMAT_MODEL,
@@ -81,9 +132,72 @@ def _parse_json(raw: str) -> dict:
     return json.loads(s)
 
 
+# Bound the tokens a text-based document can consume (~15k tokens).
+MAX_DOC_TEXT_CHARS = int(os.getenv("MAX_DOC_TEXT_CHARS", "60000"))
+
+
+async def doc_agent(
+    filename: str,
+    pdf_bytes: bytes | None = None,
+    text: str | None = None,
+    max_findings: int | None = None,
+) -> dict:
+    """Document Stats Agent — reads a document and returns:
+        {"documentTitle": str, "findings": [{"question", "shape", "brief"}, ...]}
+
+    PDFs are sent natively (text + vision, so tables, charts, and scanned pages
+    all work). Word/CSV/Excel/plain-text arrive as pre-extracted `text`.
+    Each finding's `brief` uses the same labeled-sections format the Format
+    Agent already consumes, so downstream is classify -> format -> validate,
+    identical to the single-prompt pipeline. Raises on failure.
+    """
+    client = _get_client()
+    today = datetime.now(timezone.utc).date().isoformat()
+    # A client-supplied cap (project's remaining space) can lower the ceiling,
+    # never raise it.
+    limit = min(MAX_DOC_FINDINGS, max_findings) if max_findings else MAX_DOC_FINDINGS
+    instructions = DOC_EXTRACT_PROMPT.format(
+        max_findings=limit,
+        doc_name=filename,
+        today=today,
+    )
+
+    if pdf_bytes is not None:
+        data_url = "data:application/pdf;base64," + base64.b64encode(pdf_bytes).decode()
+        content = [
+            {"type": "input_file", "filename": filename, "file_data": data_url},
+            {"type": "input_text",
+             "text": "Extract the stat-worthy findings from this document as the JSON described."},
+        ]
+    else:
+        content = [
+            {"type": "input_text",
+             "text": "Document contents below. Extract the stat-worthy findings as the JSON described.\n\n"
+                     f"<<<\n{(text or '')[:MAX_DOC_TEXT_CHARS]}\n>>>"},
+        ]
+
+    response = await client.responses.create(
+        model=DOC_MODEL,
+        instructions=instructions,
+        input=[{"role": "user", "content": content}],
+        text={"format": {"type": "json_object"}},
+    )
+    result = _parse_json(response.output_text or "")
+    findings = result.get("findings")
+    if not isinstance(findings, list):
+        raise ValueError("doc_agent returned no findings list")
+    # Defensive cap + shape filter so one bad extraction can't flood the import.
+    result["findings"] = [
+        f for f in findings
+        if isinstance(f, dict) and f.get("brief") and f.get("question")
+    ][:limit]
+    return result
+
+
 async def request_chart_from_agent(prompt: str, preferred_type: str | None = None) -> dict:
-    """Full pipeline: research -> format -> raw card dict (pre-validation).
+    """Full pipeline: research -> classify -> format -> raw card dict (pre-validation).
     Raises on failure so the caller can fall back to the mock generator."""
     brief = await research_agent(prompt)
-    card = await format_agent(brief)
+    card_type = await classify_card_type(prompt, brief)
+    card = await format_agent(brief, card_type)
     return card
