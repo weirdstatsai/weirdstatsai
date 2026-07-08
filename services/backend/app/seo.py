@@ -99,7 +99,9 @@ def build_snapshot_html(card_id: str, doc: Optional[dict]) -> str:
     plain = _plain_title(card) or "A weird stat"
     title = f"{plain} — {SITE}"
     desc = _description(card)
-    image = f"{ORIGIN}/og/card/{card_id}.png"
+    # Prefer the real-card social preview (rendered client-side on publish and
+    # stored in Firebase Storage); fall back to the generated template image.
+    image = (doc or {}).get("ogImage") or f"{ORIGIN}/og/card/{card_id}.png"
 
     # Visible, indexable content: heading, insight, and the data rows/values.
     rows = card.get("rows") or []

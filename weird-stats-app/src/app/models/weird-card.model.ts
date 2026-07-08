@@ -140,6 +140,10 @@ export interface StoredStatCard {
   /** Name of the document this card was bulk-imported from (absent for cards
    *  generated from a typed prompt). Used to group a project's grid by source. */
   importFile?: string;
+  /** Firebase Storage URL of the rendered social-preview (OG) image — the real
+   *  card, generated client-side on publish. Backend OG meta points here when
+   *  present, else falls back to the generated Pillow template. */
+  ogImage?: string;
   data: WeirdCard;
 }
 

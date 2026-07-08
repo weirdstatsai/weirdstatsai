@@ -469,3 +469,48 @@ $alt-tile-w: min(45vw, 190px);
   ion-icon { font-size: 17px; }
   &:active { transform: scale(0.98); }
 }
+
+// ── Offscreen social-preview (OG) capture frame ───────────────────────────
+.og-capture {
+  position: fixed;
+  left: -20000px;
+  top: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+.og-frame {
+  width: 1200px;
+  height: 630px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.og-tile {
+  width: 430px;
+  background: #fff;
+  border-radius: 26px;
+  padding: 22px 22px 16px;
+  box-shadow: 0 20px 60px rgba(20, 22, 43, 0.14);
+  display: flex;
+  flex-direction: column;
+}
+.og-tile app-weird-card {
+  display: block;
+  width: 100%;
+}
+.og-brand {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1a2e;
+  letter-spacing: -0.4px;
+}
+.og-logo {
+  display: inline-block;
+  font-size: 22px;
+  filter: hue-rotate(345deg) saturate(1.9) brightness(0.92);
+}
+.og-accent { color: #6C5CE7; }

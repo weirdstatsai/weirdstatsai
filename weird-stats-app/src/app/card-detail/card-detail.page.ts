@@ -1,6 +1,7 @@
 import { Component, OnInit, NgZone, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { AngularFireStorage } from '@angular/fire/compat/storage';
 import { HttpClient } from '@angular/common/http';
 import { ActionSheetController, AlertController, ToastController, LoadingController, NavController, ModalController } from '@ionic/angular';
 
@@ -49,7 +50,16 @@ export class CardDetailPage implements OnInit {
 
   // Inline share (view-only): watermark capture frame + premium flag
   @ViewChild('shareArea') shareArea?: ElementRef<HTMLElement>;
+  // Offscreen 1200x630 frame captured as the social-preview (OG) image
+  @ViewChild('ogArea') ogArea?: ElementRef<HTMLElement>;
   isPremium = false;
+
+  /** Card gradient used as the OG frame backdrop (blends with the card). */
+  get ogGradient(): string {
+    const from = this.card?.uiMeta?.gradientFrom || '#f5f3ff';
+    const to = this.card?.uiMeta?.gradientTo || '#ede9fe';
+    return `linear-gradient(135deg, ${from}, ${to})`;
+  }
   get canNativeShare(): boolean {
     return !!(navigator as any).share && !!(navigator as any).canShare;
   }
@@ -120,6 +130,7 @@ export class CardDetailPage implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private afs: AngularFirestore,
+    private storage: AngularFireStorage,
     private http: HttpClient,
     private authService: AuthService,
     private actionSheetCtrl: ActionSheetController,
@@ -298,6 +309,7 @@ export class CardDetailPage implements OnInit {
       this._buildAltStyles();
       this.applyCardSeo();
       this.trackCardOpen('in_app');
+      this.maybeBackfillOg();
     } else {
       const id = this.route.snapshot.paramMap.get('id');
       if (id) {
@@ -325,7 +337,7 @@ export class CardDetailPage implements OnInit {
       this.storedCard = snap?.data() ?? undefined;
       this.card = this.storedCard?.data;
       if (!this.card) this.errorMsg = 'Card not found.';
-      else { this._buildAltStyles(); this.applyCardSeo(); this.trackCardOpen('deep_link'); }
+      else { this._buildAltStyles(); this.applyCardSeo(); this.trackCardOpen('deep_link'); this.maybeBackfillOg(); }
     } catch {
       this.errorMsg = 'Could not load this card.';
     } finally {
@@ -699,6 +711,8 @@ export class CardDetailPage implements OnInit {
       this.drafts.remove(uid, card.id);
       this.storedCard = { ...card, publishStatus: status };
       this.toast(msg);
+      // Public cards get shared — render the real-card social preview now.
+      if (status === 'published') this.generateOgImage();
     } catch {
       this.toast('Could not save card.');
     }
@@ -731,6 +745,8 @@ export class CardDetailPage implements OnInit {
       await this.afs.doc(`stats/${id}`).update({ publishStatus: status });
       this.storedCard = { ...this.storedCard!, publishStatus: status };
       this.toast(msg);
+      // Public cards get shared — render the real-card social preview now.
+      if (status === 'published') this.generateOgImage();
     } catch {
       this.toast('Could not update card.');
     }
@@ -889,6 +905,43 @@ export class CardDetailPage implements OnInit {
   private async toast(msg: string): Promise<void> {
     const t = await this.toastCtrl.create({ message: msg, duration: 1800, position: 'bottom' });
     await t.present();
+  }
+
+  // ── Social-preview (OG) image: render the real card, store in Storage ───
+  /**
+   * Render the offscreen 1200x630 frame (the actual card on its gradient) to a
+   * PNG, upload to Storage at og/{id}.png, and save the URL on the card doc so
+   * the backend's share/OG meta points at the real card instead of the
+   * generic template. Non-fatal: any failure just leaves the template.
+   * Only the card's owner can write (Storage + Firestore rules).
+   */
+  private async generateOgImage(): Promise<void> {
+    const id = this.storedCard?.id;
+    const el = this.ogArea?.nativeElement;
+    if (!id || !el) return;
+    try {
+      // Let Chart.js and layout settle before capturing.
+      await new Promise((r) => setTimeout(r, 700));
+      const dataUrl: string = await domtoimage.toPng(el, {
+        width: 1200, height: 630, bgcolor: '#ffffff',
+      });
+      const ref = this.storage.ref(`og/${id}.png`);
+      await ref.putString(dataUrl, 'data_url', { contentType: 'image/png' });
+      const url = await firstValueFrom(ref.getDownloadURL());
+      await this.afs.doc(`stats/${id}`).update({ ogImage: url });
+      if (this.storedCard) this.storedCard = { ...this.storedCard, ogImage: url };
+    } catch (e) {
+      console.warn('OG image generation failed', e);
+    }
+  }
+
+  /** Owner viewing their own published card that has no preview yet — build
+   *  it quietly in the background (lazy backfill for pre-existing cards). */
+  private async maybeBackfillOg(): Promise<void> {
+    const card = this.storedCard;
+    if (!card?.id || card.ogImage || card.publishStatus !== 'published') return;
+    const uid = await this.uid();
+    if (uid && uid === card.createdBy) this.generateOgImage();
   }
 
   // ── Shared-link visitor (logged-out) acquisition ────────────────────────

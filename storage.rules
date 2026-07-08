@@ -1,0 +1,13 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Shareable card preview (OG) images: world-readable so social crawlers
+    // can fetch them; only signed-in users can write, PNG, capped at 5 MB.
+    match /og/{cardId} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/png');
+    }
+  }
+}

@@ -68,6 +68,18 @@
       </ng-container>
     </div>
 
+    <!-- Offscreen 1200x630 social-preview frame — captured to PNG on publish.
+         Mirrors the Save-Image look: the real feed card on a white tile,
+         floating on the card's own gradient. -->
+    <div class="og-capture" aria-hidden="true">
+      <div class="og-frame" #ogArea [style.background]="ogGradient">
+        <div class="og-tile">
+          <app-weird-card [card]="card" size="feed" [fontSize]="factFontSize"></app-weird-card>
+          <div class="og-brand"><span class="og-logo">🐙</span> weirdstats<span class="og-accent">.ai</span></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Insight moved out of the card — clean card, story below it. Fact cards
          are excluded: their text IS the card, so it stays inside. -->
     <div class="card-info" *ngIf="card.insight && card.cardType !== 'fact'">
