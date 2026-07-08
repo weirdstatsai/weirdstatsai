@@ -61,7 +61,7 @@ $purple: #6C5CE7;
   letter-spacing: -0.2px;
   color: #999;
   margin: 0 0 10px;
-  span { color: #E53935; }
+  span { color: $purple; }
 }
 
 .hero-title {
