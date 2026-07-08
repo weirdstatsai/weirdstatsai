@@ -380,6 +380,7 @@ $alt-tile-w: min(45vw, 190px);
     gap: 8px;
     width: 100%;
     padding: 14px;
+    margin-bottom: 10px;
     background: transparent;
     border: 1.5px solid #6C5CE7;
     border-radius: 14px;
@@ -389,6 +390,7 @@ $alt-tile-w: min(45vw, 190px);
     font-family: inherit;
     cursor: pointer;
     &:active { opacity: 0.8; }
+    &:last-of-type { margin-bottom: 0; }
   }
 }
 
