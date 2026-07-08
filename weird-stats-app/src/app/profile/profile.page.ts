@@ -119,11 +119,13 @@ export class ProfilePage implements OnInit, OnDestroy {
         this.projectCounts = counts;
 
         // Saved tab = published + private cards owned by the user.
-        // Cards generated inside a project (projectId set) live in that
-        // project only — they never show in Saved.
+        // Cards that belong to a project — generated in it (projectId) or
+        // bulk-imported into it (importFile) — live in that project only and
+        // never appear here. Checking BOTH markers is belt-and-suspenders:
+        // an import card can't leak even if its projectId was lost.
         this.savedCards = docs
           .filter(d => d.data?.title && d.data?.cardType)
-          .filter(d => !d.projectId)
+          .filter(d => !d.projectId && !d.importFile)
           .filter(d => ['published', 'private'].includes(d.publishStatus ?? 'draft'))
           .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
         this.isLoading = false;
