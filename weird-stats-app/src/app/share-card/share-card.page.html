@@ -12,10 +12,11 @@
 <ion-content class="ion-padding">
   <ng-container *ngIf="card; else noCard">
 
-    <!-- Share frame — this is what gets captured as the image -->
+    <!-- Share frame — this is what gets captured as the image. Full size so
+         charts/maps show their axes and values, not a bare sparkline. -->
     <div class="share-frame" #shareArea>
       <div class="card-wrap">
-        <app-weird-card [card]="card" size="feed"></app-weird-card>
+        <app-weird-card [card]="card" size="full"></app-weird-card>
 
       </div>
 
