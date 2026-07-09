@@ -106,3 +106,21 @@
 .share-frame ::ng-deep .weird-badge {
   display: none;
 }
+
+// ── Toolbar / title — match the app's clean bold heading (not Ionic default) ─
+ion-toolbar {
+  --background: #ffffff;
+  --border-width: 0;
+  --min-height: 52px;
+}
+ion-title {
+  font-family: inherit;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #1a1a2e;
+}
+.share-card-page .nav-back,
+ion-buttons ion-button {
+  --color: #1a1a2e;
+}
