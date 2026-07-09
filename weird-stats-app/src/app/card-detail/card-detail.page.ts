@@ -309,6 +309,7 @@ export class CardDetailPage implements OnInit {
       this.applyCardSeo();
       this.trackCardOpen('in_app');
       this.maybeBackfillOg();
+      this.prepareShareImage();
     } else {
       const id = this.route.snapshot.paramMap.get('id');
       if (id) {
@@ -340,6 +341,7 @@ export class CardDetailPage implements OnInit {
         // Re-check viewer now that we know who created the card (isOwner).
         this.refreshGuest();
         this._buildAltStyles(); this.applyCardSeo(); this.trackCardOpen('deep_link'); this.maybeBackfillOg();
+        this.prepareShareImage();
       }
     } catch {
       this.errorMsg = 'Could not load this card.';
@@ -489,18 +491,64 @@ export class CardDetailPage implements OnInit {
     return (this.card?.title ?? 'weirdstats').replace(/\s+/g, '-').slice(0, 40);
   }
 
+  // Card image, pre-rendered in the background so a share tap can hand the file
+  // to the native sheet synchronously — rendering on tap would drop the
+  // user-gesture that navigator.share requires.
+  private shareFile?: File;
+
+  private dataUrlToFile(dataUrl: string, filename: string): File {
+    const [header, data] = dataUrl.split(',');
+    const mime = header.match(/:(.*?);/)![1];
+    const bytes = atob(data);
+    const arr = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    return new File([arr], filename, { type: mime });
+  }
+
+  /** Render the shareable card image once, in the background, and cache it. */
+  private async prepareShareImage(): Promise<void> {
+    if (!this.viewOnly) return;
+    // Give the card (and any chart) a beat to settle before capturing.
+    await new Promise((r) => setTimeout(r, 900));
+    try {
+      const dataUrl = await this.renderPng();
+      if (dataUrl) this.shareFile = this.dataUrlToFile(dataUrl, `${this.slug()}.png`);
+    } catch { /* non-fatal — sharing falls back to the link */ }
+  }
+
+  /** True when the device can share an actual image file (phones / PWAs). */
+  private get canShareImage(): boolean {
+    return !!this.shareFile && !!(navigator as any).canShare?.({ files: [this.shareFile] });
+  }
+
   /**
-   * Open the chosen platform's share dialog for this card's link. Each button is
-   * platform-specific (Facebook → Facebook, X → X), so we go straight to that
-   * network's web-intent — the card's OG image unfurls into a rich preview
-   * everywhere, so a link share is all that's needed. Must stay SYNCHRONOUS with
-   * the click: any await first (rendering a PNG, presenting a loader) drops the
-   * user-gesture and the browser blocks the popup — that's why Facebook wasn't
-   * opening. To share the raw image instead, use Save Image.
+   * Share the card. On phones we hand the actual PNG to the native share sheet
+   * so it posts as a real IMAGE — the only way Instagram works, and it makes
+   * WhatsApp/Messenger/etc. send a photo instead of a link-preview. The card URL
+   * rides along as text so the link still travels with the image.
+   *
+   * On desktop (no file share) we fall back to the platform's web-intent, where
+   * the OG image unfurls — except Instagram, which has no web intent at all, so
+   * we save the image for the user to upload. Must stay synchronous with the tap
+   * (the image is pre-rendered) or the browser blocks share/popup.
    */
-  shareTo(network: string): void {
+  async shareTo(network: string): Promise<void> {
     if (!this.card) return;
     this.analytics.track('share', { method: network, card_id: this.storedCard?.id || '' });
+
+    if (this.canShareImage) {
+      try {
+        await (navigator as any).share({ files: [this.shareFile], title: this.card.title, text: this.cardUrl() });
+      } catch { /* user cancelled the sheet */ }
+      return;
+    }
+
+    // Desktop: Instagram can't take a link, so hand over the image file instead.
+    if (network === 'instagram') {
+      this.toast('Image saved — post it to Instagram.');
+      this.download();
+      return;
+    }
     const url = this.shareUrl(network);
     if (url && url !== '#') window.open(url, '_blank', 'noopener');
   }
