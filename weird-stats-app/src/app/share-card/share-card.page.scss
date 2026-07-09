@@ -100,3 +100,9 @@
   color: #888;
   ion-icon { font-size: 36px; color: #D85A30; }
 }
+
+// The "Chart card" / "KPI card" type label is an internal tag — not useful in
+// a shared image. Hide it in the captured frame only (still on the detail page).
+.share-frame ::ng-deep .weird-badge {
+  display: none;
+}
