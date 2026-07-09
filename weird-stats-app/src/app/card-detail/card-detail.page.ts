@@ -40,6 +40,8 @@ export class CardDetailPage implements OnInit {
   // Logged-out visitor on a shared /card/:id link — drives the sign-in bar
   // and the "make your own" acquisition CTA.
   isGuest = false;
+  // The signed-in viewer is the card's creator (they opened their own link).
+  isOwner = false;
   editing = false;
   isSaved = false;
   isAdminView = false;
@@ -337,7 +339,11 @@ export class CardDetailPage implements OnInit {
       this.storedCard = snap?.data() ?? undefined;
       this.card = this.storedCard?.data;
       if (!this.card) this.errorMsg = 'Card not found.';
-      else { this._buildAltStyles(); this.applyCardSeo(); this.trackCardOpen('deep_link'); this.maybeBackfillOg(); }
+      else {
+        // Re-check viewer now that we know who created the card (isOwner).
+        this.refreshGuest();
+        this._buildAltStyles(); this.applyCardSeo(); this.trackCardOpen('deep_link'); this.maybeBackfillOg();
+      }
     } catch {
       this.errorMsg = 'Could not load this card.';
     } finally {
@@ -897,6 +903,12 @@ export class CardDetailPage implements OnInit {
       this.router.navigate(['/profile'], { state: { tab: 'draft' } });
       return;
     }
+    // Owner opening their own shared link (a fresh tab, no in-app history) —
+    // Back has nowhere to go, so take them to their account.
+    if (this.viewOnly && this.isOwner) {
+      this.router.navigate(['/profile']);
+      return;
+    }
     // Everyone else returns along the real navigation stack, so Back mirrors how
     // the user actually arrived (Home, Profile, Explore, a public profile…).
     this.navCtrl.back();
@@ -948,6 +960,7 @@ export class CardDetailPage implements OnInit {
   private async refreshGuest(): Promise<void> {
     const user = await firstValueFrom(this.authService.user$);
     this.isGuest = !user;
+    this.isOwner = !!user && user.uid === this.storedCard?.createdBy;
   }
 
   /** Open the sign-in modal; re-check guest state afterwards so the bar/CTA

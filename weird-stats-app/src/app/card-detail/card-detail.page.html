@@ -21,7 +21,9 @@
       <ion-icon name="shield-checkmark-outline"></ion-icon> Admin view
     </div>
     <ion-buttons slot="end">
-      <ion-button (click)="isAdminView ? presentAdminActions() : viewOnly ? presentViewActions() : presentActions()" *ngIf="card" aria-label="Options">
+      <!-- Owner viewing their own shared card has nothing to report/manage
+           here (they manage from their profile), so hide the menu for them. -->
+      <ion-button (click)="isAdminView ? presentAdminActions() : viewOnly ? presentViewActions() : presentActions()" *ngIf="card && !(viewOnly && isOwner)" aria-label="Options">
         <ion-icon slot="icon-only" name="ellipsis-vertical-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
