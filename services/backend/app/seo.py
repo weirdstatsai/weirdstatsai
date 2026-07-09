@@ -214,105 +214,191 @@ _FONT_PATHS = (
 )
 
 
+def _hex(s, default):
+    """Parse '#rrggbb' / '#rgb' to an (r,g,b) tuple; default on anything odd."""
+    try:
+        s = str(s).lstrip("#").strip()
+        if len(s) == 3:
+            s = "".join(c * 2 for c in s)
+        return (int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16))
+    except Exception:
+        return default
+
+
+def _mix(color, other, amt):
+    """Blend `color` toward `other` by amt (0..1)."""
+    return tuple(int(c + (o - c) * amt) for c, o in zip(color, other))
+
+
 def compose_og_image(doc: Optional[dict]) -> Optional[bytes]:
-    """Render a branded 1200x630 PNG from the card's data. Returns None on any
-    problem so the route can fall back to the default image."""
+    """Render a branded 1200x630 PNG that mirrors the in-app card: the card's own
+    pastel gradient behind a clean white card panel, accent-coloured ranking bars
+    or a big KPI number, and the insight below — never overlapping. This is the
+    fallback used whenever a card has no client-rendered OG image, so it must look
+    like the real thing. Returns None on any problem so the route can fall back to
+    the default image."""
     card = (doc or {}).get("data") or {}
     if not card:
         return None
     try:
         from io import BytesIO
-        from PIL import Image, ImageDraw, ImageFont
+        from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
         W, H = 1200, 630
-        # brand gradient (purple -> blue), vertical
-        top, bot = (0x7B, 0x6B, 0xEF), (0x42, 0x85, 0xD6)
-        img = Image.new("RGB", (W, H), top)
-        px = img.load()
-        for y in range(H):
-            t = y / (H - 1)
-            r = int(top[0] + (bot[0] - top[0]) * t)
-            g = int(top[1] + (bot[1] - top[1]) * t)
-            b = int(top[2] + (bot[2] - top[2]) * t)
-            for x in range(W):
-                px[x, y] = (r, g, b)
-        draw = ImageDraw.Draw(img)
+        ui = card.get("uiMeta") or {}
+        WHITE = (255, 255, 255)
+        INK = (20, 22, 31)
+        MUTE = (120, 122, 133)
+        accent = _hex(ui.get("accentColor"), (0x6C, 0x5C, 0xE7))
+        g_from = _hex(ui.get("gradientFrom"), (0xF5, 0xF3, 0xFF))
+        g_to = _hex(ui.get("gradientTo"), (0xED, 0xE9, 0xFE))
 
-        def font(size: int):
-            for p in _FONT_PATHS:
+        # ── Background: the card's pastel gradient (vertical strip, upscaled) ──
+        strip = Image.new("RGB", (1, H))
+        sp = strip.load()
+        for y in range(H):
+            sp[0, y] = _mix(g_from, g_to, y / (H - 1))
+        img = strip.resize((W, H)).convert("RGBA")
+
+        def font(size: int, bold: bool = True):
+            paths = _FONT_PATHS if bold else (_FONT_PATHS[1], _FONT_PATHS[0], *_FONT_PATHS[2:])
+            for p in paths:
                 try:
                     return ImageFont.truetype(p, size)
                 except Exception:
                     continue
             raise RuntimeError("no scalable font available")
 
-        f_brand = font(34)
-        f_title = font(66)
-        f_row = font(38)
-        f_foot = font(28)
+        # ── Card panel with a soft drop-shadow ──
+        pad = 56
+        panel = [pad, 52, W - pad, H - 104]
+        shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        ImageDraw.Draw(shadow).rounded_rectangle(
+            [panel[0], panel[1] + 16, panel[2], panel[3] + 16], radius=34, fill=(20, 22, 43, 70)
+        )
+        img = Image.alpha_composite(img, shadow.filter(ImageFilter.GaussianBlur(24)))
+        draw = ImageDraw.Draw(img)
+        draw.rounded_rectangle(panel, radius=34, fill=(255, 255, 255, 255))
 
-        white = (255, 255, 255)
-        soft = (255, 255, 255)
+        inset = 42
+        cx = panel[0] + inset
+        cr = panel[2] - inset
+        cw = cr - cx
+        panel_bottom = panel[3] - inset
+        y = panel[1] + inset
 
-        # brand lockup — octopus logo + wordmark
+        # ── Category + type pills ──
+        cat = str(ui.get("category") or "").strip()
+        ctype = str(card.get("cardType") or "").strip()
+        f_pill = font(22)
+        ph = 38
+        if cat:
+            tw = draw.textlength(cat, font=f_pill)
+            draw.rounded_rectangle([cx, y, cx + tw + 34, y + ph], radius=ph // 2,
+                                   fill=_mix(accent, WHITE, 0.85))
+            draw.text((cx + 17, y + ph / 2), cat, font=f_pill, fill=accent, anchor="lm")
+            nx = cx + tw + 34 + 10
+        else:
+            nx = cx
+        if ctype:
+            lbl = f"{ctype} card"
+            tw2 = draw.textlength(lbl, font=f_pill)
+            draw.rounded_rectangle([nx, y, nx + tw2 + 30, y + ph], radius=ph // 2,
+                                   fill=(238, 238, 242))
+            draw.text((nx + 15, y + ph / 2), lbl, font=f_pill, fill=MUTE, anchor="lm")
+        y += ph + 16
+
+        # ── Title (up to 2 lines) ──
+        plain = _plain_title(card) or "A weird stat"
+        f_title = font(48)
+        tlines = _wrap(draw, plain, f_title, cw)[:2]
+        for ln in tlines:
+            draw.text((cx, y), ln, font=f_title, fill=INK)
+            y += 56
+        y += 12
+
+        # ── Insight reserve so the body never overruns it ──
+        insight = str(card.get("insight") or "").strip()
+        f_ins = font(25, bold=False)
+        ins_lines = _wrap(draw, insight, f_ins, cw)[:2] if insight else []
+        ins_h = (len(ins_lines) * 32 + 14) if ins_lines else 0
+
+        rows = card.get("rows") or []
+        metric = card.get("metric") or {}
+        body_bottom = panel_bottom - ins_h
+
+        if rows:
+            # Fit as many rows as the space allows at a comfortable height, never
+            # more — so nothing ever overruns into the insight below.
+            avail = body_bottom - y
+            MIN_RH = 44
+            n = max(1, min(len(rows), 5, int(avail // MIN_RH)))
+            row_h = min(64, avail / n)
+            mx = max([_num(r.get("value")) for r in rows[:n]] + [1])
+            f_lbl = font(30, bold=False)
+            f_val = font(30)
+            for r in rows[:n]:
+                label = str(r.get("label") or "")
+                # keep the label clear of the value column
+                while draw.textlength(label, font=f_lbl) > cw - 210 and len(label) > 4:
+                    label = label[:-2]
+                val = f"{_fmt_num(r.get('value'))} {str(r.get('unit') or '')}".strip()
+                draw.text((cx, y), label, font=f_lbl, fill=(46, 48, 58))
+                draw.text((cr, y), val, font=f_val, fill=accent, anchor="ra")
+                bar_y = y + 32
+                frac = max(0.05, _num(r.get("value")) / mx)
+                draw.rounded_rectangle([cx, bar_y, cr, bar_y + 9], radius=5,
+                                       fill=_mix(accent, WHITE, 0.82))
+                draw.rounded_rectangle([cx, bar_y, cx + int(cw * frac), bar_y + 9], radius=5,
+                                       fill=accent)
+                y += row_h
+            y = body_bottom
+        elif metric.get("value") is not None:
+            f_big = font(132)
+            draw.text((cx, y), _fmt_num(metric["value"]), font=f_big, fill=accent)
+            bw = draw.textlength(_fmt_num(metric["value"]), font=f_big)
+            unit = str(metric.get("unit") or "")
+            if unit:
+                draw.text((cx + bw + 16, y + 78), unit, font=font(34), fill=MUTE, anchor="lm")
+            name = str(metric.get("name") or "")
+            if name:
+                draw.text((cx, y + 150), name, font=font(28, bold=False), fill=MUTE)
+            y = body_bottom
+        else:
+            y = body_bottom
+
+        # ── Insight (dark, below the body — guaranteed inside the panel) ──
+        if ins_lines:
+            iy = panel_bottom - len(ins_lines) * 34
+            for ln in ins_lines:
+                draw.text((cx, iy), ln, font=f_ins, fill=(90, 92, 104))
+                iy += 34
+
+        # ── Brand lockup, centred below the panel ──
+        f_brand = font(30)
+        wordmark, tld = "weirdstats", ".ai"
+        ww = draw.textlength(wordmark, font=f_brand)
+        tw = draw.textlength(tld, font=f_brand)
         oct_logo = None
         try:
             op = os.path.join(os.path.dirname(__file__), "assets", "octopus.png")
             raw = Image.open(op).convert("RGBA")
-            s = 58 / raw.height
-            oct_logo = raw.resize((max(1, int(raw.width * s)), 58), Image.LANCZOS)
+            s = 40 / raw.height
+            oct_logo = raw.resize((max(1, int(raw.width * s)), 40), Image.LANCZOS)
         except Exception:
             oct_logo = None
+        logo_w = (oct_logo.width + 12) if oct_logo is not None else 0
+        total = logo_w + ww + tw
+        bx = int((W - total) // 2)
+        by = H - 74
         if oct_logo is not None:
-            img.paste(oct_logo, (80, 56), oct_logo)
-            draw.text((80 + oct_logo.width + 16, 68), "WeirdStats.ai", font=f_brand, fill=white)
-        else:
-            draw.text((80, 70), "WeirdStats.ai", font=f_brand, fill=white)
-
-        # title (wrapped, up to 3 lines)
-        plain = _plain_title(card) or "A weird stat"
-        lines = _wrap(draw, plain, f_title, W - 160)[:3]
-        y = 150
-        for ln in lines:
-            draw.text((80, y), ln, font=f_title, fill=white)
-            y += 82
-
-        # body: rows as bars, or big KPI number
-        rows = card.get("rows") or []
-        metric = card.get("metric") or {}
-        y = max(y + 20, 380)
-        if rows:
-            top_rows = rows[:4]
-            mx = max([_num(r.get("value")) for r in top_rows] + [1])
-            for r in top_rows:
-                label = str(r.get("label") or "")[:28]
-                val = _fmt_num(r.get("value"))
-                unit = str(r.get("unit") or "")
-                draw.text((80, y), label, font=f_row, fill=soft)
-                # bar
-                bar_x, bar_w, bar_h = 80, W - 360, 14
-                frac = max(0.04, _num(r.get("value")) / mx)
-                draw.rounded_rectangle([bar_x, y + 48, bar_x + bar_w, y + 48 + bar_h],
-                                       radius=7, fill=(255, 255, 255, 60))
-                draw.rounded_rectangle([bar_x, y + 48, bar_x + int(bar_w * frac), y + 48 + bar_h],
-                                       radius=7, fill=white)
-                draw.text((W - 250, y), f"{val} {unit}".strip(), font=f_row, fill=white)
-                y += 78
-        elif metric.get("value") is not None:
-            big = font(150)
-            draw.text((80, y), _fmt_num(metric["value"]), font=big, fill=white)
-            if metric.get("unit"):
-                draw.text((80, y + 165), str(metric["unit"]), font=f_row, fill=soft)
-
-        # footer: insight snippet
-        insight = str(card.get("insight") or "").strip()
-        if insight:
-            foot = _wrap(draw, insight, f_foot, W - 160)[:1]
-            if foot:
-                draw.text((80, H - 70), foot[0], font=f_foot, fill=(235, 235, 255))
+            img.paste(oct_logo, (bx, by), oct_logo)
+            bx += oct_logo.width + 12
+        draw.text((bx, by + 20), wordmark, font=f_brand, fill=INK, anchor="lm")
+        draw.text((bx + ww, by + 20), tld, font=f_brand, fill=(0x6C, 0x5C, 0xE7), anchor="lm")
 
         out = BytesIO()
-        img.save(out, format="PNG", optimize=True)
+        img.convert("RGB").save(out, format="PNG", optimize=True)
         return out.getvalue()
     except Exception as e:
         logger.warning(f"compose_og_image failed: {e}")
