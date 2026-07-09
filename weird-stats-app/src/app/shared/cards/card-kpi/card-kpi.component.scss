@@ -331,3 +331,12 @@
   font-size: 11px;
   color: #aaa;
 }
+
+// ── Feed: fill the tall portrait tile ─────────────────────────────────────
+// The comparison KPI is short content and (unlike hero/circular, which use
+// flex:1) clustered at the top with dead space below. Center the number +
+// benchmark + diff block vertically so the tile reads as a balanced stat.
+.wcard:not(.full):not(.alt) {
+  .comp-layout { margin-top: auto; margin-bottom: 12px; }
+  .comp-diff { margin-bottom: auto; }
+}
