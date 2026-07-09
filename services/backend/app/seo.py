@@ -69,6 +69,10 @@ def _fmt_num(v) -> str:
     except (TypeError, ValueError):
         return str(v)
     a = abs(n)
+    if a >= 1_000_000_000_000:
+        return f"{n / 1_000_000_000_000:.1f}T"
+    if a >= 1_000_000_000:
+        return f"{n / 1_000_000_000:.1f}B"
     if a >= 1_000_000:
         return f"{n / 1_000_000:.1f}M"
     if a >= 1_000:
@@ -317,19 +321,34 @@ def compose_og_image(doc: Optional[dict]) -> Optional[bytes]:
             y += 56
         y += 12
 
-        # ── Insight reserve so the body never overruns it ──
-        insight = str(card.get("insight") or "").strip()
-        f_ins = font(25, bold=False)
-        ins_lines = _wrap(draw, insight, f_ins, cw)[:2] if insight else []
-        ins_h = (len(ins_lines) * 32 + 14) if ins_lines else 0
-
         rows = card.get("rows") or []
         metric = card.get("metric") or {}
-        body_bottom = panel_bottom - ins_h
+        insight = str(card.get("insight") or "").strip()
+        ctype_l = str(card.get("cardType") or "").lower()
+        # A fact card is text-first: its number (if any) lives in the title, so we
+        # never render it as a KPI. Bars need real rows; a KPI needs a value.
+        mode = "rows" if rows else ("kpi" if (metric.get("value") is not None and ctype_l != "fact") else "text")
 
-        if rows:
-            # Fit as many rows as the space allows at a comfortable height, never
-            # more — so nothing ever overruns into the insight below.
+        def footer_insight(max_lines: int):
+            """Draw the insight as a muted footer, bottom-anchored, with an ellipsis
+            when it's clipped. Returns the height it reserves."""
+            if not insight:
+                return 0
+            f = font(25, bold=False)
+            allw = _wrap(draw, insight, f, cw)
+            lines = allw[:max_lines]
+            if lines and len(allw) > max_lines:
+                lines[-1] = lines[-1].rstrip() + "…"
+            h = len(lines) * 32 + 14
+            iy = panel_bottom - len(lines) * 32
+            for ln in lines:
+                draw.text((cx, iy), ln, font=f, fill=(90, 92, 104))
+                iy += 32
+            return h
+
+        if mode == "rows":
+            ins_h = (min(len(_wrap(draw, insight, font(25, bold=False), cw)), 2) * 32 + 14) if insight else 0
+            body_bottom = panel_bottom - ins_h
             avail = body_bottom - y
             MIN_RH = 44
             n = max(1, min(len(rows), 5, int(avail // MIN_RH)))
@@ -339,7 +358,6 @@ def compose_og_image(doc: Optional[dict]) -> Optional[bytes]:
             f_val = font(30)
             for r in rows[:n]:
                 label = str(r.get("label") or "")
-                # keep the label clear of the value column
                 while draw.textlength(label, font=f_lbl) > cw - 210 and len(label) > 4:
                     label = label[:-2]
                 val = f"{_fmt_num(r.get('value'))} {str(r.get('unit') or '')}".strip()
@@ -352,27 +370,34 @@ def compose_og_image(doc: Optional[dict]) -> Optional[bytes]:
                 draw.rounded_rectangle([cx, bar_y, cx + int(cw * frac), bar_y + 9], radius=5,
                                        fill=accent)
                 y += row_h
-            y = body_bottom
-        elif metric.get("value") is not None:
-            f_big = font(132)
-            draw.text((cx, y), _fmt_num(metric["value"]), font=f_big, fill=accent)
-            bw = draw.textlength(_fmt_num(metric["value"]), font=f_big)
+            footer_insight(2)
+        elif mode == "kpi":
+            ins_h = (min(len(_wrap(draw, insight, font(25, bold=False), cw)), 2) * 32 + 14) if insight else 0
+            body_bottom = panel_bottom - ins_h
+            f_big = font(128)
+            big = _fmt_num(metric["value"])
+            draw.text((cx, y), big, font=f_big, fill=accent)
+            bw = draw.textlength(big, font=f_big)
             unit = str(metric.get("unit") or "")
             if unit:
-                draw.text((cx + bw + 16, y + 78), unit, font=font(34), fill=MUTE, anchor="lm")
+                draw.text((cx + bw + 16, y + 76), unit, font=font(34), fill=MUTE, anchor="lm")
             name = str(metric.get("name") or "")
-            if name:
-                draw.text((cx, y + 150), name, font=font(28, bold=False), fill=MUTE)
-            y = body_bottom
+            # Only draw the metric name if it clears the footer insight.
+            if name and y + 148 + 28 <= body_bottom:
+                draw.text((cx, y + 148), name, font=font(28, bold=False), fill=MUTE)
+            footer_insight(2)
         else:
-            y = body_bottom
-
-        # ── Insight (dark, below the body — guaranteed inside the panel) ──
-        if ins_lines:
-            iy = panel_bottom - len(ins_lines) * 34
-            for ln in ins_lines:
-                draw.text((cx, iy), ln, font=f_ins, fill=(90, 92, 104))
-                iy += 34
+            # Text/fact card: the insight is the hero — render it large in the body.
+            if insight:
+                f_body = font(34, bold=False)
+                allw = _wrap(draw, insight, f_body, cw)
+                max_lines = max(1, int((panel_bottom - y) // 46))
+                lines = allw[:max_lines]
+                if lines and len(allw) > max_lines:
+                    lines[-1] = lines[-1].rstrip() + "…"
+                for ln in lines:
+                    draw.text((cx, y), ln, font=f_body, fill=(46, 48, 58))
+                    y += 46
 
         # ── Brand lockup, centred below the panel ──
         f_brand = font(30)

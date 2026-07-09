@@ -139,8 +139,10 @@ async def og_card_image(ref: str) -> Response:
     png = seo.compose_og_image(doc)
     if png is None:
         return RedirectResponse(seo.DEFAULT_OG_IMAGE, status_code=307)
+    # Short fresh window so card edits / renderer fixes propagate within the
+    # hour; stale-while-revalidate keeps it instant for scrapers meanwhile.
     return Response(png, media_type="image/png",
-                    headers={"Cache-Control": "public, max-age=86400"})
+                    headers={"Cache-Control": "public, max-age=3600, stale-while-revalidate=86400"})
 
 
 @app.get("/sitemap-cards.xml")
