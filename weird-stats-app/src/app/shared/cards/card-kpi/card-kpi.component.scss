@@ -335,8 +335,16 @@
 // ── Feed: fill the tall portrait tile ─────────────────────────────────────
 // The comparison KPI is short content and (unlike hero/circular, which use
 // flex:1) clustered at the top with dead space below. Center the number +
-// benchmark + diff block vertically so the tile reads as a balanced stat.
+// benchmark + diff block vertically so the tile reads as a balanced stat, and
+// scale the content up so it reads bold and prominent in the tall tile. As a
+// component style this applies to every card of this type, now and future.
 .wcard:not(.full):not(.alt) {
-  .comp-layout { margin-top: auto; margin-bottom: 12px; }
+  .comp-layout { margin-top: auto; margin-bottom: 14px; }
   .comp-diff { margin-bottom: auto; }
+  .comp-val { font-size: clamp(44px, 26cqw, 74px); letter-spacing: -2.5px; }
+  .comp-lbl { font-size: 12.5px; margin-top: 6px; }
+  .comp-divider { height: 58px; margin: 0 16px; }
+  .comp-bench-val { font-size: 32px; }
+  .comp-bench-lbl { font-size: 11.5px; margin-top: 5px; }
+  .comp-diff span { font-size: 13px; padding: 5px 13px; }
 }
