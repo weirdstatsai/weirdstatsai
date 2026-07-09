@@ -82,17 +82,18 @@ export class HomePage implements OnInit, OnDestroy {
     // no extra Firestore reads, just a local clock tick.
     this.usageTimer = setInterval(() => this.tickCountdown(), 60_000);
 
-    // Home feed: published cards only, sorted client-side to avoid composite index
+    // Home feed: admin-curated cards only (pushed from the admin panel). Public
+    // user-shared cards live on Explore now. Order is shuffled on a rotating
+    // window so repeat visitors see a fresh arrangement.
     this.cardSub = this.afs
       .collection<StoredStatCard>('stats', ref =>
-        ref.where('publishStatus', '==', 'published').limit(25)
+        ref.where('homeFeatured', '==', true).limit(60)
       )
       .valueChanges({ idField: 'id' })
       .subscribe({
         next: docs => {
-          this.recentCards = docs
-            .filter(d => d.data?.title && d.data?.cardType)
-            .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+          const valid = docs.filter(d => d.data?.title && d.data?.cardType);
+          this.recentCards = this.shuffleForWindow(valid);
           this.isLoading = false;
         },
         error: () => { this.isLoading = false; },
@@ -183,6 +184,28 @@ export class HomePage implements OnInit, OnDestroy {
   open(card: StoredStatCard): void {
     // View-only: no edit panel, no alternatives
     this.router.navigate(['/card'], { state: { card, viewOnly: true } });
+  }
+
+  /**
+   * Deterministic shuffle keyed to a rotating time window (default 3h), so
+   * everyone sees the same order within a window and it reshuffles each window
+   * — keeps the curated Home feed feeling fresh without jarring mid-session
+   * reordering. Seeded PRNG (mulberry32) so it's stable, not random per render.
+   */
+  private shuffleForWindow(cards: StoredStatCard[], windowMs = 3 * 60 * 60 * 1000): StoredStatCard[] {
+    let seed = Math.floor(Date.now() / windowMs) >>> 0;
+    const rng = () => {
+      seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    const out = cards.slice();
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [out[i], out[j]] = [out[j], out[i]];
+    }
+    return out;
   }
 
   // Map and fact cards need horizontal room to read — span both grid columns.

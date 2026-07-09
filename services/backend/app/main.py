@@ -52,6 +52,56 @@ async def health() -> dict:
     return {"status": "ok"}
 
 
+@app.get("/api/admin/trending")
+async def admin_trending(geo: str = "US") -> dict:
+    """Trending topics for the admin panel to turn into Home-feed cards.
+
+    Pulls from Google Trends (daily trending searches) plus Google News top
+    stories and a politics query — all public RSS. Returns a deduped list
+    tagged by source so the panel can group them. Fails soft per source.
+    """
+    import xml.etree.ElementTree as ET
+    import httpx
+
+    sources = [
+        ("trends",   f"https://trends.google.com/trending/rss?geo={geo}"),
+        ("news",     f"https://news.google.com/rss?hl=en-US&gl={geo}&ceid={geo}:en"),
+        ("politics", f"https://news.google.com/rss/search?q=politics&hl=en-US&gl={geo}&ceid={geo}:en"),
+    ]
+    per_source = 12
+    topics: list[dict] = []
+    seen: set[str] = set()
+
+    async with httpx.AsyncClient(
+        timeout=10.0, follow_redirects=True,
+        headers={"User-Agent": "Mozilla/5.0 (compatible; WeirdStatsBot/1.0)"},
+    ) as client:
+        for source, url in sources:
+            try:
+                resp = await client.get(url)
+                root = ET.fromstring(resp.text)
+                count = 0
+                for item in root.iter("item"):
+                    title = (item.findtext("title") or "").strip()
+                    # Google News titles carry a " - Publisher" suffix; drop it.
+                    if source != "trends" and " - " in title:
+                        title = title.rsplit(" - ", 1)[0].strip()
+                    if not title:
+                        continue
+                    key = title.lower()
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    topics.append({"topic": title, "source": source})
+                    count += 1
+                    if count >= per_source:
+                        break
+            except Exception:
+                logger.warning("trending source failed: %s", source, exc_info=True)
+
+    return {"topics": topics, "geo": geo}
+
+
 # ── SEO: bot-snapshot rendering for shareable card URLs ─────────────────────
 # Firebase Hosting rewrites /card/**, /share/**, /og/**, /sitemap-cards.xml to
 # this service. Bots get purpose-built HTML/images; humans get the SPA shell.

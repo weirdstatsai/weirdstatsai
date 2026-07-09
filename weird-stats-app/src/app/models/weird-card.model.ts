@@ -144,6 +144,11 @@ export interface StoredStatCard {
    *  card, generated client-side on publish. Backend OG meta points here when
    *  present, else falls back to the generated Pillow template. */
   ogImage?: string;
+  /** Admin-curated card pushed to the Home feed. Home shows these; Explore
+   *  shows the public user-published cards (which don't have this flag). */
+  homeFeatured?: boolean;
+  /** ISO time the card was pushed to Home (ordering + shuffle windows). */
+  homeAddedAt?: string;
   data: WeirdCard;
 }
 

@@ -42,6 +42,10 @@
 
     <!-- Section tabs -->
     <div class="section-tabs">
+      <button class="stab" [class.active]="activeTab === 'home'" (click)="activeTab = 'home'">
+        Home feed
+        <span class="stab-badge accent" *ngIf="homeCards.length > 0">{{ homeCards.length }}</span>
+      </button>
       <button class="stab" [class.active]="activeTab === 'users'" (click)="activeTab = 'users'">
         Users
       </button>
@@ -49,6 +53,79 @@
         Flagged
         <span class="stab-badge" *ngIf="flaggedCards.length > 0">{{ flaggedCards.length }}</span>
       </button>
+    </div>
+
+    <!-- ── Home feed curation ── -->
+    <div *ngIf="activeTab === 'home'" class="tab-body">
+
+      <!-- Custom topic -->
+      <div class="home-block">
+        <p class="block-title">Push a stat to Home</p>
+        <p class="block-sub">Type any topic, or pick a trending one below. It generates a card and adds it to the Home feed instantly.</p>
+        <div class="topic-input">
+          <input [(ngModel)]="customTopic" placeholder="e.g. Which country drinks the most coffee?"
+                 (keydown.enter)="generateCustom()" [disabled]="!!generatingTopic" class="topic-in"/>
+          <button class="gen-btn" (click)="generateCustom()" [disabled]="!!generatingTopic || !customTopic.trim()">
+            <ion-icon name="sparkles-outline"></ion-icon> Generate
+          </button>
+        </div>
+        <p class="gen-status" *ngIf="generatingTopic">
+          <ion-spinner name="crescent"></ion-spinner>
+          {{ genStatus || 'Generating' }} — “{{ generatingTopic }}”
+        </p>
+      </div>
+
+      <!-- Trending -->
+      <div class="home-block">
+        <div class="block-head">
+          <p class="block-title">Trending now</p>
+          <button class="refresh-btn" (click)="loadTrends()" [disabled]="trendsLoading">
+            <ion-icon name="refresh-outline"></ion-icon>
+          </button>
+        </div>
+        <div class="trends-loading" *ngIf="trendsLoading">
+          <ion-spinner name="dots"></ion-spinner> Fetching trends…
+        </div>
+        <ng-container *ngIf="!trendsLoading">
+          <div class="trend-group" *ngFor="let src of sourceOrder">
+            <ng-container *ngIf="trendsFor(src).length">
+              <p class="trend-src">{{ sourceMeta[src].icon }} {{ sourceMeta[src].label }}</p>
+              <div class="trend-list">
+                <button class="trend-chip" *ngFor="let t of trendsFor(src)"
+                        (click)="generateToHome(t.topic)"
+                        [disabled]="!!generatingTopic"
+                        [class.busy]="generatingTopic === t.topic">
+                  <span class="trend-txt">{{ t.topic }}</span>
+                  <ion-spinner *ngIf="generatingTopic === t.topic" name="crescent"></ion-spinner>
+                  <ion-icon *ngIf="generatingTopic !== t.topic" name="add-circle-outline"></ion-icon>
+                </button>
+              </div>
+            </ng-container>
+          </div>
+          <p class="empty-state" *ngIf="trends.length === 0">No trending topics right now.</p>
+        </ng-container>
+      </div>
+
+      <!-- On Home now -->
+      <div class="home-block">
+        <p class="block-title">On Home now <span class="count-pill">{{ homeCards.length }}</span></p>
+        <p class="block-sub" *ngIf="homeCards.length">These are shuffled for visitors every few hours.</p>
+        <div class="home-cards">
+          <div class="home-card-row" *ngFor="let c of homeCards">
+            <div class="hc-info">
+              <p class="hc-title">{{ c.data?.title }}</p>
+              <p class="hc-meta">{{ c.data?.uiMeta?.category || 'Other' }} · {{ c.data?.cardType }} card</p>
+            </div>
+            <button class="hc-remove" (click)="removeFromHome(c)" title="Remove from Home">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
+          </div>
+          <div class="home-empty" *ngIf="homeCards.length === 0">
+            <ion-icon name="home-outline"></ion-icon>
+            <p>Home feed is empty. Push a topic above to fill it.</p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Users -->

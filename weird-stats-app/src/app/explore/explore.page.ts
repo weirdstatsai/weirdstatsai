@@ -51,7 +51,8 @@ export class ExplorePage implements OnInit, OnDestroy {
         next: docs => {
           this.cards = docs
             .filter(d => d.data?.title && d.data?.cardType)
-            .filter(d => d.publishStatus === 'published')
+            // Public shares only. Admin-curated cards live on Home, not Explore.
+            .filter(d => d.publishStatus === 'published' && !d.homeFeatured)
             .sort((a, b) => (b.data?.weirdScore ?? 0) - (a.data?.weirdScore ?? 0));
           this.isLoading = false;
           this._computeProfiles();
