@@ -230,11 +230,15 @@
   align-items: flex-end;
   gap: 0;
   margin-bottom: 10px;
-  overflow: hidden;
+  // No overflow:hidden here — the main label self-clips with its own ellipsis,
+  // and clipping at this edge shaves the right-aligned benchmark's last glyph.
   min-width: 0;
 }
 
-.comp-main { flex: 1; }
+// comp-main carries an ellipsis label, so it may shrink; the benchmark must
+// not — without this the right-hand "prev record" gets squeezed and clips past
+// the card's rounded edge.
+.comp-main { flex: 1; min-width: 0; }
 
 .comp-val {
   font-size: clamp(32px, 16cqw, 52px);
@@ -265,7 +269,7 @@
   margin: 0 14px;
 }
 
-.comp-bench { text-align: right; }
+.comp-bench { text-align: right; flex-shrink: 0; }
 
 .comp-bench-val {
   font-size: 24px;

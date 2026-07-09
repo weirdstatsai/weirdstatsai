@@ -62,9 +62,6 @@ export class CardDetailPage implements OnInit {
     const to = this.card?.uiMeta?.gradientTo || '#ede9fe';
     return `linear-gradient(135deg, ${from}, ${to})`;
   }
-  get canNativeShare(): boolean {
-    return !!(navigator as any).share && !!(navigator as any).canShare;
-  }
 
   altTypes: Array<'bar' | 'line' | 'doughnut'> = ['bar', 'line', 'doughnut'];
   selectedAltType?: 'bar' | 'line' | 'doughnut';
@@ -488,47 +485,24 @@ export class CardDetailPage implements OnInit {
     return domtoimage.toPng(el, { bgcolor: '#ffffff', scale: 2 });
   }
 
-  private dataUrlToFile(dataUrl: string, filename: string): File {
-    const [header, data] = dataUrl.split(',');
-    const mime = header.match(/:(.*?);/)![1];
-    const bytes = atob(data);
-    const arr = new Uint8Array(bytes.length);
-    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
-    return new File([arr], filename, { type: mime });
-  }
-
   private slug(): string {
     return (this.card?.title ?? 'weirdstats').replace(/\s+/g, '-').slice(0, 40);
   }
 
-  /** Share the watermarked card image directly — native sheet on mobile, URL on desktop */
-  async shareTo(network: string): Promise<void> {
+  /**
+   * Open the chosen platform's share dialog for this card's link. Each button is
+   * platform-specific (Facebook → Facebook, X → X), so we go straight to that
+   * network's web-intent — the card's OG image unfurls into a rich preview
+   * everywhere, so a link share is all that's needed. Must stay SYNCHRONOUS with
+   * the click: any await first (rendering a PNG, presenting a loader) drops the
+   * user-gesture and the browser blocks the popup — that's why Facebook wasn't
+   * opening. To share the raw image instead, use Save Image.
+   */
+  shareTo(network: string): void {
     if (!this.card) return;
     this.analytics.track('share', { method: network, card_id: this.storedCard?.id || '' });
-    const loading = await this.loadingCtrl.create({ message: 'Preparing…', duration: 8000 });
-    await loading.present();
-    try {
-      const dataUrl = await this.renderPng();
-      const cardUrl = this.cardUrl();
-
-      if (dataUrl && this.canNativeShare) {
-        const file = this.dataUrlToFile(dataUrl, `${this.slug()}.png`);
-        if ((navigator as any).canShare({ files: [file] })) {
-          await loading.dismiss();
-          try {
-            await (navigator as any).share({ files: [file], url: cardUrl, title: this.card.title });
-          } catch { /* user cancelled */ }
-          return;
-        }
-      }
-
-      await loading.dismiss();
-      const url = this.shareUrl(network);
-      if (url && url !== '#') window.open(url, '_blank', 'noopener');
-    } catch {
-      await loading.dismiss();
-      this.toast('Something went wrong.');
-    }
+    const url = this.shareUrl(network);
+    if (url && url !== '#') window.open(url, '_blank', 'noopener');
   }
 
   /** Platform share URL (desktop fallback / href) */

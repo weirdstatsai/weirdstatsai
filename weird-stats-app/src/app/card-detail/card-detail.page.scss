@@ -490,17 +490,20 @@ $alt-tile-w: min(45vw, 190px);
   overflow: hidden;
 }
 .og-tile {
-  width: 720px;
-  background: #fff;
+  width: 760px;
+  background: transparent;   // no white matte — the card sits on the gradient
   border-radius: 28px;
-  padding: 30px 30px 20px;
-  box-shadow: 0 20px 60px rgba(20, 22, 43, 0.14);
+  padding: 0;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
 }
 // Render the rich full card (chart with axes/values), constrained to the tile.
+// Soft drop-shadow lifts the card off the gradient so it reads as a distinct
+// card — no white matte needed.
 .og-card-full {
   width: 100%;
+  filter: drop-shadow(0 16px 38px rgba(20, 22, 43, 0.18));
 }
 .og-card-full app-card-ranking,
 .og-card-full app-card-kpi,
