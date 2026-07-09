@@ -59,26 +59,38 @@
     <div *ngIf="activeTab === 'home'" class="tab-body">
 
       <!-- Custom topic -->
-      <div class="home-block">
-        <p class="block-title">Push a stat to Home</p>
-        <p class="block-sub">Type any topic, or pick a trending one below. It generates a card and adds it to the Home feed instantly.</p>
+      <div class="home-block hero-block">
+        <div class="block-lead">
+          <div class="lead-icon"><ion-icon name="sparkles"></ion-icon></div>
+          <div class="lead-text">
+            <p class="block-title">Push a stat to Home</p>
+            <p class="block-sub">Type any topic, or pick a trending one below — it generates a card and pins it to Home instantly.</p>
+          </div>
+        </div>
         <div class="topic-input">
           <input [(ngModel)]="customTopic" placeholder="e.g. Which country drinks the most coffee?"
                  (keydown.enter)="generateCustom()" [disabled]="!!generatingTopic" class="topic-in"/>
           <button class="gen-btn" (click)="generateCustom()" [disabled]="!!generatingTopic || !customTopic.trim()">
-            <ion-icon name="sparkles-outline"></ion-icon> Generate
+            <ion-icon name="sparkles-outline"></ion-icon>
+            <span>Generate</span>
           </button>
         </div>
         <p class="gen-status" *ngIf="generatingTopic">
           <ion-spinner name="crescent"></ion-spinner>
-          {{ genStatus || 'Generating' }} — “{{ generatingTopic }}”
+          <span>{{ genStatus || 'Generating' }} — “{{ generatingTopic }}”</span>
         </p>
       </div>
 
       <!-- Trending -->
       <div class="home-block">
         <div class="block-head">
-          <p class="block-title">Trending now</p>
+          <div class="block-lead compact">
+            <div class="lead-icon flame"><ion-icon name="flame"></ion-icon></div>
+            <div class="lead-text">
+              <p class="block-title">Trending now</p>
+              <p class="block-sub tight">Live from Google Trends, news &amp; politics</p>
+            </div>
+          </div>
           <button class="refresh-btn" (click)="loadTrends()" [disabled]="trendsLoading">
             <ion-icon name="refresh-outline"></ion-icon>
           </button>
@@ -89,7 +101,7 @@
         <ng-container *ngIf="!trendsLoading">
           <div class="trend-group" *ngFor="let src of sourceOrder">
             <ng-container *ngIf="trendsFor(src).length">
-              <p class="trend-src">{{ sourceMeta[src].icon }} {{ sourceMeta[src].label }}</p>
+              <p class="trend-src">{{ sourceMeta[src].label }}</p>
               <div class="trend-list">
                 <button class="trend-chip" *ngFor="let t of trendsFor(src)"
                         (click)="generateToHome(t.topic)"
@@ -108,8 +120,13 @@
 
       <!-- On Home now -->
       <div class="home-block">
-        <p class="block-title">On Home now <span class="count-pill">{{ homeCards.length }}</span></p>
-        <p class="block-sub" *ngIf="homeCards.length">These are shuffled for visitors every few hours.</p>
+        <div class="block-lead compact">
+          <div class="lead-icon home"><ion-icon name="home"></ion-icon></div>
+          <div class="lead-text">
+            <p class="block-title">On Home now <span class="count-pill">{{ homeCards.length }}</span></p>
+            <p class="block-sub tight" *ngIf="homeCards.length">Shuffled for visitors every few hours</p>
+          </div>
+        </div>
         <div class="home-cards">
           <div class="home-card-row" *ngFor="let c of homeCards">
             <div class="hc-info">
