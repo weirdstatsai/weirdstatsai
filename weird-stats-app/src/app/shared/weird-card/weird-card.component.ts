@@ -41,19 +41,34 @@ export class WeirdCardComponent {
     return this.is2PointChart && this.selectedStyle === 'comparison';
   }
 
-  /** Map the chart's two points into a comparison-KPI card: latest = the hero
-   *  value, earliest = the labelled benchmark. */
+  /** Which of the two points is the "current" one. The data isn't guaranteed to
+   *  be oldest-first, so infer recency from the labels; default to the 2nd. */
+  private get latestIdx(): number {
+    const labels = (this.card.labels || []).slice(0, 2).map(l => (l || '').toLowerCase());
+    const now = labels.findIndex(l => /\b(now|today|current|present|latest)\b/.test(l));
+    if (now >= 0) return now;
+    const ago = labels.findIndex(l => /ago|prev|previous|\bthen\b|past|before|earlier/.test(l));
+    if (ago >= 0) return ago === 0 ? 1 : 0;
+    const yr = labels.map(l => { const m = l.match(/(?:19|20)\d{2}/); return m ? +m[0] : NaN; });
+    if (!isNaN(yr[0]) && !isNaN(yr[1]) && yr[0] !== yr[1]) return yr[1] > yr[0] ? 1 : 0;
+    return 1;
+  }
+
+  /** Map the chart's two points into a comparison-KPI card: the current point is
+   *  the hero value, the other is the labelled benchmark. */
   get comparisonCard(): WeirdCard {
     const data = this.card.datasets[0].data;
     const labels = this.card.labels;
+    const cur = this.latestIdx;
+    const past = cur === 0 ? 1 : 0;
     const name = this.card.metric?.name || this.card.title;
     const unit = this.card.metric?.unit || '';
     return {
       ...this.card,
-      metric: { ...this.card.metric, name, unit, value: data[1] },
+      metric: { ...this.card.metric, name, unit, value: data[cur] },
       rows: [
-        { rank: null, label: name, value: data[1], unit, extra: '' },
-        { rank: null, label: labels[0], value: data[0], unit, extra: '' },
+        { rank: null, label: name, value: data[cur], unit, extra: '' },
+        { rank: null, label: labels[past], value: data[past], unit, extra: '' },
       ],
     };
   }
