@@ -259,6 +259,16 @@ Chart rules:
 * chartType is null unless cardType is "chart", "ranking", or "map".
 * line=time trends; bar=category comparisons/rankings; pie/doughnut=parts of a whole;
   scatter=two-variable; bubble=three-variable.
+* TIME SERIES RULE (strict): if the labels are years or dates, or the question is a trend
+  "over the years / since <year> / history of", the chartType MUST be "line" (or "bar" for
+  a few discrete periods) and presentationType "line-chart"/"bar-chart". NEVER pie or
+  doughnut for a time series — years are not parts of a whole, and a pie of yearly values is
+  meaningless. Only use pie/doughnut when the slices genuinely sum to one whole (a % breakdown
+  or shares of a total, e.g. an energy mix), and the values should add up to ~100% or the full total.
+* AXIS SANITY: labels are the x-axis and dataset values are the y-axis, so both must read
+  sensibly. Order time-series labels chronologically (oldest → newest), keep each value in the
+  same unit, and make labels short (a year like "2024", not a sentence). metric.unit is the
+  y-axis unit and must be a symbol/short word.
 * datasets may have one or more series. labels length must equal each dataset's data length.
 * Fill labels/datasets/rows even for non-chart cards so the frontend can reuse the data.
 

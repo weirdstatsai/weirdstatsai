@@ -235,6 +235,18 @@ export class CardDetailPage implements OnInit {
         .map(s => this.mapAltStyles.find(a => a.key === s) ?? { key: s, label: s });
     }
 
+    // Chart alts — a time series (year labels) is never "parts of a whole", so
+    // offering a doughnut is misleading. Give it line + bar only; other charts
+    // keep the full set. Default the selection to the card's current type.
+    if (this.card?.cardType === 'chart') {
+      const labels = this.card.labels ?? [];
+      const years = labels.filter(l => /(1[6-9]\d{2}|2[0-1]\d{2})/.test(String(l))).length;
+      const timeSeries = labels.length >= 2 && years >= Math.ceil(labels.length * 0.6);
+      this.altTypes = timeSeries ? ['line', 'bar'] : ['bar', 'line', 'doughnut'];
+      const cur = this.card.chartType as 'bar' | 'line' | 'doughnut';
+      this.selectedAltType = this.altTypes.includes(cur) ? cur : this.altTypes[0];
+    }
+
     // Restore previously selected style
     const saved = ui?.selectedStyle;
     if (saved) {
