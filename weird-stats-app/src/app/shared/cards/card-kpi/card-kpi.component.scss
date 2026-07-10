@@ -23,10 +23,9 @@
   }
 }
 
-// Feed tile title: KPI tiles carry little content, so the title gets to
+// Feed + alt tile title: KPI tiles carry little content, so the title gets to
 // be bigger than the 13px base title, scaling fluidly with the card. Alt
-// shares the full-card layout now (see .kpi-illus-bg below), so this only
-// really targets feed, but stays harmless there since .full overrides it.
+// shares this exact layout with feed, so both get it.
 .wcard:not(.full) .wcard-title {
   font-size: clamp(16px, 6.5cqw, 24px);
   line-height: 1.25;
@@ -132,19 +131,15 @@
 .full .kpi-illus { width: 88px; height: 88px; }
 .full .illus-emoji { font-size: 52px; }
 
-// Full (detail + share) AND alt (style-preview): the illustration + circle is
-// a background layer behind the content, centred on the right and faded, not
-// beside the title. Sized with cqw so the alt tile (~190px) gets a smaller but
-// still-prominent circle instead of full's fixed size overflowing it — the alt
-// preview is meant to be an honest miniature of the real full card.
-.full .kpi-illus-bg,
-.alt .kpi-illus-bg {
+// Full (detail + share): the illustration + circle is a background layer behind
+// the content, centred on the right and faded, not beside the title.
+.full .kpi-illus-bg {
   position: absolute;
   top: 50%;
   right: -6%;
   transform: translateY(-50%);
-  width: clamp(80px, 46cqw, 190px);
-  height: clamp(80px, 46cqw, 190px);
+  width: 190px;
+  height: 190px;
   border-radius: 50%;
   background: color-mix(in srgb, var(--accent) 13%, transparent);
   display: flex;
@@ -154,16 +149,13 @@
   opacity: 0.6;
   pointer-events: none;
 }
-.full .kpi-illus-bg .illus-emoji,
-.alt .kpi-illus-bg .illus-emoji { font-size: clamp(44px, 25cqw, 104px); line-height: 1; }
+.full .kpi-illus-bg .illus-emoji { font-size: 104px; line-height: 1; }
 
 // Content sits in front of the background illustration.
 .full .wcard-head,
 .full .kpi-title-row,
 .full .kpi-number-row,
-.full .wcard-insight,
-.alt .kpi-title-row,
-.alt .kpi-number-row { position: relative; z-index: 1; }
+.full .wcard-insight { position: relative; z-index: 1; }
 
 .kpi-body {
   display: flex;
@@ -184,7 +176,8 @@
 }
 
 .full .kpi-value { font-size: 64px; }
-.alt .kpi-value  { font-size: 28px; }
+// No .alt override here — alt shares .kpi-hero-stack with feed, whose own
+// clamp-based .kpi-value sizing already handles it responsively.
 
 .kpi-unit {
   font-size: 12px;
