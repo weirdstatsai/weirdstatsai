@@ -131,6 +131,32 @@
 .full .kpi-illus { width: 88px; height: 88px; }
 .full .illus-emoji { font-size: 52px; }
 
+// Full (detail + share): the illustration + circle is a background layer behind
+// the content, centred on the right and faded, not beside the title.
+.full .kpi-illus-bg {
+  position: absolute;
+  top: 50%;
+  right: -6%;
+  transform: translateY(-50%);
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 0;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.full .kpi-illus-bg .illus-emoji { font-size: 104px; line-height: 1; }
+
+// Content sits in front of the background illustration.
+.full .wcard-head,
+.full .kpi-title-row,
+.full .kpi-number-row,
+.full .wcard-insight { position: relative; z-index: 1; }
+
 .kpi-body {
   display: flex;
   flex-direction: row;

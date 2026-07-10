@@ -27,13 +27,13 @@
       </div>
     </ng-container>
 
-    <!-- Detail (full): title + illustration side by side, number row, insight -->
+    <!-- Detail (full): illustration is a background layer behind the content -->
     <ng-container *ngIf="size === 'full'">
+      <div class="kpi-illus-bg" *ngIf="card.uiMeta?.icon">
+        <span class="illus-emoji">{{ card.uiMeta.icon }}</span>
+      </div>
       <div class="kpi-title-row">
         <p class="wcard-title">{{ card.title | stripEmoji }}</p>
-        <div class="kpi-illus" *ngIf="card.uiMeta?.icon">
-          <span class="illus-emoji">{{ card.uiMeta.icon }}</span>
-        </div>
       </div>
       <div class="kpi-number-row">
         <p class="kpi-value">{{ displayValue }}</p>
