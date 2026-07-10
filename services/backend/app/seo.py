@@ -291,27 +291,7 @@ def compose_og_image(doc: Optional[dict]) -> Optional[bytes]:
         panel_bottom = panel[3] - inset
         y = panel[1] + inset
 
-        # ── Category + type pills ──
-        cat = str(ui.get("category") or "").strip()
-        ctype = str(card.get("cardType") or "").strip()
-        f_pill = font(22)
-        ph = 38
-        if cat:
-            tw = draw.textlength(cat, font=f_pill)
-            draw.rounded_rectangle([cx, y, cx + tw + 34, y + ph], radius=ph // 2,
-                                   fill=_mix(accent, WHITE, 0.85))
-            draw.text((cx + 17, y + ph / 2), cat, font=f_pill, fill=accent, anchor="lm")
-            nx = cx + tw + 34 + 10
-        else:
-            nx = cx
-        if ctype:
-            lbl = f"{ctype} card"
-            tw2 = draw.textlength(lbl, font=f_pill)
-            draw.rounded_rectangle([nx, y, nx + tw2 + 30, y + ph], radius=ph // 2,
-                                   fill=(238, 238, 242))
-            draw.text((nx + 15, y + ph / 2), lbl, font=f_pill, fill=MUTE, anchor="lm")
-        y += ph + 16
-
+        # No category/type pills — this is a shared image, not app chrome.
         # ── Title (up to 2 lines) ──
         plain = _plain_title(card) or "A weird stat"
         f_title = font(48)

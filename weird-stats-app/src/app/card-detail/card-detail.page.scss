@@ -530,13 +530,6 @@ $alt-tile-w: min(45vw, 190px);
   display: block;
   width: 100%;
 }
-// The badges sit above the 760px-wide OG tile — scale them up to match this
-// larger canvas (the component's own sizing targets the ~360px app viewport).
-.og-badges {
-  display: block;
-  ::ng-deep .card-badges { margin: 0 0 16px 2px; }
-  ::ng-deep .cat-badge, ::ng-deep .type-badge { font-size: 20px; padding: 8px 18px; }
-}
 .og-brand {
   text-align: center;
   margin-top: 14px;
