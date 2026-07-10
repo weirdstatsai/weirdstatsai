@@ -59,7 +59,7 @@
   <ng-container *ngIf="card && !isLoading">
 
     <!-- Main full card -->
-    <app-card-badges [card]="card"></app-card-badges>
+    <app-card-badges [card]="card" class="main-badges"></app-card-badges>
     <div class="main-card-wrap">
       <ng-container [ngSwitch]="card.cardType">
         <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>

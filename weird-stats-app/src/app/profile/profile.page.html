@@ -69,7 +69,7 @@
         </div>
 
         <!-- Full card -->
-        <app-card-badges [card]="selectedDraft.data"></app-card-badges>
+        <app-card-badges [card]="selectedDraft.data" class="draft-badges"></app-card-badges>
         <div class="draft-full-card">
           <ng-container [ngSwitch]="selectedDraft.data?.cardType">
             <app-card-ranking *ngSwitchCase="'ranking'" [card]="selectedDraft.data!" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>

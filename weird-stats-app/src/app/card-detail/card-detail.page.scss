@@ -54,6 +54,16 @@ app-weird-card {
   margin-bottom: 20px;
 }
 
+// The external badges (app-card-badges) sit above .main-card-wrap as a
+// sibling, so they don't inherit its side padding — match it explicitly so
+// the badges line up with the card's own left edge instead of the screen edge.
+// Scoped to .main-badges only — the share-capture/og-capture instances are
+// already nested inside their own padded containers and shouldn't get this too.
+.main-badges {
+  display: block;
+  padding: 0 16px;
+}
+
 .main-card-wrap {
   padding: 0 16px;
 
