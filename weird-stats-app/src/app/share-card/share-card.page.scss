@@ -1,31 +1,30 @@
 .share-frame {
-  background: #fff;
   border-radius: 20px;
-  padding: 12px 12px 0;
+  padding: 16px;
   margin-bottom: 20px;
-  border: 0.5px solid rgba(0,0,0,0.07);
   overflow: hidden;
+  // background bound to the card's own gradient — no white frame, matching the
+  // in-card share image and the link-preview.
 }
 
 .card-wrap {
   pointer-events: none;
   position: relative;
-  border-radius: 16px;
-  overflow: hidden;
+  // No overflow/radius — let the card's own rounded border + shadow render fully.
+  app-weird-card { display: block; }
 }
-
 
 .brand-strip {
   display: flex;
   align-items: center;
-  padding: 10px 4px 10px;
+  padding: 11px 2px 1px;
 }
 
 .brand-name {
-  font-size: 13px;
-  font-weight: 800;
-  color: #1a1a2e;
-  letter-spacing: -0.3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #4a4a58;
+  letter-spacing: 0.1px;
 }
 
 .brand-dot {

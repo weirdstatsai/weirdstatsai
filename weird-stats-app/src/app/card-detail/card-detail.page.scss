@@ -333,16 +333,12 @@ $alt-tile-w: min(45vw, 190px);
     app-weird-card { display: block; margin: 0; }
   }
 
-  // Small attribution watermark, overlaid in the bottom margin (out of flow) so
-  // the card keeps an equal margin on every side.
+  // Normal flow, tight under the card — never detaches, even for a short card.
   .brand-strip {
-    position: absolute;
-    left: 20px;
-    bottom: 5px;
     display: flex; align-items: center;
-    padding: 0;
+    padding: 11px 2px 1px;
   }
-  .brand-name { font-size: 9px; font-weight: 600; color: #565664; letter-spacing: 0.2px; }
+  .brand-name { font-size: 11px; font-weight: 600; color: #4a4a58; letter-spacing: 0.1px; }
   .brand-dot { color: #6C5CE7; }
 
   .section-title {

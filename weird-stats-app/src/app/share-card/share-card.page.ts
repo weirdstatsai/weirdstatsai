@@ -27,6 +27,14 @@ export class ShareCardPage implements OnInit {
     return !!(navigator as any).share && !!(navigator as any).canShare;
   }
 
+  /** The card's own gradient, so the share image matches the in-card look and
+   *  the link-preview (OG) — no white frame. */
+  get cardGradient(): string {
+    const from = this.card?.uiMeta?.gradientFrom || '#f5f3ff';
+    const to = this.card?.uiMeta?.gradientTo || '#ede9fe';
+    return `linear-gradient(135deg, ${from}, ${to})`;
+  }
+
   constructor(
     private router: Router,
     private authService: AuthService,
