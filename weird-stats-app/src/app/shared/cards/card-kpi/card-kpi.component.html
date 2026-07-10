@@ -11,9 +11,10 @@
 
   <!-- ── A: Default — title+illus row, then big number ── -->
   <ng-container *ngIf="kpiStyle === 'default'">
-    <!-- Feed tile: title on top, icon + number + unit as one centered hero
-         stack that fills the whole portrait tile — no dead space. -->
-    <ng-container *ngIf="size === 'feed'">
+    <!-- Feed tile AND alt preview: title on top, icon + number + unit as one
+         centered hero stack that fills the tile — no dead space, and the alt
+         preview reads as a real mini-card instead of a lone number. -->
+    <ng-container *ngIf="size === 'feed' || size === 'alt'">
       <p class="wcard-title">{{ card.title | stripEmoji }}</p>
       <div class="kpi-hero-stack">
         <div class="kpi-hero-num">
@@ -26,9 +27,9 @@
       </div>
     </ng-container>
 
-    <!-- Detail/alt: title + illustration side by side, number row, insight -->
-    <ng-container *ngIf="size !== 'feed'">
-      <div class="kpi-title-row" *ngIf="size !== 'alt'">
+    <!-- Detail (full): title + illustration side by side, number row, insight -->
+    <ng-container *ngIf="size === 'full'">
+      <div class="kpi-title-row">
         <p class="wcard-title">{{ card.title | stripEmoji }}</p>
         <div class="kpi-illus" *ngIf="card.uiMeta?.icon">
           <span class="illus-emoji">{{ card.uiMeta.icon }}</span>
