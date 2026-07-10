@@ -56,6 +56,13 @@
   z-index: 1;
 }
 
+// At full size (detail, share, OG) the badges render externally via
+// <app-card-badges>, above the card — hide the internal row so it isn't
+// duplicated. Feed/alt tiles keep their own internal badges.
+.full .wcard-head {
+  display: none;
+}
+
 .cat-badge {
   display: inline-flex;
   align-items: center;

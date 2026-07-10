@@ -59,6 +59,7 @@
   <ng-container *ngIf="card && !isLoading">
 
     <!-- Main full card -->
+    <app-card-badges [card]="card"></app-card-badges>
     <div class="main-card-wrap">
       <ng-container [ngSwitch]="card.cardType">
         <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>
@@ -76,6 +77,7 @@
     <div class="og-capture" aria-hidden="true">
       <div class="og-frame" #ogArea [style.background]="ogGradient">
         <div class="og-tile">
+          <app-card-badges [card]="card" class="og-badges"></app-card-badges>
           <div class="og-card-full">
             <ng-container [ngSwitch]="card.cardType">
               <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>
@@ -106,6 +108,7 @@
 
       <!-- Offscreen watermarked frame — captured to PNG when sharing/saving -->
       <div class="share-capture" #shareArea aria-hidden="true" [style.background]="ogGradient">
+        <app-card-badges [card]="card"></app-card-badges>
         <div class="card-wrap">
           <app-weird-card [card]="card" size="full"></app-weird-card>
         </div>
