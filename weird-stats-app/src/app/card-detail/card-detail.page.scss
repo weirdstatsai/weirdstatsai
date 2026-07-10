@@ -338,7 +338,7 @@ $alt-tile-w: min(45vw, 190px);
     display: flex; align-items: center;
     padding: 11px 2px 1px;
   }
-  .brand-name { font-size: 11px; font-weight: 600; color: #4a4a58; letter-spacing: 0.1px; }
+  .brand-name { font-size: 11px; font-weight: 600; color: #4a4a58; letter-spacing: 0.1px; white-space: nowrap; }
   .brand-dot { color: #6C5CE7; }
 
   .section-title {
