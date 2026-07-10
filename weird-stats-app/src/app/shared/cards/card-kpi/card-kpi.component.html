@@ -65,22 +65,17 @@
     </div>
   </ng-container>
 
-  <!-- ── C: Comparison vs benchmark ── -->
+  <!-- ── C: Comparison — one hero value; benchmark demoted to a quiet line ── -->
   <ng-container *ngIf="kpiStyle === 'comparison'">
-    <div class="comp-layout">
-      <div class="comp-main">
-        <p class="comp-val">{{ displayValue }}</p>
-        <p class="comp-lbl">{{ card.rows?.[0]?.label || card.metric?.name }}</p>
-      </div>
-      <div class="comp-divider"></div>
-      <div class="comp-bench">
-        <p class="comp-bench-val">{{ compValue }}</p>
-        <p class="comp-bench-lbl">{{ compLabel }}</p>
-      </div>
+    <div class="comp-main">
+      <p class="comp-val">{{ displayValue }}</p>
+      <p class="comp-lbl">{{ card.rows?.[0]?.label || card.metric?.name }}</p>
     </div>
-    <div class="comp-diff" *ngIf="diffPct !== 0">
-      <span>{{ diffPct > 0 ? '↑' : '↓' }} {{ diffPct | number:'1.0-0' }}% {{ diffPct > 0 ? 'more' : 'less' }}</span>
+    <div class="comp-foot">
+      <span class="comp-chip" *ngIf="diffPct !== 0">{{ diffPct > 0 ? '↑' : '↓' }} {{ diffPct | number:'1.0-0' }}% {{ diffPct > 0 ? 'more' : 'less' }}</span>
+      <span class="comp-vs" *ngIf="compValue">vs {{ compValue }} {{ compLabel }}</span>
     </div>
+    <span class="comp-illus" *ngIf="card.uiMeta?.icon">{{ card.uiMeta.icon }}</span>
     <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
   </ng-container>
 

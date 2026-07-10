@@ -224,84 +224,67 @@
   line-height: 1.4;
 }
 
-// ── C: Comparison ─────────────────────────────────────────────────────────
-.comp-layout {
-  display: flex;
-  align-items: flex-end;
-  gap: 0;
-  margin-bottom: 10px;
-  // No overflow:hidden here — the main label self-clips with its own ellipsis,
-  // and clipping at this edge shaves the right-aligned benchmark's last glyph.
-  min-width: 0;
-}
-
-// comp-main carries an ellipsis label, so it may shrink; the benchmark must
-// not — without this the right-hand "prev record" gets squeezed and clips past
-// the card's rounded edge.
-.comp-main { flex: 1; min-width: 0; }
+// ── C: Comparison — one hero value; benchmark demoted to a quiet line ──────
+.comp-main { position: relative; z-index: 1; margin-bottom: 12px; }
 
 .comp-val {
   font-size: clamp(32px, 16cqw, 52px);
   font-weight: 900;
   color: var(--accent);
   letter-spacing: -2px;
-  line-height: 1;
+  line-height: 0.92;
   margin: 0;
   white-space: nowrap;
 }
-
-.alt .comp-val  { font-size: 26px; }
-.alt .comp-bench-val { font-size: 16px; }
 
 .comp-lbl {
-  font-size: 10px;
-  color: #888;
-  margin: 3px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3d3d52;
+  line-height: 1.25;
+  margin: 8px 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.comp-divider {
-  width: 1px;
-  height: 44px;
-  background: rgba(0,0,0,0.1);
-  margin: 0 14px;
+.comp-foot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
 }
 
-.comp-bench { text-align: right; flex-shrink: 0; }
-
-.comp-bench-val {
-  font-size: 24px;
+.comp-chip {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
   font-weight: 800;
-  color: #bbb;
-  letter-spacing: -1px;
-  line-height: 1;
-  margin: 0;
   white-space: nowrap;
 }
 
-.comp-bench-lbl {
-  font-size: 10px;
-  color: #bbb;
-  margin: 3px 0 0;
+.comp-vs {
+  font-size: 11px;
+  color: #9a9aa2;
   white-space: nowrap;
 }
 
-.comp-diff {
-  display: inline-flex;
-  margin-bottom: 10px;
+// Category emoji watermark — hidden by default, shown only on the feed tile.
+.comp-illus { display: none; }
 
-  span {
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
-    color: var(--accent);
-    border-radius: 20px;
-    padding: 3px 10px;
-    font-size: 11px;
-    font-weight: 800;
-    white-space: nowrap;
-  }
-}
+.alt .comp-val { font-size: 26px; }
+.alt .comp-lbl { font-size: 11px; margin-top: 5px; -webkit-line-clamp: 2; }
+
+.full .comp-val { font-size: 60px; line-height: 0.9; }
+.full .comp-lbl { font-size: 15px; margin-top: 10px; -webkit-line-clamp: 3; }
+.full .comp-foot { margin-top: 14px; gap: 8px; }
+.full .comp-chip { font-size: 13px; padding: 5px 13px; }
+.full .comp-vs { font-size: 13px; }
 
 // ── D: Hero ────────────────────────────────────────────────────────────────
 .hero-layout {
@@ -344,12 +327,24 @@
 // scale the content up so it reads bold and prominent in the tall tile. As a
 // component style this applies to every card of this type, now and future.
 .wcard:not(.full):not(.alt) {
-  .comp-layout { margin-top: auto; margin-bottom: 14px; }
-  .comp-diff { margin-bottom: auto; }
+  .comp-main { margin-top: 6px; margin-bottom: 14px; }
   .comp-val { font-size: clamp(44px, 26cqw, 74px); letter-spacing: -2.5px; }
-  .comp-lbl { font-size: 12.5px; margin-top: 6px; }
-  .comp-divider { height: 58px; margin: 0 16px; }
-  .comp-bench-val { font-size: 32px; }
-  .comp-bench-lbl { font-size: 11.5px; margin-top: 5px; }
-  .comp-diff span { font-size: 13px; padding: 5px 13px; }
+  .comp-lbl { font-size: 13.5px; margin-top: 10px; }
+  .comp-foot { gap: 8px; }
+  .comp-chip { font-size: 13px; padding: 5px 13px; }
+  .comp-vs { font-size: 12px; }
+
+  // The category emoji, blown up and faded, bleeding off the bottom-right
+  // corner behind the stat — same texture the single-KPI tile uses.
+  .comp-illus {
+    display: block;
+    position: absolute;
+    right: -6cqw;
+    bottom: -8cqw;
+    font-size: 52cqw;
+    line-height: 1;
+    opacity: 0.15;
+    z-index: 0;
+    pointer-events: none;
+  }
 }
