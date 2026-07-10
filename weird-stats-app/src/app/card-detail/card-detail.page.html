@@ -105,7 +105,7 @@
     <div class="share-inline" *ngIf="viewOnly">
 
       <!-- Offscreen watermarked frame — captured to PNG when sharing/saving -->
-      <div class="share-capture" #shareArea aria-hidden="true">
+      <div class="share-capture" #shareArea aria-hidden="true" [style.background]="ogGradient">
         <div class="card-wrap">
           <app-weird-card [card]="card" size="feed"></app-weird-card>
         </div>

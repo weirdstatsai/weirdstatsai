@@ -314,12 +314,12 @@ $alt-tile-w: min(45vw, 190px);
     left: -9999px;
     top: 0;
     width: 360px;
-    background: #fff;
     border-radius: 20px;
-    padding: 12px;
-    border: 0.5px solid rgba(0,0,0,0.07);
+    padding: 14px;
     overflow: hidden;
     pointer-events: none;
+    // background is bound to the card's own gradient (ogGradient) so the card
+    // sits edge-to-edge with no white frame around it.
   }
 
   .card-wrap {
@@ -337,7 +337,7 @@ $alt-tile-w: min(45vw, 190px);
     display: flex; align-items: center;
     padding: 8px 2px 0;
   }
-  .brand-name { font-size: 13px; font-weight: 800; color: #1a1a2e; letter-spacing: -0.3px; }
+  .brand-name { font-size: 11px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.2px; }
   .brand-dot { color: #6C5CE7; }
 
   .section-title {
