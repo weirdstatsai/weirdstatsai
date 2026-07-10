@@ -60,7 +60,7 @@ CARDS = [
             "labels": [],
             "datasets": [],
             "rows": [],
-            "insight": "Two hearts pump blood to the gills, one to the body — and it stops completely when they swim, which is why octopuses prefer crawling.",
+            "insight": "Two hearts pump blood to the gills and one to the body — and that body heart stops completely whenever they swim, which is why octopuses would rather crawl. Picture your heart clocking out every time you broke into a jog.",
             "tags": ["animals", "biology", "weird"],
             "weirdScore": 9,
             "uiMeta": {
@@ -97,7 +97,7 @@ CARDS = [
                 {"rank": 4, "label": "Ireland",        "value": 99.0,  "unit": "L", "extra": "Still holding strong"},
                 {"rank": 5, "label": "Croatia",        "value": 95.1,  "unit": "L", "extra": "A toast to the sunny coast!"},
             ],
-            "insight": "Czech Republic drinks nearly 150 litres per person per year — that's almost a pint every single day.",
+            "insight": "The Czech Republic drinks nearly 150 litres of beer per person a year — the most on Earth and almost a pint every single day. That's a national average that includes babies, so somebody is clearly picking up the slack.",
             "tags": ["beer", "countries", "drinking"],
             "weirdScore": 7,
             "uiMeta": {
@@ -129,7 +129,7 @@ CARDS = [
             "labels": [],
             "datasets": [],
             "rows": [{"rank": 1, "label": "Eumillipes persephone", "value": 1306.0, "unit": "legs", "extra": "Found 60m underground in Western Australia"}],
-            "insight": "Discovered in 2021, this Australian millipede shattered the previous record of 750 legs. It lives 60 metres underground and has no eyes.",
+            "insight": "Discovered in 2021, the Australian millipede Eumillipes persephone has 1,306 legs — shattering the previous record of 750. It lives 60 metres underground with no eyes, which is a lot of shoes to buy for something that can't see where it's going.",
             "tags": ["animals", "records", "biology"],
             "weirdScore": 10,
             "uiMeta": {
@@ -164,7 +164,7 @@ CARDS = [
                 {"rank": 1, "label": "Usain Bolt",  "value": 44.7, "unit": "km/h", "extra": "100m world record holder"},
                 {"rank": 2, "label": "House Cat",   "value": 48.0, "unit": "km/h", "extra": "Your average tabby"},
             ],
-            "insight": "Your lazy sofa cat is faster than the fastest human alive. The cat wins by 3.3 km/h.",
+            "insight": "A house cat tops out around 48 km/h versus Usain Bolt's peak of 44.7 km/h — so your lazy sofa cat is faster than the fastest human alive, by 3.3 km/h. The only reason you've never lost a race to it is that it simply cannot be bothered.",
             "tags": ["sports", "animals", "speed", "versus"],
             "weirdScore": 9,
             "uiMeta": {
@@ -195,7 +195,7 @@ CARDS = [
             "labels": ["1880", "1900", "1920", "1940", "1960", "1980", "2000", "2010", "2020", "2023"],
             "datasets": [{"label": "Temp anomaly (°C)", "data": [-0.2, -0.1, -0.27, 0.09, -0.01, 0.26, 0.42, 0.72, 0.98, 1.2]}],
             "rows": [],
-            "insight": "The last decade is the hottest in recorded history. 2023 was +1.2°C above the pre-industrial baseline.",
+            "insight": "The last decade is the hottest in recorded history, with 2023 running about +1.2°C above the pre-industrial baseline. Earth has essentially had a low-grade fever for ten years straight and still refuses to stay home from work.",
             "tags": ["climate", "science", "temperature", "global"],
             "weirdScore": 8,
             "uiMeta": {
@@ -232,7 +232,7 @@ CARDS = [
                 {"rank": 4, "label": "Sailfish",         "value": 110.0, "unit": "km/h", "extra": "Ocean fish"},
                 {"rank": 5, "label": "Pronghorn",        "value": 98.0,  "unit": "km/h", "extra": "Land mammal"},
             ],
-            "insight": "The Peregrine Falcon hits 389 km/h in a dive — faster than a Formula 1 car.",
+            "insight": "The peregrine falcon hits about 389 km/h in a hunting dive — faster than a Formula 1 car at full throttle. It's technically the fastest animal alive, achieving this purely by falling with tremendous commitment.",
             "tags": ["animals", "speed", "records"],
             "weirdScore": 7,
             "uiMeta": {
@@ -269,7 +269,7 @@ CARDS = [
                 {"rank": 4, "label": "France",  "value": 52.0, "unit": "sites", "extra": "🇫🇷"},
                 {"rank": 5, "label": "Spain",   "value": 50.0, "unit": "sites", "extra": "🇪🇸"},
             ],
-            "insight": "Italy edges out China by just one site. Europe dominates the top 5 — with 3 of the top 4 spots.",
+            "insight": "Italy edges out China for the most UNESCO World Heritage Sites by just one, and Europe holds 3 of the top 4 spots. Italy has so much history that at this point tripping over a priceless ruin there basically counts as a commute.",
             "tags": ["geography", "countries", "culture", "UNESCO"],
             "weirdScore": 6,
             "uiMeta": {
