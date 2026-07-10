@@ -11,10 +11,9 @@
 
   <!-- ── A: Default — title+illus row, then big number ── -->
   <ng-container *ngIf="kpiStyle === 'default'">
-    <!-- Feed tile AND alt preview: title on top, icon + number + unit as one
-         centered hero stack that fills the tile — no dead space, and the alt
-         preview reads as a real mini-card instead of a lone number. -->
-    <ng-container *ngIf="size === 'feed' || size === 'alt'">
+    <!-- Feed tile only: title on top, icon + number + unit as one centered
+         hero stack that fills the tall grid tile — no dead space. -->
+    <ng-container *ngIf="size === 'feed'">
       <p class="wcard-title">{{ card.title | stripEmoji }}</p>
       <div class="kpi-hero-stack">
         <div class="kpi-hero-num">
@@ -27,8 +26,10 @@
       </div>
     </ng-container>
 
-    <!-- Detail (full): illustration is a background layer behind the content -->
-    <ng-container *ngIf="size === 'full'">
+    <!-- Detail (full) AND alt preview: same layout so the style-picker tile
+         is an honest miniature of what selecting it actually produces —
+         illustration is a background layer behind the title/number. -->
+    <ng-container *ngIf="size === 'full' || size === 'alt'">
       <div class="kpi-illus-bg" *ngIf="card.uiMeta?.icon">
         <span class="illus-emoji">{{ card.uiMeta.icon }}</span>
       </div>
