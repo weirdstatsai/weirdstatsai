@@ -309,35 +309,40 @@ $alt-tile-w: min(45vw, 190px);
   padding: 28px 16px 24px;
 
   // Offscreen frame — rendered so it can be captured to PNG, but never shown.
+  // Equal padding on all four sides gives the card a uniform gradient margin;
+  // the brand is overlaid inside the bottom margin (below) so it doesn't add
+  // extra height and unbalance the frame. Background is bound to the card's
+  // own gradient (ogGradient) so there's no white frame.
   .share-capture {
     position: absolute;
     left: -9999px;
     top: 0;
     width: 360px;
     border-radius: 20px;
-    padding: 14px;
+    padding: 20px;
     overflow: hidden;
     pointer-events: none;
-    // background is bound to the card's own gradient (ogGradient) so the card
-    // sits edge-to-edge with no white frame around it.
   }
 
   .card-wrap {
     pointer-events: none;
     position: relative;
-    border-radius: 16px;
-    overflow: hidden;
-    // app-weird-card is a custom element with a default block margin — force block
-    // and drop the margin so no phantom gap appears under the card.
+    // No overflow:hidden or radius here — that clipped the card's own rounded
+    // border + drop-shadow (the disappearing bottom line). The card already
+    // clips its own content; let its full border and shadow render.
     app-weird-card { display: block; margin: 0; }
   }
 
-  // Brand sits tight under the card, bottom-left — no dead space between them.
+  // Small attribution watermark, overlaid in the bottom margin (out of flow) so
+  // the card keeps an equal margin on every side.
   .brand-strip {
+    position: absolute;
+    left: 20px;
+    bottom: 5px;
     display: flex; align-items: center;
-    padding: 8px 2px 0;
+    padding: 0;
   }
-  .brand-name { font-size: 11px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.2px; }
+  .brand-name { font-size: 9px; font-weight: 600; color: #565664; letter-spacing: 0.2px; }
   .brand-dot { color: #6C5CE7; }
 
   .section-title {
