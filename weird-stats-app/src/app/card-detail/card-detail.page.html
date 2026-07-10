@@ -234,11 +234,19 @@
       <div class="alts-row">
         <div
           class="alt-wrap"
-          [class.selected]="selectedAltType === t"
+          [class.selected]="!isChartComparison && selectedAltType === t"
           *ngFor="let t of altTypes"
           (click)="selectAlt(t)">
           <p class="alt-type-label">{{ t }}</p>
           <app-card-chart [card]="card" size="alt" [forceType]="t"></app-card-chart>
+        </div>
+        <div
+          class="alt-wrap"
+          *ngIf="canChartCompare"
+          [class.selected]="isChartComparison"
+          (click)="selectChartComparison()">
+          <p class="alt-type-label">comparison</p>
+          <app-weird-card [card]="comparisonPreviewCard" size="alt"></app-weird-card>
         </div>
       </div>
     </div>

@@ -883,7 +883,30 @@ export class CardDetailPage implements OnInit {
   selectAlt(type: 'bar' | 'line' | 'doughnut'): void {
     if (!this.card) return;
     this.selectedAltType = type;
-    this.card = { ...this.card, chartType: type };
+    // Picking a chart type clears any "render as comparison KPI" selection.
+    this.card = { ...this.card, chartType: type, uiMeta: { ...this.card.uiMeta, selectedStyle: '' } };
+    this.persistCardEdits();
+  }
+
+  // ── Chart → comparison-KPI alternative (only for 2-point time charts) ──
+  get canChartCompare(): boolean {
+    return this.card?.cardType === 'chart'
+      && this.card.datasets?.[0]?.data?.length === 2
+      && this.card.labels?.length === 2;
+  }
+
+  get isChartComparison(): boolean {
+    return this.card?.uiMeta?.selectedStyle === 'comparison';
+  }
+
+  /** A preview clone flagged to render as the comparison KPI. */
+  get comparisonPreviewCard(): WeirdCard {
+    return { ...this.card!, uiMeta: { ...this.card!.uiMeta, selectedStyle: 'comparison' } };
+  }
+
+  selectChartComparison(): void {
+    if (!this.card) return;
+    this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, selectedStyle: 'comparison' } };
     this.persistCardEdits();
   }
 

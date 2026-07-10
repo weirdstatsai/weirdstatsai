@@ -61,6 +61,19 @@ export class CardKpiComponent implements OnChanges {
     return Math.round(((main - comp) / comp) * 100);
   }
 
+  /** Magnitude only — the arrow already carries direction. */
+  get absDiffPct(): number {
+    return Math.abs(this.diffPct);
+  }
+
+  /** A plain-English benchmark line, e.g. "up from 1,114 (30 years ago)". */
+  get compSummary(): string {
+    if (!this.hasBenchmark) return '';
+    const dir = this.diffPct >= 0 ? 'up from' : 'down from';
+    const ctx = this.compLabel ? ` (${this.compLabel})` : '';
+    return `${dir} ${this.compValue}${ctx}`;
+  }
+
   /** SVG ring dash for circular style — capped at 85% */
   get ringDash(): string {
     const c = 2 * Math.PI * 30;
