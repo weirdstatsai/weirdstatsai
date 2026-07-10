@@ -233,6 +233,17 @@ MAP RULE (overrides ROW-COUNT RULE): if every row label is a COUNTRY, cardType M
 25 rows. Sub-national geography (states, districts, provinces, cities) is NEVER "map" —
 the map renders countries only; use "ranking" or "table" per the ROW-COUNT RULE.
 
+KPI RULE (no fabricated comparisons): default to presentationType "kpi-single" — a single
+clean number is the tightest, most trustworthy KPI. Use "kpi-comparison" ONLY when the
+research brief itself already contains a second, meaningful figure to compare against
+(e.g. a world average, a specific past-year value, or a directly related benchmark).
+NEVER invent a benchmark: no made-up "previous record", "last year", or "average" that is
+not explicitly in the brief. With only one figure, presentationType MUST be "kpi-single"
+and rows has exactly one item. For a genuine "kpi-comparison": rows[0] is the main value and
+rows[1] is the benchmark, and rows[1].label MUST plainly name what it is ("World average",
+"In 2010", "Global mean") — never a vague "prev record". Keep metric.name a short noun
+phrase (the label shown under the number) and metric.unit a symbol.
+
 UNIT RULE: always use symbols not words. Use "%" not "Percentage" or "percent",
 "km" not "kilometers", "kg" not "kilograms", "$" not "dollars", "°C" not "Celsius".
 

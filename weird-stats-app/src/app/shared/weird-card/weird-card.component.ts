@@ -36,7 +36,11 @@ export class WeirdCardComponent {
 
   get kpiStyle(): KpiStyle {
     const s = this.selectedStyle;
-    return (s && KPI_STYLES.includes(s as KpiStyle)) ? (s as KpiStyle) : 'default';
+    const style = (s && KPI_STYLES.includes(s as KpiStyle)) ? (s as KpiStyle) : 'default';
+    // Comparison needs a genuine second value; without one it would fabricate a
+    // benchmark, so fall back to the clean single-value default.
+    if (style === 'comparison' && this.card?.rows?.[1]?.value == null) return 'default';
+    return style;
   }
 
   get tableStyle(): TableStyle {

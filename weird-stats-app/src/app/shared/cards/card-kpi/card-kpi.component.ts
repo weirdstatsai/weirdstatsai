@@ -39,20 +39,24 @@ export class CardKpiComponent implements OnChanges {
     return this.card.rows?.[0]?.value != null ? this.fmt(this.card.rows[0].value) : '—';
   }
 
-  /** Benchmark value for comparison — rows[1] if exists, else 60% of main */
+  /** True only when the data carries a real second value to compare against. */
+  get hasBenchmark(): boolean {
+    return this.card?.rows?.[1]?.value != null;
+  }
+
+  /** Benchmark value — ONLY from a genuine second row. Never fabricated. */
   get compValue(): string {
-    if (this.card.rows?.[1]?.value != null) return this.fmt(this.card.rows[1].value);
-    const main = this.card.metric?.value ?? this.card.rows?.[0]?.value;
-    return main != null ? this.fmt(Math.round(main * 0.6)) : '—';
+    return this.hasBenchmark ? this.fmt(this.card.rows![1].value) : '';
   }
 
   get compLabel(): string {
-    return this.card.rows?.[1]?.label || 'prev record';
+    return this.card?.rows?.[1]?.label || '';
   }
 
   get diffPct(): number {
+    if (!this.hasBenchmark) return 0;
     const main = this.card.metric?.value ?? this.card.rows?.[0]?.value ?? 0;
-    const comp = this.card.rows?.[1]?.value ?? (main * 0.6);
+    const comp = this.card.rows![1].value;
     if (!comp || comp === main) return 0;
     return Math.round(((main - comp) / comp) * 100);
   }

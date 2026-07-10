@@ -97,11 +97,18 @@ export class CardDetailPage implements OnInit {
   selectedMapStyle: MapStyle = 'choropleth';
   selectMapAlt(style: MapStyle): void { this.selectedMapStyle = style; this._persistStyle(style); }
 
-  readonly kpiAltStyles: Array<{ key: KpiStyle; label: string }> = [
-    { key: 'default',    label: 'Default' },
-    { key: 'comparison', label: 'Comparison' },
-    { key: 'hero',       label: 'Hero' },
-  ];
+  // Comparison is only offered when the card carries a genuine second value —
+  // otherwise it would invent a benchmark, so we hide the option entirely.
+  get kpiAltStyles(): Array<{ key: KpiStyle; label: string }> {
+    const styles: Array<{ key: KpiStyle; label: string }> = [
+      { key: 'default', label: 'Default' },
+      { key: 'hero',    label: 'Hero' },
+    ];
+    if (this.card?.rows?.[1]?.value != null) {
+      styles.splice(1, 0, { key: 'comparison', label: 'Comparison' });
+    }
+    return styles;
+  }
   selectedKpiStyle: KpiStyle = 'default';
 
   factFontSize: 'small' | 'medium' | 'large' = 'medium';

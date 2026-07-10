@@ -72,7 +72,7 @@
       <p class="comp-val">{{ displayValue }}</p>
       <p class="comp-lbl">{{ card.rows?.[0]?.label || card.metric?.name }}</p>
     </div>
-    <div class="comp-foot">
+    <div class="comp-foot" *ngIf="hasBenchmark">
       <span class="comp-chip" *ngIf="diffPct !== 0">{{ diffPct > 0 ? '↑' : '↓' }} {{ diffPct | number:'1.0-0' }}% {{ diffPct > 0 ? 'more' : 'less' }}</span>
       <span class="comp-vs" *ngIf="compValue">vs {{ compValue }} {{ compLabel }}</span>
     </div>
