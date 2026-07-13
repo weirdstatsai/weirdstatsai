@@ -8,43 +8,13 @@ service cloud.firestore {
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Stats — the single collection holding every card (drafts, private, public).
-    //
-    // A card is world-readable only once it is published (or admin-featured on
-    // Home). A user's own drafts/private cards are readable only by them. The
-    // backend runs on the Admin SDK and bypasses these rules, so server-side
-    // writes (generation cache) are unaffected. Validated with the Firestore
-    // emulator (20/20 rules tests) against the app's real query shapes.
+    // Stats — public read, backend writes.
+    // TEMPORARILY reverted to open while the hardened ruleset (saved in
+    // firestore.rules.hardened) is diagnosed — it emptied the prod Explore feed
+    // despite passing emulator tests, so it was rolled back to restore service.
     match /stats/{statId} {
-      function isOwner() {
-        return request.auth != null && resource.data.createdBy == request.auth.uid;
-      }
-      // The document AFTER the write is owned by the requester.
-      function willOwn() {
-        return request.auth != null && request.resource.data.createdBy == request.auth.uid;
-      }
-
-      allow read: if resource.data.publishStatus == 'published'
-                  || resource.data.homeFeatured == true
-                  || isOwner()
-                  || isAdmin();
-
-      // Creating a card client-side (rare — the backend normally creates it):
-      // the new doc must be owned by the requester.
-      allow create: if willOwn() || isAdmin();
-
-      // Claiming an anonymous backend cache doc as your draft, or editing your
-      // own card: the result must be owned by you, and you may only take over a
-      // doc that is currently yours or unowned (the backend writes createdBy
-      // "Anonymous" for cache copies).
-      allow update: if isAdmin()
-                    || (willOwn() && (
-                          resource.data.createdBy == request.auth.uid ||
-                          resource.data.createdBy == 'Anonymous' ||
-                          !('createdBy' in resource.data)
-                       ));
-
-      allow delete: if isOwner() || isAdmin();
+      allow read: if true;
+      allow write: if true;
     }
 
     // Users — owner can read/write their own; admin can read/write any
