@@ -500,6 +500,10 @@ $alt-tile-w: min(45vw, 190px);
   width: 1200px;
   height: 630px;
   box-sizing: border-box;
+  // Vertical breathing room; the tile is scaled to fit this padded area at
+  // capture time (see fitOgTile in the page component) so a tall card never
+  // gets its title/story clipped, and a short one stays centered on gradient.
+  padding: 44px 0;
   display: flex;
   align-items: center;
   justify-content: center;

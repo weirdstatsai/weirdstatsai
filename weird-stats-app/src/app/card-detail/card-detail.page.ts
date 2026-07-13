@@ -10,6 +10,7 @@ const domtoimage = require('dom-to-image-more');
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { WeirdCard, StoredStatCard, ACCENT_COLORS } from '../models/weird-card.model';
+import { cardHasData } from '../shared/card-data.util';
 import { AuthService } from '../services/auth.service';
 import { RankStyle } from '../shared/cards/card-ranking/card-ranking.component';
 import { TableStyle } from '../shared/cards/card-table/card-table.component';
@@ -552,7 +553,7 @@ export class CardDetailPage implements OnInit {
    * (the image is pre-rendered) or the browser blocks share/popup.
    */
   async shareTo(network: string): Promise<void> {
-    if (!this.card) return;
+    if (!this.card || !this.ensureShareable()) return;
     this.analytics.track('share', { method: network, card_id: this.storedCard?.id || '' });
 
     if (this.canShareImage) {
@@ -587,6 +588,7 @@ export class CardDetailPage implements OnInit {
 
   /** Save the watermarked card as a PNG */
   async download(): Promise<void> {
+    if (!this.ensureShareable()) return;
     this.analytics.track('share', { method: 'save_image', card_id: this.storedCard?.id || '' });
     const loading = await this.loadingCtrl.create({ message: 'Saving image…', duration: 8000 });
     await loading.present();
@@ -713,7 +715,17 @@ export class CardDetailPage implements OnInit {
   }
 
   /** Draft → choose public or private. */
+  /** Guard: a hollow card (empty chart, row-less list, value-less kpi) must not
+   *  be shared or published as a "No data available" shell. Backend generation
+   *  now repairs these, but pre-existing stored cards may still be hollow. */
+  private ensureShareable(): boolean {
+    if (cardHasData(this.card)) return true;
+    this.toast("This card doesn't have enough data to share yet — try regenerating it.");
+    return false;
+  }
+
   private async publishFlow(): Promise<void> {
+    if (!this.ensureShareable()) return;
     const modal = await this.modalCtrl.create({
       component: PublishModalComponent,
       breakpoints: [0, 1], initialBreakpoint: 1, handle: false,
@@ -952,7 +964,7 @@ export class CardDetailPage implements OnInit {
   }
 
   goShare(): void {
-    if (!this.card) return;
+    if (!this.card || !this.ensureShareable()) return;
     this.router.navigate(['/share-card'], {
       state: { card: this.card, cardId: this.storedCard?.id ?? null },
     });
@@ -998,6 +1010,9 @@ export class CardDetailPage implements OnInit {
     try {
       // Let Chart.js and layout settle before capturing.
       await new Promise((r) => setTimeout(r, 700));
+      // Scale the card down to fit the fixed 1200×630 canvas so a tall card
+      // (long table, big chart + story) is never clipped at the title/story.
+      this.fitOgTile(el);
       const dataUrl: string = await domtoimage.toPng(el, {
         width: 1200, height: 630, bgcolor: '#ffffff',
       });
@@ -1009,6 +1024,22 @@ export class CardDetailPage implements OnInit {
     } catch (e) {
       console.warn('OG image generation failed', e);
     }
+  }
+
+  /** Scale the OG tile so its natural height fits the fixed 1200×630 canvas.
+   *  Only ever scales DOWN (never upscales a short card); a short card stays
+   *  centered on the gradient, a tall one shrinks to fit with nothing clipped. */
+  private fitOgTile(frame: HTMLElement): void {
+    const tile = frame.querySelector('.og-tile') as HTMLElement | null;
+    if (!tile) return;
+    tile.style.transform = '';
+    tile.style.transformOrigin = 'center center';
+    const availH = 630 - 88;              // frame height minus 44px top+bottom padding
+    const availW = 1200;
+    const natH = tile.scrollHeight;
+    const natW = tile.scrollWidth;
+    const scale = Math.min(1, availH / natH, availW / natW);
+    if (scale < 1) tile.style.transform = `scale(${scale})`;
   }
 
   /** Owner viewing their own published card that has no preview yet — build

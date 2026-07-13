@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
 
 from app.agent_client import (
-    request_chart_from_agent, research_agent, format_agent, classify_card_type, doc_agent,
+    request_chart_from_agent, research_agent, format_validated, classify_card_type, doc_agent,
 )
 from app.firestore_client import (
     save_graph, find_cached_card, get_stored_card, list_published_cards,
@@ -195,14 +195,15 @@ async def generate_stream(req: GenerateRequest) -> StreamingResponse:
         # Step 2: format — retry once before surfacing an error, since the
         # format/validate step occasionally fails transiently on the first try.
         yield _sse("status", {"message": "Building your card…", "step": 2})
+        # format_validated formats, validates, and guarantees the card has data
+        # its type can actually render (repairs a hollow card, degrading as a last
+        # resort). The try/except here only guards transient API failures.
         try:
-            raw = await format_agent(brief, card_type)
-            card = validate_card(raw)
+            card = await format_validated(brief, card_type)
         except Exception:
             logger.warning("Stream format failed, retrying once", exc_info=True)
             try:
-                raw = await format_agent(brief, card_type)
-                card = validate_card(raw)
+                card = await format_validated(brief, card_type)
             except Exception:
                 logger.warning("Stream format failed twice", exc_info=True)
                 yield _sse("error", {"message": "Could not format card. Try again."})
@@ -387,8 +388,7 @@ async def project_import_stream(
             })
             try:
                 card_type = await classify_card_type(question, brief)
-                raw = await format_agent(brief, card_type)
-                card = validate_card(raw)
+                card = await format_validated(brief, card_type)
             except Exception:
                 # One bad finding never sinks the import — skip and continue.
                 logger.warning("Import card %d/%d failed (%s)", i, total, question, exc_info=True)

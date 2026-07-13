@@ -72,6 +72,73 @@ def _iso_date(raw: str) -> str:
     return raw  # keep original if we can't parse it
 
 
+def _chart_has_data(c: dict) -> bool:
+    """A chart can render iff it has x labels AND at least one non-empty series."""
+    labels = c.get("labels") or []
+    datasets = c.get("datasets") or []
+    return bool(labels) and any((ds.get("data") or []) for ds in datasets)
+
+
+def _clean_rows(c: dict) -> list:
+    """Rows that actually carry a label — blank placeholders don't count."""
+    return [
+        r for r in (c.get("rows") or [])
+        if isinstance(r, dict) and str(r.get("label") or "").strip()
+    ]
+
+
+def card_data_ok(card: dict) -> bool:
+    """True when a card carries the data its cardType needs to actually render.
+
+    This is the gate the normalizer never had: it rejects hollow cards — a
+    'chart' with empty labels/datasets, a 'ranking'/'table'/'map' with no rows,
+    a 'kpi' with no value — that otherwise pass schema validation and reach the
+    UI as a "No data available" shell.
+    """
+    c = card or {}
+    ctype = str(c.get("cardType", "fact")).lower()
+    if ctype == "chart":
+        return _chart_has_data(c)
+    if ctype in ("ranking", "table", "map"):
+        return len(_clean_rows(c)) >= 1
+    if ctype == "versus":
+        return len(_clean_rows(c)) >= 2
+    if ctype == "kpi":
+        metric = c.get("metric") or {}
+        return metric.get("value") is not None or len(_clean_rows(c)) >= 1
+    if ctype == "fact":
+        return bool(str(c.get("insight") or "").strip())
+    return True
+
+
+def degrade_card(card: dict) -> dict:
+    """Last-resort reshape: turn a data-inadequate card into the richest type its
+    actually-present data supports, so the UI never renders an empty shell.
+
+    Only reached after the generation pipeline's repair retry still comes back
+    hollow. The result is flagged needs_review and re-validated.
+    """
+    c = dict(card or {})
+    rows = _clean_rows(c)
+    metric = c.get("metric") or {}
+
+    if _chart_has_data(c):
+        c["cardType"] = "chart"
+        c["presentationType"] = c.get("presentationType") or "bar-chart"
+        c["chartType"] = c.get("chartType") or "bar"
+    elif len(rows) > 5:
+        c["cardType"], c["presentationType"], c["chartType"] = "table", "top-10", None
+    elif len(rows) >= 2:
+        c["cardType"], c["presentationType"], c["chartType"] = "ranking", "top-5", "bar"
+    elif metric.get("value") is not None or len(rows) == 1:
+        c["cardType"], c["presentationType"], c["chartType"] = "kpi", "kpi-single", None
+    else:
+        c["cardType"], c["presentationType"], c["chartType"] = "fact", "fact", None
+
+    c["status"] = "needs_review"
+    return validate_card(c)
+
+
 def validate_card(card: dict) -> dict:
     """Normalize a raw agent card into a clean, schema-valid dict."""
     c = dict(card or {})

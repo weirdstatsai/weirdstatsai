@@ -232,6 +232,19 @@ Presentation selection (metric-first):
 * fact   -> one strong surprising statement.
 * chart  -> a visual trend/comparison is more useful than a table/card.
 
+DATA COMPLETENESS RULE (critical — a card with no data is worse than no card):
+Every card MUST carry the data its cardType renders. Before you finalize, check:
+* chart  -> labels[] non-empty AND datasets[0].data non-empty, and len(labels) == len(data).
+* ranking-> rows has 2–5 items.   table -> rows has 6+ items.   map -> rows has 1+ country rows.
+* versus -> rows has exactly 2 items (the two entities).
+* kpi    -> metric.value is a real number (not null); rows has 1 item (2 for kpi-comparison).
+* fact   -> insight is a full, self-contained sentence.
+If the brief does NOT give you enough to fill the chosen type, DO NOT return an empty card.
+Instead pick the type you CAN fill from what the brief actually contains: if you have no
+series/rows but one clear number, make it "kpi"; if you have only a qualitative finding,
+make it "fact". A correct simpler card always beats a hollow "chart"/"ranking" shell. Never
+output labels/datasets/rows that are empty for the type you selected.
+
 ROW-COUNT RULE (strict): if rows has more than 5 items AND cardType is NOT "map",
 cardType MUST be "table" and presentationType "top-10" or "top-25".
 cardType "ranking" may never exceed 5 rows. Keep cardType, presentationType, and row count consistent.
@@ -371,7 +384,8 @@ Status rules:
 * success      -> reliable enough to display.
 * needs_review -> plausible but weak source quality, recency, or measurement.
 * unsupported  -> brief says unsupported/unsafe, or no usable data; explain in insight.
-* Always return the full JSON shape; use empty arrays where data is absent.
+* Always return the full JSON shape. Secondary/unused arrays may be empty, but the
+  data the chosen cardType renders MUST be present (see DATA COMPLETENESS RULE).
 
 Style: concise, vivid, feels like WeirdStats. No text outside the JSON. No markdown.
 Language: en-US unless the brief is in another language."""

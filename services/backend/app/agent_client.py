@@ -10,6 +10,7 @@ because Agent Builder workflows can't be invoked via API.
 from __future__ import annotations
 
 import json
+import logging
 import os
 from datetime import datetime, timezone
 
@@ -18,6 +19,8 @@ from openai import AsyncOpenAI
 import base64
 
 from app.prompts import RESEARCH_PROMPT, FORMAT_PROMPT, CLASSIFY_PROMPT, DOC_EXTRACT_PROMPT
+
+logger = logging.getLogger(__name__)
 
 _client: AsyncOpenAI | None = None
 
@@ -116,9 +119,40 @@ async def format_agent(brief: str, card_type: str | None = None) -> dict:
         model=FORMAT_MODEL,
         instructions=FORMAT_PROMPT,
         input=user_msg,
+        # Low but non-zero: the data-fill step should be near-deterministic so it
+        # doesn't occasionally emit hollow labels/datasets, while keeping a little
+        # room for the insight's wording.
+        temperature=0.3,
         text={"format": {"type": "json_object"}},
     )
     return _parse_json(response.output_text or "")
+
+
+async def format_validated(brief: str, card_type: str | None = None) -> dict:
+    """Format → validate → guarantee the card actually has renderable data.
+
+    The Format Agent occasionally returns a well-formed but hollow card (a rich
+    story with empty labels/datasets/rows). Schema validation alone never caught
+    this, so it reached the UI as a "No data available" shell. Here we gate on
+    card_data_ok: if the first attempt is hollow we retry the format step once,
+    and if it's still hollow we degrade to the richest type the present data
+    supports. The returned card is always validated and always renderable.
+    """
+    from app.validator import validate_card, card_data_ok, degrade_card
+
+    raw = await format_agent(brief, card_type)
+    card = validate_card(raw)
+    if card_data_ok(card):
+        return card
+
+    logger.info("format_validated: hollow %s card, repairing", card.get("cardType"))
+    raw = await format_agent(brief, card_type)
+    card = validate_card(raw)
+    if card_data_ok(card):
+        return card
+
+    logger.warning("format_validated: still hollow after retry, degrading %s", card.get("cardType"))
+    return degrade_card(card)
 
 
 def _parse_json(raw: str) -> dict:
@@ -195,9 +229,8 @@ async def doc_agent(
 
 
 async def request_chart_from_agent(prompt: str, preferred_type: str | None = None) -> dict:
-    """Full pipeline: research -> classify -> format -> raw card dict (pre-validation).
+    """Full pipeline: research -> classify -> format -> validated, renderable card.
     Raises on failure so the caller can fall back to the mock generator."""
     brief = await research_agent(prompt)
     card_type = await classify_card_type(prompt, brief)
-    card = await format_agent(brief, card_type)
-    return card
+    return await format_validated(brief, card_type)
