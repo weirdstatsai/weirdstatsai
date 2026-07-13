@@ -140,6 +140,9 @@
           <button class="draft-action-btn share" (click)="openCard(selectedDraft!)">
             <ion-icon name="eye-outline"></ion-icon> Open
           </button>
+          <button class="draft-action-btn delete" (click)="deleteDraft(selectedDraft!, $event)">
+            <ion-icon name="trash-outline"></ion-icon> Delete
+          </button>
         </div>
       </div>
 

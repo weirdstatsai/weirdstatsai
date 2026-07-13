@@ -100,9 +100,8 @@ export class ProfilePage implements OnInit, OnDestroy {
     this.sub = this.user$.pipe(
       switchMap(user => {
         this.currentUid = user?.uid ?? '';
-        this.draftCards = user ? this.drafts.list(user.uid) : [];
+        if (!user) { this.draftCards = []; return of([] as StoredStatCard[]); }
 
-        if (!user) return of([] as StoredStatCard[]);
         return this.afs
           .collection<StoredStatCard>('stats', ref =>
             ref.where('createdBy', '==', user.uid).limit(300)
@@ -123,11 +122,14 @@ export class ProfilePage implements OnInit, OnDestroy {
         // bulk-imported into it (importFile) — live in that project only and
         // never appear here. Checking BOTH markers is belt-and-suspenders:
         // an import card can't leak even if its projectId was lost.
-        this.savedCards = docs
+        const own = docs
           .filter(d => d.data?.title && d.data?.cardType)
           .filter(d => !d.projectId && !d.importFile)
-          .filter(d => ['published', 'private'].includes(d.publishStatus ?? 'draft'))
           .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+        this.savedCards = own.filter(d => ['published', 'private'].includes(d.publishStatus ?? 'draft'));
+        // Drafts are now cloud-synced: the same query, split by status. A draft
+        // made on one device shows up here on any device the user signs in on.
+        this.draftCards = own.filter(d => (d.publishStatus ?? 'draft') === 'draft');
         this.isLoading = false;
       },
       error: () => { this.savedCards = []; this.isLoading = false; },
@@ -148,8 +150,7 @@ export class ProfilePage implements OnInit, OnDestroy {
   }
 
   ionViewWillEnter(): void {
-    // Refresh local drafts each time the page is shown
-    if (this.currentUid) this.draftCards = this.drafts.list(this.currentUid);
+    // Drafts refresh live via the Firestore query — no manual reload needed.
     // Open straight to a specific tab when navigated with a hint (e.g. Back from
     // a freshly generated draft → Drafts tab).
     const tab = (history.state as { tab?: 'saved' | 'draft' } | undefined)?.tab;
@@ -309,18 +310,12 @@ export class ProfilePage implements OnInit, OnDestroy {
     if (data?.plan === 'premium') await this._saveCard(card, 'private');
   }
 
-  // Promote a local draft into the user's Firestore collection
+  // Publish/unpublish is a status flip on the same doc — the draft and the saved
+  // card are one document, so there's nothing to copy or remove. The live query
+  // moves it between the Drafts and Saved tabs automatically.
   private async _saveCard(card: StoredStatCard, status: 'published' | 'private'): Promise<void> {
     try {
-      const id = card.id;
-      await this.afs.collection('stats').doc(id).set({
-        ...card,
-        publishStatus: status,
-        createdBy: this.currentUid,
-        createdAt: card.createdAt ?? new Date().toISOString(),
-      });
-      this.drafts.remove(this.currentUid, id);
-      this.draftCards = this.drafts.list(this.currentUid);
+      await this.afs.collection('stats').doc(card.id).update({ publishStatus: status });
       this.selectedDraft = undefined;
       this.activeTab = 'saved';
       const msg = status === 'published' ? 'Saved publicly — live on Explore!' : 'Saved privately';
@@ -332,16 +327,12 @@ export class ProfilePage implements OnInit, OnDestroy {
     }
   }
 
-  // Move a saved card back to device drafts
+  // Move a saved card back to Drafts — just flip the status back.
   private async _moveToDrafts(card: StoredStatCard): Promise<void> {
-    // A project card must never be pulled out of its project this way. This
-    // path isn't reachable for project cards today (they don't appear in the
-    // profile), but guard it so a future UI change can't regress it.
+    // A project card must never be pulled out of its project this way.
     if (card.projectId) return;
     try {
-      await this.afs.collection('stats').doc(card.id).delete();
-      this.drafts.add(this.currentUid, { ...card, publishStatus: 'draft' });
-      this.draftCards = this.drafts.list(this.currentUid);
+      await this.afs.collection('stats').doc(card.id).update({ publishStatus: 'draft' });
       this.activeTab = 'draft';
       const t = await this.toastCtrl.create({ message: 'Moved to Drafts', duration: 1600, color: 'medium' });
       await t.present();
@@ -349,6 +340,30 @@ export class ProfilePage implements OnInit, OnDestroy {
       const t = await this.toastCtrl.create({ message: 'Could not move card', duration: 1500, color: 'danger' });
       await t.present();
     }
+  }
+
+  /** Delete a draft straight from the Drafts tab (with confirmation). Previously
+   *  the only way to remove a draft was to open it and use the options menu. */
+  async deleteDraft(card: StoredStatCard, ev?: Event): Promise<void> {
+    ev?.stopPropagation();
+    if (!card?.id) return;
+    const alert = await this.alertCtrl.create({
+      header: 'Delete draft?',
+      message: 'This removes it from every device. This cannot be undone.',
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Delete', role: 'destructive',
+          handler: async () => {
+            await this.drafts.remove(this.currentUid, card.id);
+            if (this.selectedDraft?.id === card.id) this.selectedDraft = undefined;
+            const t = await this.toastCtrl.create({ message: 'Draft deleted', duration: 1500, color: 'medium' });
+            await t.present();
+          },
+        },
+      ],
+    });
+    await alert.present();
   }
 
   getTypeIcon(cardType?: string): string {

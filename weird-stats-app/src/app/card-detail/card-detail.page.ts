@@ -43,6 +43,8 @@ export class CardDetailPage implements OnInit {
   isGuest = false;
   // The signed-in viewer is the card's creator (they opened their own link).
   isOwner = false;
+  // A guest just generated this card — held locally, prompt them to sign in.
+  guestUnsaved = false;
   editing = false;
   isSaved = false;
   isAdminView = false;
@@ -285,6 +287,9 @@ export class CardDetailPage implements OnInit {
       this.uid().then(uid => { if (uid) this.drafts.add(uid, card); });
     } else if (card.id) {
       this.afs.doc(`stats/${card.id}`).update({ data: card.data }).catch(() => {});
+      // A published card's share/link-preview image must not drift from its
+      // edited look — rebuild it (debounced) whenever a public card is edited.
+      if (card.publishStatus === 'published') this.scheduleOgRefresh();
     }
   }
 
@@ -358,10 +363,15 @@ export class CardDetailPage implements OnInit {
       this.card = this.storedCard?.data;
       if (!this.card) this.errorMsg = 'Card not found.';
       else {
-        // Re-check viewer now that we know who created the card (isOwner).
-        this.refreshGuest();
+        // Re-check the viewer now that we know who created the card.
+        await this.refreshGuest();
+        // The owner opening their OWN card's link (refresh, or a shared link
+        // back to themselves) should be able to manage it — edit / publish /
+        // delete — not be stuck in the read-only share layout. Non-owners keep
+        // the clean public view.
+        if (this.isOwner) this.viewOnly = false;
         this._buildAltStyles(); this.applyCardSeo(); this.trackCardOpen('deep_link'); this.maybeBackfillOg();
-        this.prepareShareImage();
+        if (this.viewOnly) this.prepareShareImage();
       }
     } catch {
       this.errorMsg = 'Could not load this card.';
@@ -410,22 +420,28 @@ export class CardDetailPage implements OnInit {
               this.card = event.data;
               this._buildAltStyles();
               this.membership.recordGeneration();
-              // Store the new card as a device-local draft (not in Firestore)
+              const draft: StoredStatCard = {
+                id: event.data.id,
+                status: 'completed',
+                publishStatus: 'draft',
+                createdBy: uid ?? '',
+                createdAt: event.data.createdAt ?? new Date().toISOString(),
+                prompt,
+                promptHash: '',
+                data: event.data,
+              };
+              // Track it so the options menu treats this as an existing draft.
+              this.storedCard = draft;
               if (uid) {
-                const draft: StoredStatCard = {
-                  id: event.data.id,
-                  status: 'completed',
-                  publishStatus: 'draft',
-                  createdBy: uid,
-                  createdAt: event.data.createdAt ?? new Date().toISOString(),
-                  prompt,
-                  promptHash: '',
-                  data: event.data,
-                };
+                // Cloud-synced draft: claim the backend's doc so it shows in the
+                // user's Drafts on every device.
                 this.drafts.add(uid, draft);
-                // Track it so the options menu treats this as an existing
-                // draft (Publish/Delete) instead of offering to save it again.
-                this.storedCard = draft;
+              } else {
+                // Guest: hold the card and prompt to sign in so it isn't lost.
+                // It's claimed into their drafts automatically on login.
+                this.stashGuestCard(draft);
+                this.guestUnsaved = true;
+                this.toast('Sign in to save this card so you don’t lose it.');
               }
               this.isLoading = false;
               this.statusMsg = '';
@@ -755,19 +771,19 @@ export class CardDetailPage implements OnInit {
     if (data?.plan === 'premium') await this._promoteDraft('private', 'Saved privately');
   }
 
-  /** Promote a local draft into the user's Firestore collection. */
+  /** Publish/save a draft — the draft is already this user's stats doc, so this
+   *  just flips its publishStatus in place (no copy, nothing to remove). */
   private async _promoteDraft(status: 'published' | 'private', msg: string): Promise<void> {
     const uid = await this.uid();
     const card = this.storedCard;
     if (!card?.id || !uid) return;
     try {
-      await this.afs.collection('stats').doc(card.id).set({
+      await this.afs.doc(`stats/${card.id}`).set({
         ...card,
         publishStatus: status,
         createdBy: uid,
         createdAt: card.createdAt ?? new Date().toISOString(),
-      });
-      this.drafts.remove(uid, card.id);
+      }, { merge: true });
       this.storedCard = { ...card, publishStatus: status };
       this.toast(msg);
       // Public cards get shared — render the real-card social preview now.
@@ -885,12 +901,10 @@ export class CardDetailPage implements OnInit {
     const card = this.storedCard;
     if (!card?.id) return;
     try {
-      if (this.isDraftCard()) {
-        const uid = await this.uid();
-        if (uid) this.drafts.remove(uid, card.id);
-      } else {
-        await this.afs.doc(`stats/${card.id}`).delete();
-      }
+      // Drafts and saved/published cards are all one stats doc now — delete it,
+      // and clean up its social-preview image so no orphan is left in Storage.
+      await this.afs.doc(`stats/${card.id}`).delete();
+      await this.deleteOgImage(card.id);
       this.toast('Card deleted.');
       this.back();
     } catch {
@@ -1042,6 +1056,21 @@ export class CardDetailPage implements OnInit {
     if (scale < 1) tile.style.transform = `scale(${scale})`;
   }
 
+  /** Remove a card's social-preview image from Storage on delete, so deleting a
+   *  card never leaves an orphaned og/{id}.png behind. Non-fatal. */
+  private async deleteOgImage(id: string): Promise<void> {
+    try { await firstValueFrom(this.storage.ref(`og/${id}.png`).delete()); }
+    catch { /* no image, or already gone — fine */ }
+  }
+
+  private ogRefreshTimer?: ReturnType<typeof setTimeout>;
+  /** Rebuild a published card's OG image after edits settle, so its share
+   *  preview always matches the current look (debounced against rapid edits). */
+  private scheduleOgRefresh(): void {
+    if (this.ogRefreshTimer) clearTimeout(this.ogRefreshTimer);
+    this.ogRefreshTimer = setTimeout(() => this.generateOgImage(), 1500);
+  }
+
   /** Owner viewing their own published card that has no preview yet — build
    *  it quietly in the background (lazy backfill for pre-existing cards). */
   private async maybeBackfillOg(): Promise<void> {
@@ -1051,11 +1080,36 @@ export class CardDetailPage implements OnInit {
     if (uid && uid === card.createdBy) this.generateOgImage();
   }
 
+  // ── Guest card hold + claim-on-login ────────────────────────────────────
+  private static readonly PENDING_KEY = 'weirdstats_pending_card';
+
+  private stashGuestCard(card: StoredStatCard): void {
+    try { localStorage.setItem(CardDetailPage.PENDING_KEY, JSON.stringify(card)); } catch { /* quota */ }
+  }
+
+  /** After a guest signs in, move the card they generated into their cloud
+   *  drafts so nothing is lost. Safe to call whenever a user becomes present. */
+  private async claimGuestCardIfAny(uid: string): Promise<void> {
+    if (!uid) return;
+    let pending: StoredStatCard | undefined;
+    try {
+      const raw = localStorage.getItem(CardDetailPage.PENDING_KEY);
+      pending = raw ? JSON.parse(raw) as StoredStatCard : undefined;
+    } catch { pending = undefined; }
+    if (!pending?.id) return;
+    await this.drafts.add(uid, { ...pending, createdBy: uid });
+    try { localStorage.removeItem(CardDetailPage.PENDING_KEY); } catch { /* ignore */ }
+    this.guestUnsaved = false;
+    if (this.storedCard?.id === pending.id) this.storedCard = { ...this.storedCard, createdBy: uid };
+    this.toast('Saved to your drafts.');
+  }
+
   // ── Shared-link visitor (logged-out) acquisition ────────────────────────
   private async refreshGuest(): Promise<void> {
     const user = await firstValueFrom(this.authService.user$);
     this.isGuest = !user;
     this.isOwner = !!user && user.uid === this.storedCard?.createdBy;
+    if (user) await this.claimGuestCardIfAny(user.uid);
   }
 
   /** Open the sign-in modal; re-check guest state afterwards so the bar/CTA

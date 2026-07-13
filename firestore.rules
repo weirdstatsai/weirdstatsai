@@ -8,10 +8,46 @@ service cloud.firestore {
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Stats — public read, backend writes
+    // Stats — the single collection holding every card (drafts, private, public).
+    //
+    // Drafts are now cloud-synced, so a card is only world-readable once it is
+    // published (or admin-featured on Home). A user's own drafts/private cards
+    // are readable only by them. The backend runs on the Admin SDK and bypasses
+    // these rules entirely, so server-side writes are unaffected.
+    //
+    // NOTE: not yet deployed. Deploy together with the cloud-drafts frontend and
+    // verify with the Firestore emulator first — until then the live rules stay
+    // open, so DO NOT ship cloud drafts to production ahead of these.
     match /stats/{statId} {
-      allow read: if true;
-      allow write: if true;
+      function isOwner() {
+        return request.auth != null && resource.data.createdBy == request.auth.uid;
+      }
+      // The document AFTER the write is owned by the requester.
+      function willOwn() {
+        return request.auth != null && request.resource.data.createdBy == request.auth.uid;
+      }
+
+      allow read: if resource.data.publishStatus == 'published'
+                  || resource.data.homeFeatured == true
+                  || isOwner()
+                  || isAdmin();
+
+      // Creating a card client-side (rare — the backend normally creates it):
+      // the new doc must be owned by the requester.
+      allow create: if willOwn() || isAdmin();
+
+      // Claiming an anonymous backend cache doc as your draft, or editing your
+      // own card: the result must be owned by you, and you may only take over a
+      // doc that is currently yours or unowned (the backend writes createdBy
+      // "Anonymous" for cache copies).
+      allow update: if isAdmin()
+                    || (willOwn() && (
+                          resource.data.createdBy == request.auth.uid ||
+                          resource.data.createdBy == 'Anonymous' ||
+                          !('createdBy' in resource.data)
+                       ));
+
+      allow delete: if isOwner() || isAdmin();
     }
 
     // Users — owner can read/write their own; admin can read/write any

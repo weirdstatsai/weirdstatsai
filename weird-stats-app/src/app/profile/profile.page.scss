@@ -455,6 +455,13 @@ $yellow: #BA7517;
     background: rgba(0,0,0,0.06);
     color: var(--ion-color-dark);
   }
+
+  &.delete {
+    flex: 0 0 auto;
+    padding: 0 14px;
+    background: rgba(var(--ion-color-danger-rgb, 235, 68, 90), 0.1);
+    color: var(--ion-color-danger, #eb445a);
+  }
 }
 
 // ── Legacy feed grid ──────────────────────────────────────────────────────
