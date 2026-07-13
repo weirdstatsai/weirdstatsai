@@ -15,6 +15,14 @@
         { "fieldPath": "publishStatus", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "stats",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdBy", "order": "ASCENDING" },
+        { "fieldPath": "publishStatus", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

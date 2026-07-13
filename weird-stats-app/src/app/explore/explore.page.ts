@@ -42,17 +42,21 @@ export class ExplorePage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Newest first, and pull a wide window so valid cards aren't crowded out by
-    // legacy docs. Only cards with the new schema (cardType present) are shown.
+    // Published cards only, newest first — filtered server-side so this query
+    // stays valid under owner-only security rules (a fetch-all query would be
+    // rejected once drafts are private). Uses the (publishStatus, createdAt)
+    // composite index. homeFeatured cards live on Home, so they're excluded
+    // client-side (they're still publishStatus == 'published').
     this.sub = this.afs
-      .collection<StoredStatCard>('stats', ref => ref.orderBy('createdAt', 'desc').limit(200))
+      .collection<StoredStatCard>('stats', ref =>
+        ref.where('publishStatus', '==', 'published').orderBy('createdAt', 'desc').limit(200))
       .valueChanges()
       .subscribe({
         next: docs => {
           this.cards = docs
             .filter(d => d.data?.title && d.data?.cardType)
-            // Public shares only. Admin-curated cards live on Home, not Explore.
-            .filter(d => d.publishStatus === 'published' && !d.homeFeatured)
+            // Admin-curated cards live on Home, not Explore.
+            .filter(d => !d.homeFeatured)
             .sort((a, b) => (b.data?.weirdScore ?? 0) - (a.data?.weirdScore ?? 0));
           this.isLoading = false;
           this._computeProfiles();
