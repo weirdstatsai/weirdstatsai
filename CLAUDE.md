@@ -109,6 +109,29 @@ it can't be deleted cleanly yet — leave it alone.
 - Both are wired into `.claude/launch.json` as `weird-stats-app` and `weirdstats-api`
   for the in-app browser preview.
 
+## Current state & open items (as of 2026-07)
+Latest work is on branch **`claude/youthful-lehmann-8278f3`** (pushed); `main` is
+stale. Everything below is **deployed to production** (weirdstats.ai):
+- Backend data-adequacy gate (no hollow cards); share/OG image fits content.
+- Unified cloud-drafts lifecycle (one `stats` doc + `publishStatus`); publish/
+  delete/edit unified; delete cleans up OG image; owner deep-link manageable;
+  guest sign-in-to-save.
+- Firestore rules **hardened & live** (drafts/private owner-only). Composite index
+  `(publishStatus, createdAt)` = `CICAgOjXh4EK`, READY.
+- Explore/Drafts/Saved sort **latest-first** via `updatedAt`.
+
+Open / not done:
+- **`auth/invalid-login-credentials`** console errors on prod (a failed login attempt;
+  Auth, not rules/data) — un-diagnosed, flagged separately.
+- **YouTube → stat cards** feature: feasibility assessed (reuse doc-import pipeline;
+  the hard part is reliable transcript fetch — use a transcript API, not scraping from
+  Cloud Run). Not built.
+- **Legacy `Graph` flow** removal still deferred (GraphService used by project-generate/share).
+- **Research accuracy**: some KPIs come back off (e.g. avg sleep 9.03h) — data-quality
+  track separate from the structural fixes.
+- A test draft "Five Countries…moon" (kpi) was left in prod Firestore as a private draft
+  under the owner's account — harmless, can be deleted.
+
 ## Git
 - **Commit author MUST be** `Nehemya Maddela <weirdstats.ai@gmail.com>` — never deviate.
 - End commit messages with `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
