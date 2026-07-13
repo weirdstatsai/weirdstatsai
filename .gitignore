@@ -27,3 +27,5 @@ weird-stats-app/www/
 
 # Firebase deploy cache
 .firebase/
+
+firestore-debug.log
