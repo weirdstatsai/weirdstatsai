@@ -125,7 +125,8 @@ export class ProfilePage implements OnInit, OnDestroy {
         const own = docs
           .filter(d => d.data?.title && d.data?.cardType)
           .filter(d => !d.projectId && !d.importFile)
-          .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+          // Latest first — most recently created/saved/edited at the top.
+          .sort((a, b) => ((b.updatedAt ?? b.createdAt) ?? '').localeCompare((a.updatedAt ?? a.createdAt) ?? ''));
         this.savedCards = own.filter(d => ['published', 'private'].includes(d.publishStatus ?? 'draft'));
         // Drafts are now cloud-synced: the same query, split by status. A draft
         // made on one device shows up here on any device the user signs in on.
@@ -315,7 +316,7 @@ export class ProfilePage implements OnInit, OnDestroy {
   // moves it between the Drafts and Saved tabs automatically.
   private async _saveCard(card: StoredStatCard, status: 'published' | 'private'): Promise<void> {
     try {
-      await this.afs.collection('stats').doc(card.id).update({ publishStatus: status });
+      await this.afs.collection('stats').doc(card.id).update({ publishStatus: status, updatedAt: new Date().toISOString() });
       this.selectedDraft = undefined;
       this.activeTab = 'saved';
       const msg = status === 'published' ? 'Saved publicly — live on Explore!' : 'Saved privately';
@@ -332,7 +333,7 @@ export class ProfilePage implements OnInit, OnDestroy {
     // A project card must never be pulled out of its project this way.
     if (card.projectId) return;
     try {
-      await this.afs.collection('stats').doc(card.id).update({ publishStatus: 'draft' });
+      await this.afs.collection('stats').doc(card.id).update({ publishStatus: 'draft', updatedAt: new Date().toISOString() });
       this.activeTab = 'draft';
       const t = await this.toastCtrl.create({ message: 'Moved to Drafts', duration: 1600, color: 'medium' });
       await t.present();

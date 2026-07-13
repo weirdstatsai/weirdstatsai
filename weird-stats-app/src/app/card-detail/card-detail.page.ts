@@ -286,7 +286,7 @@ export class CardDetailPage implements OnInit {
     if (this.isDraftCard()) {
       this.uid().then(uid => { if (uid) this.drafts.add(uid, card); });
     } else if (card.id) {
-      this.afs.doc(`stats/${card.id}`).update({ data: card.data }).catch(() => {});
+      this.afs.doc(`stats/${card.id}`).update({ data: card.data, updatedAt: new Date().toISOString() }).catch(() => {});
       // A published card's share/link-preview image must not drift from its
       // edited look — rebuild it (debounced) whenever a public card is edited.
       if (card.publishStatus === 'published') this.scheduleOgRefresh();
@@ -783,6 +783,7 @@ export class CardDetailPage implements OnInit {
         publishStatus: status,
         createdBy: uid,
         createdAt: card.createdAt ?? new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       }, { merge: true });
       this.storedCard = { ...card, publishStatus: status };
       this.toast(msg);

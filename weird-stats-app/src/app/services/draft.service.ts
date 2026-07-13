@@ -33,6 +33,7 @@ export class DraftService {
       createdByName: card.createdByName ?? '',
       publishStatus: card.publishStatus ?? 'draft',
       data: card.data,
+      updatedAt: new Date().toISOString(),
     };
     try {
       await ref.update(patch);
@@ -43,6 +44,7 @@ export class DraftService {
         createdBy: uid,
         publishStatus: card.publishStatus ?? 'draft',
         createdAt: card.createdAt ?? new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
     }
   }

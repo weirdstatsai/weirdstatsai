@@ -57,7 +57,8 @@ export class ExplorePage implements OnInit, OnDestroy {
             .filter(d => d.data?.title && d.data?.cardType)
             // Admin-curated cards live on Home, not Explore.
             .filter(d => !d.homeFeatured)
-            .sort((a, b) => (b.data?.weirdScore ?? 0) - (a.data?.weirdScore ?? 0));
+            // Latest first — most recently published/updated at the top.
+            .sort((a, b) => ((b.updatedAt ?? b.createdAt) ?? '').localeCompare((a.updatedAt ?? a.createdAt) ?? ''));
           this.isLoading = false;
           this._computeProfiles();
         },

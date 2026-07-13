@@ -132,6 +132,9 @@ export interface StoredStatCard {
   createdBy: string;
   createdByName?: string;
   createdAt: string;
+  /** Last time the card was created, saved, published, or edited — used to sort
+   *  "latest first" in Explore / Drafts / Saved. Falls back to createdAt. */
+  updatedAt?: string;
   prompt: string;
   promptHash: string;
   /** Set when the card was generated inside a project ("Add a stat") — such
