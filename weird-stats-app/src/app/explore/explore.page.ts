@@ -42,20 +42,21 @@ export class ExplorePage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Newest first, filtered to published shares client-side. NOTE: this
-    // fetch-all shape needs only the single-field createdAt index. The
-    // server-side `where publishStatus == 'published'` variant needs a
-    // (publishStatus, createdAt) composite index that must be built AND READY
-    // in prod first — see firestore.indexes.json / the hardened-rules follow-up.
+    // Published cards only, newest first — filtered server-side so this query
+    // stays valid under owner-only security rules (a fetch-all query is rejected
+    // once drafts are private). Requires the (publishStatus, createdAt DESC)
+    // composite index [CICAgOjXh4EK], confirmed READY in prod. homeFeatured
+    // cards live on Home, so they're excluded client-side.
     this.sub = this.afs
-      .collection<StoredStatCard>('stats', ref => ref.orderBy('createdAt', 'desc').limit(200))
+      .collection<StoredStatCard>('stats', ref =>
+        ref.where('publishStatus', '==', 'published').orderBy('createdAt', 'desc').limit(200))
       .valueChanges()
       .subscribe({
         next: docs => {
           this.cards = docs
             .filter(d => d.data?.title && d.data?.cardType)
-            // Public shares only. Admin-curated cards live on Home, not Explore.
-            .filter(d => d.publishStatus === 'published' && !d.homeFeatured)
+            // Admin-curated cards live on Home, not Explore.
+            .filter(d => !d.homeFeatured)
             .sort((a, b) => (b.data?.weirdScore ?? 0) - (a.data?.weirdScore ?? 0));
           this.isLoading = false;
           this._computeProfiles();
