@@ -59,5 +59,13 @@ service cloud.firestore {
       allow read, write: if request.auth != null &&
                             (request.auth.uid == userId || isAdmin());
     }
+
+    // Business contact-form leads. Written ONLY by the backend (Admin SDK,
+    // which bypasses rules), so clients can't create/spam them. Readable only
+    // by admins (for a future inbox view); never client-writable or public.
+    match /contactMessages/{msgId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
   }
 }

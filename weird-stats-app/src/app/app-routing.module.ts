@@ -51,8 +51,8 @@ const routes: Routes = [
   },
   {
     path: 'contact',
-    data: { slug: 'contact', seo: { title: 'Contact — WeirdStats.ai', description: 'Get in touch with the WeirdStats.ai team.' } },
-    loadChildren: () => import('./static-page/static-page.module').then(m => m.StaticPagePageModule),
+    data: { seo: { title: 'Contact — WeirdStats.ai', description: 'Talk to the WeirdStats team about enterprise plans, API access, and partnerships.' } },
+    loadChildren: () => import('./contact/contact.module').then(m => m.ContactPageModule),
   },
   {
     path: 'terms',

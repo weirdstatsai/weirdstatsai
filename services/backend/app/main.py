@@ -52,6 +52,110 @@ async def health() -> dict:
     return {"status": "ok"}
 
 
+# ── Business / enterprise contact form ──────────────────────────────────────
+from pydantic import BaseModel
+from fastapi import HTTPException
+from fastapi.concurrency import run_in_threadpool
+
+
+class ContactRequest(BaseModel):
+    name: str = ""
+    email: str = ""
+    company: str = ""
+    companySize: str = ""
+    role: str = ""
+    phone: str = ""
+    topic: str = ""
+    message: str = ""
+    website: str = ""   # honeypot — bots fill hidden fields; humans never see it
+
+
+def _send_contact_email(d: dict) -> bool:
+    """Deliver a contact submission to the team inbox via SMTP. Best-effort:
+    returns False (and logs) when SMTP isn't configured, so the endpoint still
+    succeeds and the lead is preserved in Firestore. Reply-To is the customer's
+    address, so a plain 'Reply' reaches them directly."""
+    import smtplib
+    import ssl
+    from email.message import EmailMessage
+
+    host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    port = int(os.getenv("SMTP_PORT", "587"))
+    user = os.getenv("SMTP_USER", "")
+    pwd = os.getenv("SMTP_PASSWORD", "")
+    to = os.getenv("CONTACT_TO", "weirdstats.ai@gmail.com")
+    if not user or not pwd:
+        logger.warning("Contact email skipped: SMTP_USER/SMTP_PASSWORD not set")
+        return False
+
+    msg = EmailMessage()
+    who = d.get("company") or d.get("name") or "New inquiry"
+    msg["Subject"] = f"[WeirdStats Business] {d.get('topic') or 'Inquiry'} — {who}"
+    msg["From"] = f"WeirdStats Contact <{user}>"
+    msg["To"] = to
+    if d.get("email"):
+        msg["Reply-To"] = d["email"]
+    msg.set_content(
+        "New business inquiry from the WeirdStats contact form.\n\n"
+        f"Name:          {d.get('name','')}\n"
+        f"Work email:    {d.get('email','')}\n"
+        f"Company:       {d.get('company','')}\n"
+        f"Company size:  {d.get('companySize','')}\n"
+        f"Role:          {d.get('role','')}\n"
+        f"Phone:         {d.get('phone','')}\n"
+        f"Interested in: {d.get('topic','')}\n\n"
+        f"Message:\n{d.get('message','')}\n"
+    )
+    ctx = ssl.create_default_context()
+    with smtplib.SMTP(host, port, timeout=20) as s:
+        s.starttls(context=ctx)
+        s.login(user, pwd)
+        s.send_message(msg)
+    return True
+
+
+@app.post("/api/contact")
+async def contact(req: ContactRequest) -> dict:
+    # Honeypot tripped → almost certainly a bot. Pretend success, do nothing.
+    if req.website.strip():
+        return {"ok": True}
+
+    name = req.name.strip()
+    email = req.email.strip()
+    message = req.message.strip()
+    if not name or "@" not in email or "." not in email.split("@")[-1] or len(message) < 10:
+        raise HTTPException(status_code=422, detail="Please provide a name, a valid work email, and a message.")
+    if len(message) > 5000 or len(name) > 200 or len(email) > 200:
+        raise HTTPException(status_code=422, detail="One of the fields is too long.")
+
+    data = {
+        "name": name, "email": email,
+        "company": req.company.strip()[:200], "companySize": req.companySize.strip()[:40],
+        "role": req.role.strip()[:120], "phone": req.phone.strip()[:60],
+        "topic": req.topic.strip()[:80], "message": message,
+    }
+
+    # Preserve the lead first — email delivery is best-effort on top of this.
+    try:
+        from app.firestore_client import _get_db
+        _get_db().collection("contactMessages").add({
+            **data,
+            "source": "contact_form",
+            "handled": False,
+            "createdAt": datetime.now(timezone.utc).isoformat(),
+        })
+    except Exception:
+        logger.warning("Failed to store contact message", exc_info=True)
+
+    emailed = False
+    try:
+        emailed = await run_in_threadpool(_send_contact_email, data)
+    except Exception:
+        logger.warning("Failed to send contact email", exc_info=True)
+
+    return {"ok": True, "emailed": emailed}
+
+
 @app.get("/api/admin/trending")
 async def admin_trending(geo: str = "US") -> dict:
     """Trending topics for the admin panel to turn into Home-feed cards.
