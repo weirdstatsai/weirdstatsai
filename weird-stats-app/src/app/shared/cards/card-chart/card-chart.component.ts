@@ -51,9 +51,12 @@ export class CardChartComponent implements OnChanges {
   }
 
   fmt(v: number): string {
-    if (Math.abs(v) >= 1_000_000_000) return (v / 1_000_000_000).toFixed(v >= 10_000_000_000 ? 0 : 1) + 'B';
-    if (Math.abs(v) >= 1_000_000) return (v / 1_000_000).toFixed(v >= 10_000_000 ? 0 : 1) + 'M';
-    if (Math.abs(v) >= 1_000) return (v / 1_000).toFixed(v >= 10_000 ? 0 : 1) + 'K';
+    if (!isFinite(v)) return '—';   // never print NaN/Infinity on a chart label
+    const a = Math.abs(v);
+    if (a >= 1_000_000_000_000) return (v / 1_000_000_000_000).toFixed(a >= 1e13 ? 0 : 1) + 'T';
+    if (a >= 1_000_000_000) return (v / 1_000_000_000).toFixed(a >= 1e10 ? 0 : 1) + 'B';
+    if (a >= 1_000_000) return (v / 1_000_000).toFixed(a >= 1e7 ? 0 : 1) + 'M';
+    if (a >= 1_000) return (v / 1_000).toFixed(a >= 10_000 ? 0 : 1) + 'K';
     return Number.isInteger(v) ? v.toString() : v.toFixed(1);
   }
 
@@ -97,14 +100,25 @@ export class CardChartComponent implements OnChanges {
     const tickColor = '#9aa0aa';
     const gridColor = 'rgba(0,0,0,0.05)';
     const numFmt = (v: unknown) => this.fmt(Number(v));
+    const showAxes = this.size !== 'alt';
+
+    // Value labels make bars/lines self-explanatory — critical on feed tiles
+    // where the axes are hidden. Off on tiny alt previews (no room).
+    // Just the number on the chart — the unit rides the y-axis/tooltip and the
+    // title, and a verbose unit ("people") would clip the label at the edges.
+    const valueLabels = this.size === 'alt'
+      ? { enabled: false }
+      : { enabled: true, formatter: (v: number) => this.fmt(v),
+          accent: hex, maxAll: 6, fontSize: full ? 11 : 9 };
 
     const baseOpts: any = {
       responsive: true,
       maintainAspectRatio: false,
       animation: { duration: full ? 500 : 0 },
-      layout: { padding: { top: 6, right: full ? 10 : 4, bottom: 0, left: 0 } },
+      layout: { padding: { top: full ? 14 : 12, right: full ? 10 : 4, bottom: 0, left: 0 } },
       plugins: {
         legend: { display: false },
+        valueLabels,
         tooltip: {
           enabled: full,
           backgroundColor: 'rgba(255,255,255,0.97)',
@@ -123,11 +137,13 @@ export class CardChartComponent implements OnChanges {
 
     // Shared, elegant axes: no chart border, hairline horizontal grid only,
     // formatted numeric ticks so millions/billions read as "8M" / "1.4B".
+    // X labels (years/categories) show on feed too — a chart with no x context
+    // is just a shape. Fewer ticks on the smaller feed tile so they don't crowd.
     const xScale = {
-      display: full,
+      display: showAxes,
       grid: { display: false, drawBorder: false },
       border: { display: false },
-      ticks: { font: { size: 11, weight: '500' }, color: tickColor, maxRotation: 0, autoSkip: true, maxTicksLimit: 6, padding: 6 },
+      ticks: { font: { size: full ? 11 : 10, weight: '500' }, color: tickColor, maxRotation: 0, autoSkip: true, maxTicksLimit: full ? 6 : 4, padding: 6 },
     };
     const yScale = (beginZero: boolean) => ({
       display: full,

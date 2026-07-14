@@ -16,8 +16,9 @@ export type MapStyle = 'choropleth' | 'pins' | 'bubbles';
 export function hasMappableRows(card: WeirdCard | undefined): boolean {
   return (card?.rows ?? []).some(r => {
     const key = (r.label || '').toLowerCase().trim();
-    const isoId = r.extra ? parseInt(r.extra, 10) : NaN;
-    const id = !isNaN(isoId) ? isoId : NAME_TO_ID[key];
+    const raw = (r.extra ?? '').trim();
+    const isoId = /^\d{1,3}$/.test(raw) ? parseInt(raw, 10) : NaN;
+    const id = (!isNaN(isoId) && isoId > 0 && isoId <= 894) ? isoId : NAME_TO_ID[key];
     return COUNTRY_COORDS[key] !== undefined || id !== undefined;
   });
 }
@@ -46,6 +47,12 @@ const NAME_TO_ID: Record<string, number> = {
   'united kingdom':826,'uk':826,'great britain':826,
   'united states':840,'usa':840,'us':840,'united states of america':840,
   'uzbekistan':860,'venezuela':862,'vietnam':704,'yemen':887,'zimbabwe':716,
+  // Smaller nations that show up in per-capita rankings — present in the 110m
+  // atlas, so they get a choropleth fill (were previously marker-only).
+  'estonia':233,'latvia':428,'lithuania':440,'luxembourg':442,'iceland':352,
+  'slovenia':705,'moldova':498,'cyprus':196,'malta':470,'montenegro':499,
+  'north macedonia':807,'armenia':51,'georgia':268,'qatar':634,'bahrain':48,
+  'oman':512,'singapore':702,'brunei':96,'kosovo':412,
 };
 
 // Country centroid [lat, lon] for marker placement
@@ -265,6 +272,14 @@ export class CardMapComponent implements OnChanges {
   maxValue = 1;
   private topoLoaded = false;
 
+  // Choropleth focuses on the strongest few countries: coloring 12 tiny nations
+  // reads as noise, so we highlight the top N by value and let the rest fade to
+  // a neutral base. TOP_N also fixes rows arriving out of order (we sort here).
+  private readonly TOP_N = 5;
+  topRows: CardRow[] = [];
+  scaleMin = 0;
+  scaleMax = 1;
+
   private readonly MAX_LAT = 82;
   private readonly MIN_LAT = -60;
   private readonly SVG_W = 960;
@@ -283,20 +298,43 @@ export class CardMapComponent implements OnChanges {
     this.accent   = (ACCENT_COLORS as readonly string[]).includes(h) ? h : ACCENT_COLORS[0];
     this.gradFrom = this.card?.uiMeta?.gradientFrom || '#f5f3ff';
     this.gradTo   = this.card?.uiMeta?.gradientTo   || '#ffffff';
+    this.buildTop();
     this.buildValueMap();
     this.buildMarkers();
     if (!this.topoLoaded) this.loadTopo();
   }
 
+  /** Top N rows by value, highest first — the ranked list under the map. */
+  private buildTop(): void {
+    this.topRows = [...(this.card?.rows ?? [])]
+      .filter(r => typeof r.value === 'number' && !isNaN(r.value))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, this.TOP_N);
+  }
+
+  private rowId(row: CardRow): number | undefined {
+    // `extra` is only an ISO id when it's a clean integer in the ISO 3166 range
+    // (1–894). It often carries a note instead ("2023 estimate"), and a loose
+    // parseInt would read that as 2023 and match no country — the long-standing
+    // reason choropleth fills never appeared. Fall back to the label lookup.
+    const raw = (row.extra ?? '').trim();
+    const isoId = /^\d{1,3}$/.test(raw) ? parseInt(raw, 10) : NaN;
+    if (!isNaN(isoId) && isoId > 0 && isoId <= 894) return isoId;
+    return NAME_TO_ID[(row.label || '').toLowerCase().trim()];
+  }
+
   private buildValueMap(): void {
+    // Color EVERY country that has data — a full choropleth. The scale spans
+    // the whole dataset's range so the shading is meaningful end to end; the
+    // top-N list under the map is a separate, curated view.
     this.valueMap = new Map();
-    const rows = this.card?.rows ?? [];
-    this.maxValue = Math.max(...rows.map(r => r.value), 1);
-    for (const row of rows) {
-      const isoId = row.extra ? parseInt(row.extra, 10) : NaN;
-      const id = !isNaN(isoId) ? isoId : NAME_TO_ID[row.label.toLowerCase().trim()];
+    for (const row of (this.card?.rows ?? [])) {
+      const id = this.rowId(row);
       if (id !== undefined) this.valueMap.set(id, row.value);
     }
+    const vals = Array.from(this.valueMap.values());
+    this.scaleMax = vals.length ? Math.max(...vals) : 1;
+    this.scaleMin = vals.length ? Math.min(...vals) : 0;
   }
 
   private buildMarkers(): void {
@@ -354,18 +392,80 @@ export class CardMapComponent implements OnChanges {
     return [x, y];
   }
 
-  countryFill(id: number): string {
-    const v = this.valueMap.get(id);
-    if (v === undefined) return 'rgba(0,0,0,0.07)';
-    const ratio = Math.max(0.18, v / this.maxValue);
-    return this.hexWithAlpha(this.accent, ratio);
+  // ── Multi-hue color scale (Red → Yellow → Green choropleth) ───────────────
+  // A perceptual heat ramp like a standard world-atlas choropleth: low values
+  // read red/orange, mid yellow, high green. Fixed data-viz palette (not the
+  // card accent) so the shading is comparable across every map.
+  private readonly SCALE_STOPS = ['#d73027', '#fc8d59', '#fee08b', '#91cf60', '#1a9850'];
+
+  private ramp(t: number): [number, number, number] {
+    const stops = this.SCALE_STOPS.map(h => this.parseHex(h));
+    const n = stops.length - 1;
+    const s = Math.max(0, Math.min(1, t)) * n;
+    const i = Math.min(n - 1, Math.floor(s));
+    return this.lerp(stops[i], stops[i + 1], s - i);
   }
 
-  private hexWithAlpha(hex: string, alpha: number): string {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r},${g},${b},${alpha.toFixed(2)})`;
+  scaleColor(value: number): string {
+    const span = this.scaleMax - this.scaleMin;
+    const t = span > 0 ? (value - this.scaleMin) / span : 1;
+    return this.rgbStr(this.ramp(t));
+  }
+
+  countryFill(id: number): string {
+    const v = this.valueMap.get(id);
+    if (v === undefined) return 'rgba(0,0,0,0.05)';   // no data → neutral base
+    return this.scaleColor(v);
+  }
+
+  /** CSS gradient for the horizontal legend bar (left = low, right = high). */
+  get scaleGradientH(): string {
+    return 'linear-gradient(to right,' + this.SCALE_STOPS.join(',') + ')';
+  }
+
+  /** Tick marks up the legend — min & max endpoints plus round interior steps. */
+  get scaleTicks(): Array<{ label: string; pct: number }> {
+    const min = this.scaleMin, max = this.scaleMax;
+    if (!(max > min)) return [{ label: this.fmt(max), pct: 50 }];
+    const out: Array<{ label: string; pct: number }> = [{ label: this.fmt(min), pct: 0 }];
+    const step = this.niceStep((max - min) / 3);
+    for (let v = Math.ceil(min / step) * step; v < max - step * 0.25; v += step) {
+      const pct = ((v - min) / (max - min)) * 100;
+      if (pct > 8 && pct < 92) out.push({ label: this.fmt(v), pct });
+    }
+    out.push({ label: this.fmt(max), pct: 100 });
+    return out;
+  }
+
+  private niceStep(raw: number): number {
+    if (raw <= 0) return 1;
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const n = raw / mag;
+    const nice = n < 1.5 ? 1 : n < 3 ? 2 : n < 7 ? 5 : 10;
+    return nice * mag;
+  }
+
+  private lerp(a: [number, number, number], b: [number, number, number], t: number): [number, number, number] {
+    const k = Math.max(0, Math.min(1, t));
+    return [
+      Math.round(a[0] + (b[0] - a[0]) * k),
+      Math.round(a[1] + (b[1] - a[1]) * k),
+      Math.round(a[2] + (b[2] - a[2]) * k),
+    ];
+  }
+  private parseHex(hex: string): [number, number, number] {
+    return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+  }
+  private rgbStr([r, g, b]: [number, number, number]): string { return `rgb(${r},${g},${b})`; }
+
+  /** True when at least one country in the data can be drawn on the map. */
+  get mapHasGeo(): boolean {
+    return this.valueMap.size > 0;
+  }
+
+  /** The ranked list shown under the map — top N (fewer on tiny tiles). */
+  get listRows(): CardRow[] {
+    return this.topRows.slice(0, this.size === 'alt' ? 3 : this.TOP_N);
   }
 
   fmt(v: number): string {
@@ -387,8 +487,11 @@ export class CardMapComponent implements OnChanges {
     return this.card?.rows?.[0]?.unit || this.card?.metric?.unit || '';
   }
 
+  // The pins/bubbles legend lists the leaders, not every country — with 30-40
+  // rows the full list is unreadable. Cap at 10 (4 on tiny preview tiles). The
+  // map still shows ALL pins (those iterate `markers` directly), unchanged.
   get legendRows(): MapMarker[] {
-    return this.markers.slice(0, this.size === 'alt' ? 4 : this.markers.length);
+    return this.markers.slice(0, this.size === 'alt' ? 4 : 10);
   }
 
   hexToRgb(hex: string): string {

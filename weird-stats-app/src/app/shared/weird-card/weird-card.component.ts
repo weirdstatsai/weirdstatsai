@@ -7,7 +7,10 @@ import { VersusStyle } from '../cards/card-versus/card-versus.component';
 import { MapStyle } from '../cards/card-map/card-map.component';
 
 const RANK_STYLES: RankStyle[] = ['bars', 'pill', 'percent', 'vertical', 'circular', 'sparkline'];
-const KPI_STYLES: KpiStyle[] = ['default', 'circular', 'comparison', 'hero'];
+const KPI_STYLES: KpiStyle[] = [
+  'default', 'circular', 'comparison', 'hero',
+  'sparkline', 'progress', 'gauge', 'delta',
+];
 const TABLE_STYLES: TableStyle[] = ['pill', 'bars', 'rows'];
 const VERSUS_STYLES: VersusStyle[] = ['default', 'mirror', 'progress', 'winner'];
 const MAP_STYLES: MapStyle[] = ['choropleth', 'pins', 'bubbles'];
@@ -79,12 +82,11 @@ export class WeirdCardComponent {
   }
 
   get kpiStyle(): KpiStyle {
+    // Data requirements (benchmark, series, percent) are enforced inside
+    // CardKpiComponent.effStyle, which demotes unsupported picks to 'default' —
+    // here we only need to whitelist known style keys.
     const s = this.selectedStyle;
-    const style = (s && KPI_STYLES.includes(s as KpiStyle)) ? (s as KpiStyle) : 'default';
-    // Comparison needs a genuine second value; without one it would fabricate a
-    // benchmark, so fall back to the clean single-value default.
-    if (style === 'comparison' && this.card?.rows?.[1]?.value == null) return 'default';
-    return style;
+    return (s && KPI_STYLES.includes(s as KpiStyle)) ? (s as KpiStyle) : 'default';
   }
 
   get tableStyle(): TableStyle {

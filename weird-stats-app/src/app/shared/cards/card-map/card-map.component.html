@@ -13,48 +13,41 @@
 
   <p class="wcard-title">{{ card.title | stripEmoji }}</p>
 
-  <!-- CHOROPLETH style (default) -->
+  <!-- CHOROPLETH style (default) — color scale + top-N rank markers -->
   <ng-container *ngIf="mapStyle === 'choropleth'">
-    <div class="map-wrap" *ngIf="!allUnmapped">
+    <div class="map-wrap" *ngIf="mapHasGeo">
       <svg class="world-svg" viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg">
         <path *ngFor="let c of countries"
               [attr.d]="c.d"
               [attr.fill]="countryFill(c.id)"
-              stroke="rgba(255,255,255,0.5)"
-              stroke-width="0.5"/>
-        <!-- Dot markers for countries too small to show as filled paths -->
-        <g *ngFor="let m of markers; let i = index">
-          <circle [attr.cx]="m.x" [attr.cy]="m.y" [attr.r]="size === 'alt' ? 9 : 14"
-                  [attr.fill]="accent" opacity="0.2"/>
-          <circle [attr.cx]="m.x" [attr.cy]="m.y" [attr.r]="size === 'alt' ? 5 : 8"
-                  [attr.fill]="accent" opacity="0.85"/>
-          <circle [attr.cx]="m.x" [attr.cy]="m.y" [attr.r]="size === 'alt' ? 2 : 3"
-                  fill="white" opacity="0.9"/>
-        </g>
+              stroke="rgba(255,255,255,0.6)"
+              stroke-width="0.4"/>
       </svg>
       <div class="map-skeleton" *ngIf="countries.length === 0">
         <div class="skeleton-line"></div>
       </div>
     </div>
-    <!-- Ranked list for all countries (choropleth + small island fallback) -->
-    <div class="unmapped-list" *ngIf="unmapped.length > 0 || markers.length > 0">
-      <ng-container *ngFor="let m of markers; let i = index">
-        <div class="unmapped-item">
-          <span class="unmapped-rank">{{ unmapped.length + i + 1 }}</span>
-          <span class="unmapped-dot" [style.background]="accent"></span>
-          <span class="unmapped-label">{{ m.label }}</span>
-          <span class="unmapped-val" [style.color]="accent">{{ fmt(m.value) }}{{ m.unit ? ' ' + m.unit : '' }}</span>
-        </div>
-      </ng-container>
-      <ng-container *ngFor="let m of unmapped; let i = index">
-        <div class="unmapped-item">
-          <span class="unmapped-rank">{{ i + 1 }}</span>
-          <span class="unmapped-dot" style="background:rgba(0,0,0,0.2)"></span>
-          <span class="unmapped-label">{{ m.label }}</span>
-          <span class="unmapped-val" style="color:rgba(0,0,0,0.4)">{{ fmt(m.value) }}{{ m.unit ? ' ' + m.unit : '' }}</span>
-        </div>
-      </ng-container>
+
+    <!-- Horizontal color-scale legend with value ticks + unit. ALWAYS shown —
+         mandatory for reading the measurement. -->
+    <div class="scale-legend-h" *ngIf="mapHasGeo">
+      <span class="scale-unit-h" *ngIf="unit">{{ unit }}</span>
+      <div class="scale-track-h">
+        <div class="scale-bar-h" [style.background]="scaleGradientH"></div>
+        <span class="h-tick" *ngFor="let t of scaleTicks" [style.left.%]="t.pct">{{ t.label }}</span>
+      </div>
     </div>
+
+    <!-- Top-N ranked list, numbered 1..N, swatch matches the map fill -->
+    <div class="scale-list" *ngIf="listRows.length > 0">
+      <div class="scale-row" *ngFor="let r of listRows; let i = index">
+        <span class="scale-rank">{{ i + 1 }}</span>
+        <span class="scale-swatch" [style.background]="scaleColor(r.value)"></span>
+        <span class="scale-name">{{ r.label }}</span>
+        <span class="scale-value" [style.color]="accent">{{ fmt(r.value) }}{{ (r.unit || unit) ? ' ' + (r.unit || unit) : '' }}</span>
+      </div>
+    </div>
+
     <!-- Feed/alt tiles stay clean — insight shows only on the detail view
          (where card-detail relocates it into the "story" block below). -->
     <p class="map-insight" *ngIf="card.insight && size === 'full'">{{ card.insight }}</p>
@@ -64,11 +57,12 @@
   <ng-container *ngIf="mapStyle === 'pins'">
     <div class="map-wrap" *ngIf="!allUnmapped">
       <svg class="world-svg" viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg">
+        <!-- Countries carry the color scale AND a pin — maximum marking on the map -->
         <path *ngFor="let c of countries"
               [attr.d]="c.d"
-              fill="rgba(0,0,0,0.06)"
+              [attr.fill]="countryFill(c.id)"
               stroke="rgba(255,255,255,0.6)"
-              stroke-width="0.5"/>
+              stroke-width="0.4"/>
         <g *ngFor="let m of markers">
           <circle [attr.cx]="m.x" [attr.cy]="m.y" [attr.r]="size === 'alt' ? 8 : 12"
                   [attr.fill]="m.color" opacity="0.25"/>
@@ -82,17 +76,12 @@
         <div class="skeleton-line"></div>
       </div>
     </div>
-    <div class="pin-legend" *ngIf="size !== 'alt' && !allUnmapped">
-      <div class="legend-item" *ngFor="let m of legendRows">
-        <span class="legend-dot" [style.background]="m.color"></span>
-        <span class="legend-text">{{ m.label }}</span>
-        <span class="legend-pct" [style.color]="m.color">{{ m.pct }}%</span>
-      </div>
-    </div>
-    <div class="pin-legend-mini" *ngIf="size === 'alt' && !allUnmapped">
-      <div class="legend-mini-item" *ngFor="let m of legendRows">
-        <span class="legend-dot-mini" [style.background]="m.color"></span>
-        <span class="legend-mini-text">{{ m.pct }}%</span>
+    <!-- Scale legend so the country colors are readable (no country list) -->
+    <div class="scale-legend-h" *ngIf="mapHasGeo && size !== 'alt'">
+      <span class="scale-unit-h" *ngIf="unit">{{ unit }}</span>
+      <div class="scale-track-h">
+        <div class="scale-bar-h" [style.background]="scaleGradientH"></div>
+        <span class="h-tick" *ngFor="let t of scaleTicks" [style.left.%]="t.pct">{{ t.label }}</span>
       </div>
     </div>
   </ng-container>
