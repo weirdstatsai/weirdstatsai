@@ -2,173 +2,157 @@
      [style.--accent]="accent" [style.--grad-from]="gradFrom" [style.--grad-to]="gradTo">
   <span class="wcard-bg-icon" *ngIf="bgSvg && size==='full'" [innerHTML]="bgSvg"></span>
 
-  <!-- Alt preview mirrors the feed tile exactly (badges included), so the
-       style-picker thumbnail looks identical to how that style renders on
-       every grid — Explore, Home, and the Profile Drafts/Projects grid. -->
+  <!-- ── SHARED SHELL ─────────────────────────────────────────────────────────
+       Badges, title and insight live here ONCE and are guaranteed for every
+       style. Each style below supplies only its distinctive body, so a new
+       style can never ship without a title/insight the way `comparison` did.
+       Alt preview mirrors the feed tile exactly (badges + title included). -->
   <div class="wcard-head">
     <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.icon }} {{ card.uiMeta.category }}</span>
     <span class="weird-badge">KPI card</span>
   </div>
 
-  <!-- ── A: Default — title+illus row, then big number ── -->
-  <ng-container *ngIf="effStyle === 'default'">
-    <!-- Feed tile AND alt preview: title on top, icon + number + unit as one
-         centered hero stack that fills the tile — no dead space. -->
-    <ng-container *ngIf="size === 'feed' || size === 'alt'">
-      <p class="wcard-title">{{ card.title | stripEmoji }}</p>
-      <div class="kpi-hero-stack">
+  <p class="wcard-title" *ngIf="card.title">{{ card.title | stripEmoji }}</p>
+
+  <!-- ── STYLE BODY (ng-container adds no DOM → bodies stay direct children of
+       .wcard, so every tuned flex layout is preserved) ── -->
+  <ng-container [ngSwitch]="effStyle">
+
+    <!-- A: Default — big number (+ icon watermark) -->
+    <ng-container *ngSwitchCase="'default'">
+      <div class="kpi-hero-stack" *ngIf="size !== 'full'">
         <div class="kpi-hero-num">
-          <p class="kpi-value" [class.val-long]="displayValue.length > 4">{{ displayValue }}</p>
-          <p class="kpi-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</p>
+          <p class="kpi-value" [class.val-long]="displayValue.length > 4">{{ displayValue }}<span class="kpi-unit-suf" *ngIf="shortUnit">{{ unit }}</span></p>
+          <p class="kpi-unit" *ngIf="unit && !shortUnit">{{ unit }}</p>
         </div>
         <div class="kpi-illus" *ngIf="card.uiMeta?.icon">
           <span class="illus-emoji">{{ card.uiMeta.icon }}</span>
         </div>
       </div>
+      <ng-container *ngIf="size === 'full'">
+        <div class="kpi-illus-bg" *ngIf="card.uiMeta?.icon">
+          <span class="illus-emoji">{{ card.uiMeta.icon }}</span>
+        </div>
+        <div class="kpi-number-row">
+          <p class="kpi-value">{{ displayValue }}<span class="kpi-unit-suf" *ngIf="shortUnit">{{ unit }}</span></p>
+          <p class="kpi-unit" *ngIf="unit && !shortUnit">{{ unit }}</p>
+        </div>
+      </ng-container>
     </ng-container>
 
-    <!-- Detail (full): illustration is a background layer behind the content -->
-    <ng-container *ngIf="size === 'full'">
-      <div class="kpi-illus-bg" *ngIf="card.uiMeta?.icon">
-        <span class="illus-emoji">{{ card.uiMeta.icon }}</span>
-      </div>
-      <div class="kpi-title-row">
-        <p class="wcard-title">{{ card.title | stripEmoji }}</p>
-      </div>
-      <div class="kpi-number-row">
-        <p class="kpi-value">{{ displayValue }}</p>
-        <p class="kpi-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</p>
-      </div>
-      <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
-    </ng-container>
-  </ng-container>
-
-  <!-- ── B: Circular ring ── -->
-  <ng-container *ngIf="effStyle === 'circular'">
-    <div class="circ-layout">
-      <div class="circ-ring-wrap">
-        <svg width="90" height="90" viewBox="0 0 90 90">
-          <circle cx="45" cy="45" r="30" fill="none" stroke-width="7" [attr.stroke]="accent + '22'"/>
-          <circle cx="45" cy="45" r="30" fill="none" stroke-width="7" [attr.stroke]="accent"
-                  [attr.stroke-dasharray]="ringDash"
-                  stroke-dashoffset="0" stroke-linecap="round"
-                  transform="rotate(-90 45 45)"/>
-        </svg>
-        <div class="circ-center">
-          <span class="circ-val">{{ displayValue }}</span>
+    <!-- B: Circular ring -->
+    <ng-container *ngSwitchCase="'circular'">
+      <div class="circ-layout">
+        <div class="circ-ring-wrap">
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            <circle cx="45" cy="45" r="30" fill="none" stroke-width="7" [attr.stroke]="accent + '22'"/>
+            <circle cx="45" cy="45" r="30" fill="none" stroke-width="7" [attr.stroke]="accent"
+                    [attr.stroke-dasharray]="ringDash" stroke-dashoffset="0" stroke-linecap="round"
+                    transform="rotate(-90 45 45)"/>
+          </svg>
+          <div class="circ-center"><span class="circ-val">{{ displayValue }}</span></div>
+        </div>
+        <div class="circ-info">
+          <p class="circ-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</p>
+          <p class="circ-name">{{ card.metric?.name || card.rows?.[0]?.label }}</p>
         </div>
       </div>
-      <div class="circ-info">
-        <p class="circ-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</p>
-        <p class="circ-name">{{ card.metric?.name || card.rows?.[0]?.label }}</p>
-        <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
+    </ng-container>
+
+    <!-- C: Comparison — hero value + unit, benchmark demoted -->
+    <ng-container *ngSwitchCase="'comparison'">
+      <div class="comp-main">
+        <p class="comp-val">{{ displayValue }}<span class="comp-unit" *ngIf="unit">{{ unit }}</span></p>
+        <!-- Label is redundant with the title on the feed tile — full only. -->
+        <p class="comp-lbl" *ngIf="size === 'full'">{{ card.rows?.[0]?.label || card.metric?.name }}</p>
       </div>
-    </div>
-  </ng-container>
-
-  <!-- ── C: Comparison — one hero value; benchmark demoted to a quiet line ── -->
-  <ng-container *ngIf="effStyle === 'comparison'">
-    <div class="comp-main">
-      <p class="comp-val">{{ displayValue }}</p>
-      <p class="comp-lbl">{{ card.rows?.[0]?.label || card.metric?.name }}</p>
-    </div>
-    <div class="comp-foot" *ngIf="hasBenchmark">
-      <span class="comp-chip" *ngIf="diffPct !== 0">{{ diffPct > 0 ? '↑' : '↓' }} {{ absDiffPct }}%</span>
-      <span class="comp-vs">{{ compSummary }}</span>
-    </div>
-    <span class="comp-illus" *ngIf="card.uiMeta?.icon">{{ card.uiMeta.icon }}</span>
-    <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
-  </ng-container>
-
-  <!-- ── D: Hero centered ── -->
-  <ng-container *ngIf="effStyle === 'hero'">
-    <div class="hero-layout">
-      <p class="hero-val">{{ displayValue }}</p>
-      <p class="hero-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</p>
-      <p class="hero-name">{{ card.metric?.name || card.rows?.[0]?.label }}</p>
-    </div>
-    <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
-  </ng-container>
-
-  <!-- ── E: Sparkline — number + recent trend (gated on hasSeries) ── -->
-  <ng-container *ngIf="effStyle === 'sparkline'">
-    <p class="wcard-title">{{ card.title | stripEmoji }}</p>
-    <div class="spark-layout">
-      <div class="spark-numrow">
-        <p class="spark-val">{{ displayValue }}</p>
-        <p class="kpi-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</p>
+      <div class="comp-foot" *ngIf="hasBenchmark">
+        <span class="comp-chip" *ngIf="diffPct !== 0">{{ diffPct > 0 ? '↑' : '↓' }} {{ absDiffPct }}%</span>
+        <!-- Verbose benchmark line ("up from X") only where there's room. -->
+        <span class="comp-vs" *ngIf="size === 'full'">{{ compSummary }}</span>
       </div>
-      <svg class="spark-svg" viewBox="0 0 100 32" preserveAspectRatio="none">
-        <polyline [attr.points]="sparkPoints" fill="none" [attr.stroke]="accent"
-                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                  vector-effect="non-scaling-stroke"/>
-        <circle [attr.cx]="sparkEnd.x" [attr.cy]="sparkEnd.y" r="2.5" [attr.fill]="accent"/>
-      </svg>
-      <div class="spark-range" *ngIf="sparkRange">
-        <span>{{ sparkRange[0] }}</span><span>{{ sparkRange[1] }}</span>
+      <span class="comp-illus" *ngIf="card.uiMeta?.icon">{{ card.uiMeta.icon }}</span>
+    </ng-container>
+
+    <!-- D: Hero centered -->
+    <ng-container *ngSwitchCase="'hero'">
+      <div class="hero-layout">
+        <p class="hero-val">{{ displayValue }}</p>
+        <p class="hero-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</p>
+        <p class="hero-name">{{ card.metric?.name || card.rows?.[0]?.label }}</p>
       </div>
-    </div>
-    <p class="wcard-insight" *ngIf="card.insight && size === 'full'">{{ card.insight }}</p>
+    </ng-container>
+
+    <!-- E: Sparkline — number + recent trend -->
+    <ng-container *ngSwitchCase="'sparkline'">
+      <div class="spark-layout">
+        <div class="spark-numrow">
+          <p class="spark-val">{{ displayValue }}</p>
+          <p class="kpi-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</p>
+        </div>
+        <svg class="spark-svg" viewBox="0 0 100 32" preserveAspectRatio="none">
+          <polyline [attr.points]="sparkPoints" fill="none" [attr.stroke]="accent"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                    vector-effect="non-scaling-stroke"/>
+          <circle [attr.cx]="sparkEnd.x" [attr.cy]="sparkEnd.y" r="2.5" [attr.fill]="accent"/>
+        </svg>
+        <div class="spark-range" *ngIf="sparkRange">
+          <span>{{ sparkRange[0] }}</span><span>{{ sparkRange[1] }}</span>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- F: Progress — % toward a whole -->
+    <ng-container *ngSwitchCase="'progress'">
+      <div class="prog-layout">
+        <div class="prog-numrow">
+          <span class="prog-val">{{ displayValue }}<em class="prog-pct">%</em></span>
+          <span class="prog-goal">of 100%</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" [style.width.%]="progressPct"></div></div>
+        <p class="prog-name">{{ card.metric?.name || card.rows?.[0]?.label }}</p>
+      </div>
+    </ng-container>
+
+    <!-- G: Gauge — % as a semicircular dial -->
+    <ng-container *ngSwitchCase="'gauge'">
+      <div class="gauge-layout">
+        <svg class="gauge-svg" viewBox="0 0 100 58">
+          <defs>
+            <linearGradient [attr.id]="gaugeGradId" x1="0%" y1="100%" x2="100%" y2="100%">
+              <stop offset="0%" [attr.stop-color]="accentSoft"/>
+              <stop offset="100%" [attr.stop-color]="accent"/>
+            </linearGradient>
+          </defs>
+          <path d="M8,52 A42,42 0 0 1 92,52" fill="none" stroke="rgba(0,0,0,0.08)"
+                stroke-width="5" stroke-linecap="round"/>
+          <path class="gauge-arc" d="M8,52 A42,42 0 0 1 92,52" fill="none"
+                [attr.stroke]="'url(#' + gaugeGradId + ')'" [style.--sweep]="gaugeSweep"
+                stroke-width="5" stroke-linecap="round" [attr.stroke-dasharray]="gaugeDash"/>
+          <circle class="gauge-dot" [attr.cx]="gaugeTip.x" [attr.cy]="gaugeTip.y" r="4"
+                  fill="#fff" [attr.stroke]="accent" stroke-width="2.2"/>
+          <text x="50" y="46" text-anchor="middle" class="gauge-num" [attr.fill]="accent">{{ displayValue }}<tspan class="gauge-pct-sign">%</tspan></text>
+        </svg>
+        <div class="gauge-scale"><span>0%</span><span>100%</span></div>
+        <p class="gauge-name">{{ card.metric?.name || card.rows?.[0]?.label }}</p>
+      </div>
+    </ng-container>
+
+    <!-- H: Delta — the CHANGE is the headline -->
+    <ng-container *ngSwitchCase="'delta'">
+      <div class="delta-layout">
+        <p class="delta-dir" [class.delta-down]="diffPct < 0">{{ diffPct >= 0 ? '▲' : '▼' }} {{ absDiffPct }}%</p>
+        <div class="delta-numrow">
+          <span class="delta-val">{{ displayValue }}</span>
+          <span class="kpi-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</span>
+        </div>
+        <p class="delta-name">{{ card.rows?.[0]?.label || card.metric?.name }}</p>
+        <p class="delta-vs">{{ compSummary }}</p>
+      </div>
+    </ng-container>
+
   </ng-container>
 
-  <!-- ── F: Progress — % toward a whole as a linear bar (gated on isPercent) ── -->
-  <ng-container *ngIf="effStyle === 'progress'">
-    <p class="wcard-title">{{ card.title | stripEmoji }}</p>
-    <div class="prog-layout">
-      <div class="prog-numrow">
-        <span class="prog-val">{{ displayValue }}<em class="prog-pct">%</em></span>
-        <span class="prog-goal">of 100%</span>
-      </div>
-      <div class="prog-track">
-        <div class="prog-fill" [style.width.%]="progressPct"></div>
-      </div>
-      <p class="prog-name">{{ card.metric?.name || card.rows?.[0]?.label }}</p>
-    </div>
-    <p class="wcard-insight" *ngIf="card.insight && size === 'full'">{{ card.insight }}</p>
-  </ng-container>
-
-  <!-- ── G: Gauge — % as a semicircular dial (gated on isPercent) ── -->
-  <ng-container *ngIf="effStyle === 'gauge'">
-    <p class="wcard-title">{{ card.title | stripEmoji }}</p>
-    <div class="gauge-layout">
-      <svg class="gauge-svg" viewBox="0 0 100 58">
-        <defs>
-          <linearGradient [attr.id]="gaugeGradId" x1="0%" y1="100%" x2="100%" y2="100%">
-            <stop offset="0%" [attr.stop-color]="accentSoft"/>
-            <stop offset="100%" [attr.stop-color]="accent"/>
-          </linearGradient>
-        </defs>
-        <!-- Neutral track — readable on any card gradient, unlike an accent tint -->
-        <path d="M8,52 A42,42 0 0 1 92,52" fill="none" stroke="rgba(0,0,0,0.08)"
-              stroke-width="5" stroke-linecap="round"/>
-        <path class="gauge-arc" d="M8,52 A42,42 0 0 1 92,52" fill="none"
-              [attr.stroke]="'url(#' + gaugeGradId + ')'" [style.--sweep]="gaugeSweep"
-              stroke-width="5" stroke-linecap="round" [attr.stroke-dasharray]="gaugeDash"/>
-        <!-- indicator dot riding the arc's tip -->
-        <circle class="gauge-dot" [attr.cx]="gaugeTip.x" [attr.cy]="gaugeTip.y" r="4"
-                fill="#fff" [attr.stroke]="accent" stroke-width="2.2"/>
-        <text x="50" y="46" text-anchor="middle" class="gauge-num" [attr.fill]="accent">{{ displayValue }}<tspan class="gauge-pct-sign">%</tspan></text>
-      </svg>
-      <div class="gauge-scale"><span>0%</span><span>100%</span></div>
-      <p class="gauge-name">{{ card.metric?.name || card.rows?.[0]?.label }}</p>
-    </div>
-    <p class="wcard-insight" *ngIf="card.insight && size === 'full'">{{ card.insight }}</p>
-  </ng-container>
-
-  <!-- ── H: Delta — the CHANGE is the headline (gated on hasBenchmark) ── -->
-  <ng-container *ngIf="effStyle === 'delta'">
-    <div class="delta-layout">
-      <p class="delta-dir" [class.delta-down]="diffPct < 0">
-        {{ diffPct >= 0 ? '▲' : '▼' }} {{ absDiffPct }}%
-      </p>
-      <div class="delta-numrow">
-        <span class="delta-val">{{ displayValue }}</span>
-        <span class="kpi-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</span>
-      </div>
-      <p class="delta-name">{{ card.rows?.[0]?.label || card.metric?.name }}</p>
-      <p class="delta-vs">{{ compSummary }}</p>
-    </div>
-    <p class="wcard-insight" *ngIf="card.insight && size === 'full'">{{ card.insight }}</p>
-  </ng-container>
-
+  <!-- SHARED insight — detail view only, for every style. -->
+  <p class="wcard-insight" *ngIf="card.insight && size === 'full'">{{ card.insight }}</p>
 </div>

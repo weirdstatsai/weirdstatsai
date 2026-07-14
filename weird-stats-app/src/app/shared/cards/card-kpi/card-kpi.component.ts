@@ -88,6 +88,19 @@ export class CardKpiComponent implements OnChanges {
     return v == null ? '—' : this.fmt(v);
   }
 
+  /** The metric unit, trimmed ('' when none). */
+  get unit(): string {
+    return (this.card?.metric?.unit || '').trim();
+  }
+
+  /** A short unit ("g", "%", "in", "kg") rides the number as a small suffix
+   *  (4·g). A long one ("kg/person/year") won't fit inline, so it drops to its
+   *  own line — display what fits, keep the structure. */
+  get shortUnit(): boolean {
+    const u = this.unit;
+    return u.length > 0 && u.length <= 5;
+  }
+
   /** True only when the data carries a real, finite second value. */
   get hasBenchmark(): boolean {
     return this.num(this.card?.rows?.[1]?.value) != null;

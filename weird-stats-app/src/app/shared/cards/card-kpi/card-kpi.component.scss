@@ -6,22 +6,9 @@
   container-type: inline-size;
 }
 
-// Title + illustration side by side
-.kpi-title-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  min-width: 0;
-
-  .wcard-title {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .kpi-illus {
-    flex-shrink: 0;
-  }
-}
+// The shared title gets a little breathing room before the style body.
+.wcard-title { margin-bottom: 4px; }
+.full .wcard-title { margin-bottom: 10px; }
 
 // Feed + alt tile title: KPI tiles carry little content, so the title gets to
 // be bigger than the 13px base title, scaling fluidly with the card. Alt
@@ -86,6 +73,14 @@
     font-size: clamp(40px, 20cqw, 68px);
     letter-spacing: -2px;
     max-width: 100%;
+  }
+
+  // Long-unit fallback line keeps its own row, ellipsised if huge.
+  .kpi-unit {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   // Longer values ("148.8", "1,234") drop a size so they never clip.
@@ -153,7 +148,7 @@
 
 // Content sits in front of the background illustration.
 .full .wcard-head,
-.full .kpi-title-row,
+.full .wcard-title,
 .full .kpi-number-row,
 .full .wcard-insight { position: relative; z-index: 1; }
 
@@ -185,6 +180,19 @@
   margin: 0;
   white-space: nowrap;
 }
+
+// Short unit rides the number as a small subscript-style suffix (4·g, 69·in)
+// — never a lone floating letter. Baseline-aligned, weighted, muted-accent.
+.kpi-unit-suf {
+  font-size: 0.34em;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin-left: 4px;
+  vertical-align: baseline;
+  color: color-mix(in srgb, var(--accent) 62%, #555);
+  white-space: nowrap;
+}
+.full .kpi-unit-suf { font-size: 0.3em; }
 
 .alt .circ-layout,
 .alt .hero-layout { justify-content: center; }
@@ -242,8 +250,19 @@
   line-height: 1.4;
 }
 
-// ── C: Comparison — one hero value; benchmark demoted to a quiet line ──────
-.comp-main { position: relative; z-index: 1; margin-bottom: 12px; }
+// ── C: Comparison — title, one hero value; benchmark demoted to a quiet line ─
+// Title gives the card context (without it the number is meaningless); it sits
+// at the top like every other KPI style, the hero value + benchmark below.
+.comp-main { position: relative; z-index: 1; margin: 12px 0; }
+
+.comp-unit {
+  font-size: 0.42em;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin-left: 4px;
+  color: color-mix(in srgb, var(--accent) 78%, #000);
+  white-space: nowrap;
+}
 
 .comp-val {
   font-size: clamp(32px, 16cqw, 52px);
@@ -585,12 +604,13 @@
 // scale the content up so it reads bold and prominent in the tall tile. As a
 // component style this applies to every card of this type, now and future.
 .wcard:not(.full):not(.alt) {
-  .comp-main { margin-top: 6px; margin-bottom: 14px; }
-  .comp-val { font-size: clamp(44px, 26cqw, 74px); letter-spacing: -2.5px; }
-  .comp-lbl { font-size: 13.5px; margin-top: 10px; }
+  // Title now sits above, so the value is scaled to leave room for it AND the
+  // delta chip without spilling out of the tile (the label + verbose "up from"
+  // line are hidden on feed — see the template).
+  .comp-main { margin: 12px 0 12px; }
+  .comp-val { font-size: clamp(34px, 18cqw, 54px); letter-spacing: -1.5px; }
   .comp-foot { gap: 8px; }
   .comp-chip { font-size: 13px; padding: 5px 13px; }
-  .comp-vs { font-size: 12px; }
 
   // The category emoji, blown up and faded, bleeding off the bottom-right
   // corner behind the stat — same texture the single-KPI tile uses.
