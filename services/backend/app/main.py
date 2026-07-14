@@ -192,6 +192,13 @@ async def generate_stream(req: GenerateRequest) -> StreamingResponse:
         # Format Agent decide, so a classifier hiccup never blocks a card).
         card_type = await classify_card_type(req.prompt, brief)
 
+        # Tell the client the card shape the moment we know it — the UI renders a
+        # matching skeleton while the (slower) format step runs, so the wait feels
+        # shorter. Fails open: if the classifier returned None, no shape is sent
+        # and the client just keeps its generic loading state.
+        if card_type:
+            yield _sse("shape", {"cardType": card_type})
+
         # Step 2: format — retry once before surfacing an error, since the
         # format/validate step occasionally fails transiently on the first try.
         yield _sse("status", {"message": "Building your card…", "step": 2})

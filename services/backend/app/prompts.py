@@ -135,6 +135,15 @@ Method:
 * Cross-check important numbers across sources when feasible.
 * If sources disagree, prefer the more primary, more recent, more specific one, and note
   the range.
+* COUNTRY BREADTH: when the question compares COUNTRIES ("by country", "which country",
+  "top countries", per-country ranking), it will render as a shaded world map, so breadth
+  matters. Find a source with a per-country table (a reference database / international org
+  like WHO, World Bank, OWID, or the Wikipedia list is ideal) and TRANSCRIBE it: write out
+  each country and its number explicitly in DATA, one per line as "Country: value", for as
+  many countries as the source gives — aim for 30-40+. Do NOT merely say "data exists for
+  all countries" or give two examples; actually list them, ordered highest first. NEVER use
+  placeholder names ("Country A"). Never invent values for countries the source doesn't
+  cover; list only real figures with their real country names.
 
 Safety:
 * Do not research harmful, private, invasive, or illegal metrics.
@@ -250,9 +259,16 @@ cardType MUST be "table" and presentationType "top-10" or "top-25".
 cardType "ranking" may never exceed 5 rows. Keep cardType, presentationType, and row count consistent.
 
 MAP RULE (overrides ROW-COUNT RULE): if every row label is a COUNTRY, cardType MUST be
-"map" regardless of row count — even with 10, 20, or more rows. Map cards may have up to
-25 rows. Sub-national geography (states, districts, provinces, cities) is NEVER "map" —
-the map renders countries only; use "ranking" or "table" per the ROW-COUNT RULE.
+"map" regardless of row count — even with 10, 20, or more rows. Sub-national geography
+(states, districts, provinces, cities) is NEVER "map" — the map renders countries only;
+use "ranking" or "table" per the ROW-COUNT RULE.
+MAP COVERAGE (mandatory — do not shorten): the map shades EVERY country row on a color
+scale, so a map card's `rows` MUST contain ONE ENTRY FOR EVERY COUNTRY the brief's DATA
+section lists — if the brief lists 30 countries, output all 30 rows; if 40, output 40
+(hard cap 40). This is a transcription job: copy every country and its value across. Do
+NOT summarize, do NOT trim to a "top 5"/"top 10", do NOT stop early — even though the
+question says "top", the frontend picks the top 5 for its list itself. Order rows by
+value, highest first. A map card with only 5 rows when the brief had 30 is WRONG.
 
 KPI RULE (no fabricated comparisons): default to presentationType "kpi-single" — a single
 clean number is the tightest, most trustworthy KPI. Use "kpi-comparison" ONLY when the
@@ -289,6 +305,9 @@ Rows rules:
 * Always include rows for ranking, table, map, versus, and kpi.
 * Never invent rows. Use only what the brief provides; if fewer, return fewer and note it
   in insight.
+* NEVER emit placeholder labels like "Country A"/"Item 1" or a null value. Use the real
+  names and numbers from the brief; if the brief doesn't name a real country/value, omit
+  that row entirely rather than filling a placeholder.
 
 Field rules:
 * title: a FACTUAL headline that states the real finding — the actual stat in plain words.

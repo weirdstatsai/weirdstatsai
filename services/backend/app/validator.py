@@ -79,6 +79,21 @@ def _chart_has_data(c: dict) -> bool:
     return bool(labels) and any((ds.get("data") or []) for ds in datasets)
 
 
+def _num(x) -> float | None:
+    """Coerce to float, or None if it isn't a real number (handles null/'', '1,234')."""
+    if isinstance(x, bool) or x is None:
+        return None
+    if isinstance(x, (int, float)):
+        return float(x)
+    if isinstance(x, str):
+        s = x.strip().replace(",", "")
+        try:
+            return float(s)
+        except ValueError:
+            return None
+    return None
+
+
 def _clean_rows(c: dict) -> list:
     """Rows that actually carry a label — blank placeholders don't count."""
     return [
@@ -150,6 +165,23 @@ def validate_card(card: dict) -> dict:
 
     rows = c.get("rows") or []
 
+    # Drop rows the agent couldn't fill with a real number. When we ask for broad
+    # country coverage the model sometimes emits null values for countries it has
+    # no figure for; a null value fails schema validation and would sink the whole
+    # card. "Never invent values" → we simply omit those countries. Also coerces
+    # numeric strings ("1,234") to floats.
+    if isinstance(rows, list):
+        cleaned_rows = []
+        for r in rows:
+            if not isinstance(r, dict):
+                continue
+            v = _num(r.get("value"))
+            if v is None:
+                continue
+            cleaned_rows.append({**r, "value": v})
+        rows = cleaned_rows
+        c["rows"] = rows
+
     # Geographic override: if rows are country names, force map regardless of what agent said
     if isinstance(rows, list) and ctype in ("ranking", "table") and _is_geographic_rows(rows):
         ctype = "map"
@@ -183,6 +215,11 @@ def validate_card(card: dict) -> dict:
     # labels/data length must match (truncate to the shorter)
     labels = c.get("labels") or []
     datasets = c.get("datasets") or []
+    # Drop non-numeric/null data points (the agent occasionally emits null for a
+    # missing value) so they don't fail schema validation.
+    for ds in datasets:
+        if isinstance(ds, dict):
+            ds["data"] = [v for v in (_num(x) for x in (ds.get("data") or [])) if v is not None]
     if labels and datasets:
         for ds in datasets:
             data = ds.get("data") or []

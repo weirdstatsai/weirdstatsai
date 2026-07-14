@@ -26,6 +26,10 @@ _client: AsyncOpenAI | None = None
 
 RESEARCH_MODEL = os.getenv("RESEARCH_MODEL", "gpt-4o")
 FORMAT_MODEL = os.getenv("FORMAT_MODEL", "gpt-4o-mini")
+# Map cards must transcribe a full 30-40 country table into rows. gpt-4o-mini
+# does this unreliably (it truncates to ~5 or emits zero-value rows), so map
+# formatting uses the stronger model. Other card types stay on the cheap one.
+FORMAT_MAP_MODEL = os.getenv("FORMAT_MAP_MODEL", "gpt-4o")
 CLASSIFY_MODEL = os.getenv("CLASSIFY_MODEL", "gpt-4o-mini")
 # Document extraction reads tables/charts/scans via native PDF (vision) input —
 # worth the bigger model. It runs once per import; the per-card formatting
@@ -116,7 +120,8 @@ async def format_agent(brief: str, card_type: str | None = None) -> dict:
         )
 
     response = await client.responses.create(
-        model=FORMAT_MODEL,
+        # Map cards need reliable multi-row transcription → stronger model.
+        model=FORMAT_MAP_MODEL if card_type == "map" else FORMAT_MODEL,
         instructions=FORMAT_PROMPT,
         input=user_msg,
         # Low but non-zero: the data-fill step should be near-deterministic so it
