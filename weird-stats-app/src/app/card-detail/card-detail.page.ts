@@ -14,7 +14,7 @@ import { cardHasData } from '../shared/card-data.util';
 import { AuthService } from '../services/auth.service';
 import { RankStyle } from '../shared/cards/card-ranking/card-ranking.component';
 import { TableStyle } from '../shared/cards/card-table/card-table.component';
-import { KpiStyle } from '../shared/cards/card-kpi/card-kpi.component';
+import { KpiStyle, kpiAltStylesFor } from '../shared/cards/card-kpi/card-kpi.component';
 import { VersusStyle } from '../shared/cards/card-versus/card-versus.component';
 import { MapStyle, hasMappableRows } from '../shared/cards/card-map/card-map.component';
 import { MembershipService } from '../services/membership.service';
@@ -22,6 +22,7 @@ import { AdminService } from '../services/admin.service';
 import { DraftService } from '../services/draft.service';
 import { SeoService } from '../services/seo.service';
 import { AnalyticsService } from '../services/analytics.service';
+import { EmojiService } from '../services/emoji.service';
 import { PublishModalComponent } from '../shared/publish-modal/publish-modal.component';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 import firebase from 'firebase/compat/app';
@@ -36,6 +37,9 @@ export class CardDetailPage implements OnInit {
   storedCard?: StoredStatCard;
   isLoading = false;
   statusMsg = '';
+  // Card type revealed by the backend mid-generation, before the card is ready —
+  // drives the shape-specific loading skeleton. Empty until the classifier reports.
+  skeletonType = '';
   errorMsg = '';
   viewOnly = false;
   // Logged-out visitor on a shared /card/:id link — drives the sign-in bar
@@ -100,17 +104,10 @@ export class CardDetailPage implements OnInit {
   selectedMapStyle: MapStyle = 'choropleth';
   selectMapAlt(style: MapStyle): void { this.selectedMapStyle = style; this._persistStyle(style); }
 
-  // Comparison is only offered when the card carries a genuine second value —
-  // otherwise it would invent a benchmark, so we hide the option entirely.
+  // Data-gated: a KPI style is only offered when the card's data can honestly
+  // support it. Single source of truth lives next to the component.
   get kpiAltStyles(): Array<{ key: KpiStyle; label: string }> {
-    const styles: Array<{ key: KpiStyle; label: string }> = [
-      { key: 'default', label: 'Default' },
-      { key: 'hero',    label: 'Hero' },
-    ];
-    if (this.card?.rows?.[1]?.value != null) {
-      styles.splice(1, 0, { key: 'comparison', label: 'Comparison' });
-    }
-    return styles;
+    return kpiAltStylesFor(this.card);
   }
   selectedKpiStyle: KpiStyle = 'default';
 
@@ -154,12 +151,39 @@ export class CardDetailPage implements OnInit {
     private drafts: DraftService,
     private seo: SeoService,
     private analytics: AnalyticsService,
+    private emoji: EmojiService,
   ) {}
 
   private async uid(): Promise<string> {
     const user = await firstValueFrom(this.authService.user$);
     return user?.uid ?? '';
   }
+
+  /** Current signed-in user's display name (empty for guests). */
+  private async userName(): Promise<string> {
+    const user = await firstValueFrom(this.authService.user$);
+    return (user?.displayName || '').trim();
+  }
+
+  /** Creator attribution shown on the share page. Reads the denormalized
+   *  `createdByName` on the card doc (public-readable, so a shared-link viewer
+   *  can see it); falls back to the owner's own name when they're viewing a
+   *  card generated before the name was captured. */
+  get creatorName(): string {
+    const stored = (this.storedCard?.createdByName || '').trim();
+    if (stored) return stored;
+    return this.isOwner ? this._selfName : '';
+  }
+  private _selfName = '';
+
+  /** Creator's avatar emoji for the by-line — denormalized on the card, with an
+   *  owner fallback for cards made before it was captured. */
+  get creatorEmoji(): string {
+    const stored = (this.storedCard?.createdByEmoji || '').trim();
+    if (stored) return stored;
+    return this.isOwner ? this._selfEmoji : '';
+  }
+  private _selfEmoji = '';
 
   /**
    * Stored card with no explicit status (or 'draft') is a draft. A card that
@@ -384,9 +408,12 @@ export class CardDetailPage implements OnInit {
     this.isLoading = true;
     this.statusMsg = 'Starting…';
     this.errorMsg = '';
+    this.skeletonType = '';
 
     const user = await firstValueFrom(this.authService.user$);
     const uid = user?.uid ?? null;
+    // Snapshot the creator's identity now so it's denormalized onto the card.
+    const creatorEmoji = uid ? await firstValueFrom(this.emoji.emoji$(uid)).catch(() => '') || '' : '';
 
     try {
       const res = await fetch(`${environment.apiUrl}/api/generate/stream`, {
@@ -416,6 +443,10 @@ export class CardDetailPage implements OnInit {
           this.ngZone.run(async () => {
             if (event.type === 'status') {
               this.statusMsg = event.message;
+            } else if (event.type === 'shape') {
+              // Backend knows the card type before the (slower) format step
+              // finishes — render a matching skeleton so the wait feels shorter.
+              this.skeletonType = event.cardType || '';
             } else if (event.type === 'card') {
               this.card = event.data;
               this._buildAltStyles();
@@ -425,6 +456,8 @@ export class CardDetailPage implements OnInit {
                 status: 'completed',
                 publishStatus: 'draft',
                 createdBy: uid ?? '',
+                createdByName: (user?.displayName || '').trim(),
+                createdByEmoji: creatorEmoji,
                 createdAt: event.data.createdAt ?? new Date().toISOString(),
                 prompt,
                 promptHash: '',
@@ -445,6 +478,7 @@ export class CardDetailPage implements OnInit {
               }
               this.isLoading = false;
               this.statusMsg = '';
+              this.skeletonType = '';
               // Stay on the detail page so the user sees the generated card and
               // can edit / save it. It's already stored as a draft above, so
               // Back/exit lands on the Drafts tab (see back()).
@@ -453,6 +487,7 @@ export class CardDetailPage implements OnInit {
               this.errorMsg = event.message;
               this.isLoading = false;
               this.statusMsg = '';
+              this.skeletonType = '';
             }
           });
         }
@@ -777,15 +812,22 @@ export class CardDetailPage implements OnInit {
     const uid = await this.uid();
     const card = this.storedCard;
     if (!card?.id || !uid) return;
+    // Backfill the creator name + emoji onto the card doc so the share page can
+    // attribute it — public-readable, so shared-link viewers see it too.
+    const createdByName = (card.createdByName || '').trim() || (await this.userName());
+    const createdByEmoji = (card.createdByEmoji || '').trim()
+      || await firstValueFrom(this.emoji.emoji$(uid)).catch(() => '') || '';
     try {
       await this.afs.doc(`stats/${card.id}`).set({
         ...card,
         publishStatus: status,
         createdBy: uid,
+        createdByName,
+        createdByEmoji,
         createdAt: card.createdAt ?? new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }, { merge: true });
-      this.storedCard = { ...card, publishStatus: status };
+      this.storedCard = { ...card, publishStatus: status, createdByName, createdByEmoji };
       this.toast(msg);
       // Public cards get shared — render the real-card social preview now.
       if (status === 'published') this.generateOgImage();
@@ -1110,7 +1152,12 @@ export class CardDetailPage implements OnInit {
     const user = await firstValueFrom(this.authService.user$);
     this.isGuest = !user;
     this.isOwner = !!user && user.uid === this.storedCard?.createdBy;
-    if (user) await this.claimGuestCardIfAny(user.uid);
+    // Fallback attribution for the owner viewing a pre-name/emoji card.
+    this._selfName = (user?.displayName || '').trim();
+    if (user) {
+      this._selfEmoji = await firstValueFrom(this.emoji.emoji$(user.uid)).catch(() => '') || '';
+      await this.claimGuestCardIfAny(user.uid);
+    }
   }
 
   /** Open the sign-in modal; re-check guest state afterwards so the bar/CTA

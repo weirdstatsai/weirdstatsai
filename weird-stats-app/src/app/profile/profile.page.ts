@@ -17,7 +17,7 @@ import { DraftService } from '../services/draft.service';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 import { PublishModalComponent } from '../shared/publish-modal/publish-modal.component';
 import { RankStyle } from '../shared/cards/card-ranking/card-ranking.component';
-import { KpiStyle } from '../shared/cards/card-kpi/card-kpi.component';
+import { KpiStyle, kpiAltStylesFor } from '../shared/cards/card-kpi/card-kpi.component';
 import { TableStyle } from '../shared/cards/card-table/card-table.component';
 import { EmojiService } from '../services/emoji.service';
 
@@ -54,12 +54,11 @@ export class ProfilePage implements OnInit, OnDestroy {
   readonly rankStyleLabels: Record<string, string> = {
     pill: 'Value pill', percent: 'Percentage', vertical: 'Vertical', circular: 'Circular',
   };
-  readonly kpiAltStyles: Array<{ key: KpiStyle; label: string }> = [
-    { key: 'default', label: 'Default' },
-    { key: 'comparison', label: 'Comparison' },
-    { key: 'hero', label: 'Hero' },
-    { key: 'circular', label: 'Circular' },
-  ];
+  // Data-gated: a KPI style is only offered when the draft's data can honestly
+  // support it. Single source of truth lives next to the component.
+  get kpiAltStyles(): Array<{ key: KpiStyle; label: string }> {
+    return kpiAltStylesFor(this.selectedDraft?.data);
+  }
   readonly tableAltStyles: Array<{ key: TableStyle; label: string }> = [
     { key: 'pill', label: 'Value pill' },
     { key: 'bars', label: 'Bars' },

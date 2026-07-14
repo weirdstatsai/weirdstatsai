@@ -74,7 +74,11 @@ it can't be deleted cleanly yet — leave it alone.
 
 ## Deploy
 - **Frontend**: `firebase deploy --only hosting --project weirdstats-ai`
-- **Backend**: `cd services/backend && gcloud run deploy weirdstats-api --source=. --region=us-central1 --project=weirdstats-ai --quiet`
+- **Backend**: `cd services/backend && gcloud run deploy weirdstats-api --source=. --region=us-central1 --project=weirdstats-ai --min-instances=1 --cpu-boost --quiet`
+  (`--min-instances=1` keeps one warm container so generation doesn't pay a
+  cold-start [container boot + Python import + `firebase_admin` init, several
+  seconds] on the first request after idle; `--cpu-boost` speeds startup when it
+  does scale up. Costs ~1 always-on instance — drop the flag if that's not wanted.)
 - **Rules**: `firebase deploy --only firestore:rules --project weirdstats-ai`
 - **Indexes**: create via **gcloud** (see gotcha), then verify READY.
 - After a hosting deploy, the CDN can briefly serve the OLD bundle — verify with a

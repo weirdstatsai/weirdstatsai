@@ -47,6 +47,36 @@
         <ion-icon name="checkmark-outline"></ion-icon> Saving
       </div>
     </div>
+
+    <!-- Shape-specific skeleton: appears the moment the backend reports the card
+         type, so the user sees the card's layout forming before its data lands. -->
+    <div class="card-skeleton" *ngIf="skeletonType" [ngSwitch]="skeletonType">
+      <div class="sk-line sk-title"></div>
+      <ng-container *ngSwitchCase="'kpi'">
+        <div class="sk-kpi"></div>
+        <div class="sk-line sk-sub"></div>
+      </ng-container>
+      <ng-container *ngSwitchCase="'chart'">
+        <div class="sk-bars">
+          <span style="height:40%"></span><span style="height:70%"></span>
+          <span style="height:55%"></span><span style="height:90%"></span>
+          <span style="height:65%"></span>
+        </div>
+      </ng-container>
+      <ng-container *ngSwitchCase="'versus'">
+        <div class="sk-versus"><div class="sk-box"></div><div class="sk-vs"></div><div class="sk-box"></div></div>
+      </ng-container>
+      <ng-container *ngSwitchCase="'map'">
+        <div class="sk-map"></div>
+      </ng-container>
+      <ng-container *ngSwitchCase="'fact'">
+        <div class="sk-line"></div><div class="sk-line"></div><div class="sk-line sk-sub"></div>
+      </ng-container>
+      <!-- ranking & table share the row layout -->
+      <ng-container *ngSwitchDefault>
+        <div class="sk-row" *ngFor="let r of [1,2,3,4]"><span class="sk-dot"></span><span class="sk-bar"></span></div>
+      </ng-container>
+    </div>
   </div>
 
   <!-- Error -->
@@ -100,6 +130,13 @@
         <span>The story</span>
       </div>
       <p class="card-info-text">{{ card.insight }}</p>
+    </div>
+
+    <!-- Creator attribution — a standalone by-line between the story and the
+         share section: avatar emoji + left-aligned "~Name" signature. -->
+    <div class="created-by" *ngIf="creatorName">
+      <span class="created-by-avatar" *ngIf="creatorEmoji">{{ creatorEmoji }}</span>
+      <span class="created-by-name">~{{ creatorName }}</span>
     </div>
 
     <!-- View-only (Explore): inline share fills the space below the card -->

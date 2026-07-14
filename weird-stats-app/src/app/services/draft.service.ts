@@ -31,6 +31,7 @@ export class DraftService {
     const patch: Record<string, unknown> = {
       createdBy: uid,
       createdByName: card.createdByName ?? '',
+      createdByEmoji: card.createdByEmoji ?? '',
       publishStatus: card.publishStatus ?? 'draft',
       data: card.data,
       updatedAt: new Date().toISOString(),

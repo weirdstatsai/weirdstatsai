@@ -131,6 +131,9 @@ export interface StoredStatCard {
   publishStatus?: 'draft' | 'published' | 'private';
   createdBy: string;
   createdByName?: string;
+  /** Creator's avatar emoji, denormalized onto the card so shared-link viewers
+   *  can see it (users/{uid} is owner-only readable). Populated on claim/publish. */
+  createdByEmoji?: string;
   createdAt: string;
   /** Last time the card was created, saved, published, or edited — used to sort
    *  "latest first" in Explore / Drafts / Saved. Falls back to createdAt. */
