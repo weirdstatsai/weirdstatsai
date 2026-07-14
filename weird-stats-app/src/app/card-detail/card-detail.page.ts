@@ -41,6 +41,50 @@ export class CardDetailPage implements OnInit {
   // drives the shape-specific loading skeleton. Empty until the classifier reports.
   skeletonType = '';
   errorMsg = '';
+
+  // ── Frame-first loading state machine ─────────────────────────────────────
+  // The loading UI renders the real card's full-width frame from the start and
+  // never resizes; the real card cross-fades in on top (grid-stacked). Three
+  // guards keep it honest:
+  //  showLoadingUi — 300ms gate: cached/instant results never flash loading UI.
+  //  frameVisible  — the frame stays mounted ~0.5s after the card lands so the
+  //                  cross-fade has both layers; then it unmounts.
+  //  frameLeaving  — drives the frame's fade-out class during that overlap.
+  showLoadingUi = false;
+  frameVisible = false;
+  frameLeaving = false;
+  private loadingGateTimer?: ReturnType<typeof setTimeout>;
+
+  /** Arm the 300ms gate: only show loading UI if we're still waiting by then. */
+  private beginLoadingUi(): void {
+    clearTimeout(this.loadingGateTimer);
+    this.showLoadingUi = false;
+    this.loadingGateTimer = setTimeout(() => {
+      if (this.isLoading) { this.showLoadingUi = true; this.frameVisible = true; }
+    }, 300);
+  }
+
+  /** Data has arrived: fade the frame out while the real card fades in.
+   *  Interruptible by design — the card mounts immediately; only the frame's
+   *  exit is animated. If the gate never fired (cached path), no frame exists
+   *  and this is just isLoading=false. */
+  private revealCard(): void {
+    clearTimeout(this.loadingGateTimer);
+    this.showLoadingUi = false;
+    this.isLoading = false;
+    if (this.frameVisible) {
+      this.frameLeaving = true;
+      setTimeout(() => { this.frameVisible = false; this.frameLeaving = false; }, 520);
+    }
+  }
+
+  /** Error/abort: tear the loading UI down instantly (no choreography). */
+  private resetLoadingUi(): void {
+    clearTimeout(this.loadingGateTimer);
+    this.showLoadingUi = false;
+    this.frameVisible = false;
+    this.frameLeaving = false;
+  }
   viewOnly = false;
   // Logged-out visitor on a shared /card/:id link — drives the sign-in bar
   // and the "make your own" acquisition CTA.
@@ -373,6 +417,7 @@ export class CardDetailPage implements OnInit {
 
   private async loadById(id: string): Promise<void> {
     this.isLoading = true;
+    this.beginLoadingUi();
     // A card reached by its /card/:id URL — a shared link, or a page refresh —
     // is a PUBLIC view. Show the clean view-only share layout, never the
     // owner's edit/alternatives UI. Owners edit from their profile/project,
@@ -400,7 +445,9 @@ export class CardDetailPage implements OnInit {
     } catch {
       this.errorMsg = 'Could not load this card.';
     } finally {
-      this.isLoading = false;
+      // Same cross-fade as generation (usually instant — the 300ms gate means
+      // a quick Firestore read shows no loading UI at all).
+      this.revealCard();
     }
   }
 
@@ -409,6 +456,7 @@ export class CardDetailPage implements OnInit {
     this.statusMsg = 'Starting…';
     this.errorMsg = '';
     this.skeletonType = '';
+    this.beginLoadingUi();
 
     const user = await firstValueFrom(this.authService.user$);
     const uid = user?.uid ?? null;
@@ -476,7 +524,9 @@ export class CardDetailPage implements OnInit {
                 this.guestUnsaved = true;
                 this.toast('Sign in to save this card so you don’t lose it.');
               }
-              this.isLoading = false;
+              // Cross-fade: frame out, real card in (interruptible; instant
+              // when the 300ms gate never fired, e.g. cached results).
+              this.revealCard();
               this.statusMsg = '';
               this.skeletonType = '';
               // Stay on the detail page so the user sees the generated card and
@@ -488,6 +538,7 @@ export class CardDetailPage implements OnInit {
               this.isLoading = false;
               this.statusMsg = '';
               this.skeletonType = '';
+              this.resetLoadingUi();
             }
           });
         }
@@ -497,6 +548,7 @@ export class CardDetailPage implements OnInit {
         this.errorMsg = 'Generation failed. Please try again.';
         this.isLoading = false;
         this.statusMsg = '';
+        this.resetLoadingUi();
       });
     }
   }

@@ -51,68 +51,215 @@
 
 // Shape-specific loading skeleton — mirrors the coming card's layout so the
 // wait feels like the card assembling rather than a blank spinner.
-.card-skeleton {
-  width: 100%;
-  max-width: 320px;
-  margin-top: 20px;
-  padding: 18px;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,0.06);
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  text-align: left;
+// ── Frame-first loading ─────────────────────────────────────────────────────
+// The loading UI shares the real card's wrap: a full-width "frame" with the
+// card's own chrome is pinned from the first paint and never resizes. Acts:
+// movement (gears) → wireframe (dashed shape) → cross-fade to the real card.
+// Design language: dashed = draft, solid + colour = verified fact.
 
-  // shimmer applied to every skeleton element
-  .sk-line, .sk-kpi, .sk-bars span, .sk-box, .sk-map, .sk-bar, .sk-dot {
-    background: linear-gradient(100deg, #ececec 30%, #f6f6f6 50%, #ececec 70%);
+.gen-state { padding: 26px 20px 4px; }   // slim status header above the frame
+
+.card-stage {
+  display: grid;
+  // frame + real card stack in the same cell → cross-fade with zero shift
+  > * { grid-area: 1 / 1; min-width: 0; }
+}
+
+.card-frame {
+  position: relative;
+  border-radius: 20px;
+  padding: 20px;
+  // Neutral stand-in for the card's (still unknown) gradient — the app's own
+  // default pair, so most real gradients are a short colour distance away.
+  // Stays LIGHT in dark mode: the arriving card is light too.
+  background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+  border: 1.5px dashed rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+  min-height: 300px;
+  animation: frame-in 0.4s ease both;
+
+  &.frame-kpi    { min-height: 250px; }
+  &.frame-chart  { min-height: 320px; }
+  &.frame-map    { min-height: 340px; }
+  &.frame-versus { min-height: 260px; }
+  &.frame-fact   { min-height: 220px; }
+
+  // Act 3: data landed — the frame bows out while the card fades in on top.
+  &.frame-leaving { animation: frame-out 0.5s ease both; pointer-events: none; }
+}
+
+@keyframes frame-in  { from { opacity: 0; } }
+@keyframes frame-out { to { opacity: 0; transform: scale(0.99); } }
+
+// Corner registration marks — "we know the card's size; contents are draft".
+.frame-corner {
+  position: absolute; width: 14px; height: 14px;
+  border: 0 solid rgba(0, 0, 0, 0.30);
+  animation: corner-in 0.3s ease both;
+  &.tl { top: 8px; left: 8px; border-top-width: 2px; border-left-width: 2px; }
+  &.tr { top: 8px; right: 8px; border-top-width: 2px; border-right-width: 2px; animation-delay: 0.07s; }
+  &.bl { bottom: 8px; left: 8px; border-bottom-width: 2px; border-left-width: 2px; animation-delay: 0.14s; }
+  &.br { bottom: 8px; right: 8px; border-bottom-width: 2px; border-right-width: 2px; animation-delay: 0.21s; }
+}
+@keyframes corner-in { from { opacity: 0; transform: scale(1.4); } }
+
+// Draft title bar with a slow left-to-right sheen (research: slow L→R waves
+// read faster than pulses; never opacity-pulse).
+.frame-title {
+  height: 14px; width: 62%;
+  border-radius: 6px;
+  border: 2px dashed rgba(0, 0, 0, 0.14);
+  position: relative; overflow: hidden;
+  &::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(100deg, transparent 30%, rgba(0,0,0,0.05) 50%, transparent 70%);
     background-size: 200% 100%;
-    animation: sk-shimmer 1.4s ease-in-out infinite;
-    border-radius: 6px;
+    animation: wf-sheen 1.9s linear infinite;
   }
+}
+@keyframes wf-sheen { to { background-position: -200% 0; } }
 
-  .sk-line { height: 12px; width: 100%; }
-  .sk-title { height: 16px; width: 70%; }
-  .sk-sub { width: 45%; }
+// ── Act 1: the movement — gears advance in discrete escapement ticks ───────
+.frame-movement {
+  display: flex; justify-content: center;
+  padding: 30px 0 8px;
+  svg { width: 180px; height: 112px; overflow: visible; }
+  .gear { transform-box: fill-box; transform-origin: center; }
+  .gear-a   { animation: gear-tick 7s steps(35) infinite; }
+  .gear-b   { animation: gear-tick-r 4.6s steps(23) infinite; }
+  .gear-bal { animation: gear-bal 0.95s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate; }
+}
+@keyframes gear-tick   { to { transform: rotate(360deg); } }
+@keyframes gear-tick-r { to { transform: rotate(-360deg); } }
+@keyframes gear-bal    { from { transform: rotate(-38deg); } to { transform: rotate(38deg); } }
 
-  .sk-kpi { height: 56px; width: 60%; border-radius: 10px; }
+// ── Act 2: dashed wireframes per card type ──────────────────────────────────
+.frame-wire { margin-top: 20px; }
 
-  .sk-bars {
-    display: flex; align-items: flex-end; gap: 10px; height: 120px;
-    span { flex: 1; border-radius: 6px 6px 0 0; }
+.wf-plot {
+  position: relative; height: 170px;
+  display: flex; align-items: flex-end; gap: 12px; padding: 0 4px;
+  i {
+    flex: 1; height: 0;
+    border: 2px dashed rgba(0, 0, 0, 0.20);
+    border-radius: 6px 6px 3px 3px;
+    animation: wf-rise 0.7s cubic-bezier(0.3, 0.7, 0.3, 1) both;
   }
+  i:nth-child(2) { --wh: 42%; animation-delay: 0.05s; }
+  i:nth-child(3) { --wh: 66%; animation-delay: 0.15s; }
+  i:nth-child(4) { --wh: 52%; animation-delay: 0.25s; }
+  i:nth-child(5) { --wh: 88%; animation-delay: 0.35s; }
+  i:nth-child(6) { --wh: 70%; animation-delay: 0.45s; }
+}
+@keyframes wf-rise { to { height: var(--wh, 50%); } }
 
-  .sk-versus {
-    display: flex; align-items: center; gap: 12px;
-    .sk-box { flex: 1; height: 90px; border-radius: 10px; }
-    .sk-vs { width: 22px; height: 22px; border-radius: 50%; background: #ddd; flex: none; }
-  }
+.wf-axis {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px;
+  background: rgba(0, 0, 0, 0.25);
+  transform: scaleX(0); transform-origin: left;
+  animation: wf-axis 0.5s ease-out both;
+}
+@keyframes wf-axis { to { transform: scaleX(1); } }
 
-  .sk-map { height: 150px; border-radius: 10px; }
+.wf-kpi {
+  height: 64px; width: 58%;
+  border: 2px dashed rgba(0, 0, 0, 0.20); border-radius: 12px;
+  margin: 26px 0 12px;
+  animation: wf-pop 0.5s ease both;
+}
+.wf-kpi-sub {
+  height: 10px; width: 34%;
+  border: 2px dashed rgba(0, 0, 0, 0.14); border-radius: 5px;
+  animation: wf-pop 0.5s ease 0.12s both;
+}
+@keyframes wf-pop { from { opacity: 0; transform: scale(0.94); } }
 
-  .sk-row {
+.wf-versus {
+  display: flex; align-items: center; gap: 14px; margin-top: 24px;
+  .wf-box { flex: 1; height: 110px; border: 2px dashed rgba(0,0,0,0.20); border-radius: 14px; animation: wf-pop 0.5s ease both; }
+  .wf-box:last-child { animation-delay: 0.12s; }
+  .wf-vs { width: 26px; height: 26px; border-radius: 50%; border: 2px dashed rgba(0,0,0,0.28); flex: none; animation: wf-pop 0.4s ease 0.2s both; }
+}
+
+.wf-map {
+  height: 200px; position: relative; overflow: hidden;
+  border: 2px dashed rgba(0, 0, 0, 0.18); border-radius: 12px;
+  margin-top: 22px;
+  animation: wf-pop 0.5s ease both;
+  // dashed landmass blobs
+  span { position: absolute; border: 2px dashed rgba(0,0,0,0.20); border-radius: 45% 55% 48% 52%; animation: wf-pop 0.5s ease both; }
+  span:nth-child(1) { width: 34%; height: 44%; left: 8%;  top: 14%; animation-delay: 0.15s; }
+  span:nth-child(2) { width: 26%; height: 34%; left: 52%; top: 10%; animation-delay: 0.28s; }
+  span:nth-child(3) { width: 30%; height: 30%; left: 44%; top: 56%; animation-delay: 0.41s; }
+}
+
+.wf-rows {
+  display: flex; flex-direction: column; gap: 15px; margin-top: 22px;
+  .wf-row {
     display: flex; align-items: center; gap: 10px;
-    .sk-dot { width: 22px; height: 22px; border-radius: 50%; flex: none; }
-    .sk-bar { height: 12px; flex: 1; }
+    animation: wf-pop 0.4s ease both;
+    .wf-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px dashed rgba(0,0,0,0.22); flex: none; }
+    .wf-bar { height: 12px; flex: 1; border: 2px dashed rgba(0,0,0,0.16); border-radius: 6px; }
   }
+  .wf-row:nth-child(2) { animation-delay: 0.09s; }
+  .wf-row:nth-child(3) { animation-delay: 0.18s; }
+  .wf-row:nth-child(4) { animation-delay: 0.27s; }
 }
 
-@keyframes sk-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+.wf-line {
+  height: 12px;
+  border: 2px dashed rgba(0, 0, 0, 0.16); border-radius: 6px;
+  margin-bottom: 13px;
+  animation: wf-pop 0.4s ease both;
+  &:nth-child(2) { animation-delay: 0.09s; }
+  &.wf-short { width: 55%; animation-delay: 0.18s; }
 }
 
-@media (prefers-color-scheme: dark) {
-  .card-skeleton {
-    background: #1c1c1e;
-    border-color: rgba(255,255,255,0.08);
-    .sk-line, .sk-kpi, .sk-bars span, .sk-box, .sk-map, .sk-bar, .sk-dot {
-      background: linear-gradient(100deg, #2a2a2c 30%, #363638 50%, #2a2a2c 70%);
-      background-size: 200% 100%;
-    }
-    .sk-versus .sk-vs { background: #3a3a3c; }
+// Title-block status line, engineering-drawing style.
+.frame-status {
+  position: absolute; left: 20px; bottom: 12px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.36);
+}
+
+// ── Act 3: the page IRISES open out of the skeleton window ──────────────────
+// A clip-path window opens from the card's centre and expands outward
+// (negative final inset so the card's shadow is never clipped at rest), then
+// the rest of the detail page cascades downward — the page emerges through the
+// widening window. GPU-cheap (clip-path only), interruptible, ≤0.7s.
+.card-live {
+  animation: card-iris 0.62s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+@keyframes card-iris {
+  0%   { clip-path: inset(38% 34% 44% 34% round 14px); opacity: 0.7; }
+  22%  { opacity: 1; }
+  100% { clip-path: inset(-40px round 22px); opacity: 1; }
+}
+
+// Everything around/below emerges from the window in a downward stagger,
+// each element wiped open top→down so the whole page reads as one expansion.
+.main-badges  { animation: content-iris 0.42s cubic-bezier(0.4,0,0.2,1) 0.14s both; }
+.card-info    { animation: content-iris 0.46s cubic-bezier(0.4,0,0.2,1) 0.26s both; }
+.created-by   { animation: content-iris 0.44s cubic-bezier(0.4,0,0.2,1) 0.36s both; }
+.share-inline,
+.alts-section,
+.edit-panel   { animation: content-iris 0.50s cubic-bezier(0.4,0,0.2,1) 0.46s both; }
+@keyframes content-iris {
+  from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(6px); }
+  to   { opacity: 1; clip-path: inset(0 0 -10px 0); transform: none; }
+}
+
+// Accessibility: collapse all loading choreography to simple fades.
+@media (prefers-reduced-motion: reduce) {
+  .card-frame, .card-frame *, .card-live,
+  .main-badges, .card-info, .created-by,
+  .share-inline, .alts-section, .edit-panel {
+    animation-duration: 0.01s !important;
+    animation-delay: 0s !important;
   }
+  .frame-title::after { animation: none !important; }
+  .frame-movement .gear { animation: none !important; }
 }
 
 app-weird-card {

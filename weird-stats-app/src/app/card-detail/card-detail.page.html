@@ -32,9 +32,8 @@
 
 <ion-content>
 
-  <!-- Loading -->
-  <div class="state" *ngIf="isLoading">
-    <ion-spinner name="dots"></ion-spinner>
+  <!-- Loading status header (the frame below carries the visual work) -->
+  <div class="state gen-state" *ngIf="isLoading && showLoadingUi">
     <p class="status-msg">{{ statusMsg || 'Starting…' }}</p>
     <div class="status-steps">
       <div class="step" [class.active]="statusMsg.includes('Searching')">
@@ -47,36 +46,6 @@
         <ion-icon name="checkmark-outline"></ion-icon> Saving
       </div>
     </div>
-
-    <!-- Shape-specific skeleton: appears the moment the backend reports the card
-         type, so the user sees the card's layout forming before its data lands. -->
-    <div class="card-skeleton" *ngIf="skeletonType" [ngSwitch]="skeletonType">
-      <div class="sk-line sk-title"></div>
-      <ng-container *ngSwitchCase="'kpi'">
-        <div class="sk-kpi"></div>
-        <div class="sk-line sk-sub"></div>
-      </ng-container>
-      <ng-container *ngSwitchCase="'chart'">
-        <div class="sk-bars">
-          <span style="height:40%"></span><span style="height:70%"></span>
-          <span style="height:55%"></span><span style="height:90%"></span>
-          <span style="height:65%"></span>
-        </div>
-      </ng-container>
-      <ng-container *ngSwitchCase="'versus'">
-        <div class="sk-versus"><div class="sk-box"></div><div class="sk-vs"></div><div class="sk-box"></div></div>
-      </ng-container>
-      <ng-container *ngSwitchCase="'map'">
-        <div class="sk-map"></div>
-      </ng-container>
-      <ng-container *ngSwitchCase="'fact'">
-        <div class="sk-line"></div><div class="sk-line"></div><div class="sk-line sk-sub"></div>
-      </ng-container>
-      <!-- ranking & table share the row layout -->
-      <ng-container *ngSwitchDefault>
-        <div class="sk-row" *ngFor="let r of [1,2,3,4]"><span class="sk-dot"></span><span class="sk-bar"></span></div>
-      </ng-container>
-    </div>
   </div>
 
   <!-- Error -->
@@ -85,21 +54,92 @@
     <p>{{ errorMsg }}</p>
   </div>
 
+  <!-- ── Card stage ─────────────────────────────────────────────────────────
+       Frame-first loading: the real card's full-width frame is pinned here
+       from the first paint of the loading UI and NEVER resizes. Acts:
+        1 (no skeletonType)  — the "movement": escapement gears ticking.
+        2 (skeletonType set) — dashed per-type wireframe assembles.
+        3 (card arrives)     — frame fades out while the real card fades in;
+                               both are grid-stacked in the same cell, so the
+                               transition is a pure cross-fade, no size jump. -->
+  <app-card-badges *ngIf="card && !isLoading" [card]="card" class="main-badges"></app-card-badges>
+  <div class="main-card-wrap" *ngIf="frameVisible || (card && !isLoading)">
+    <div class="card-stage">
+
+      <div class="card-frame" *ngIf="frameVisible" [class.frame-leaving]="frameLeaving"
+           [ngClass]="'frame-' + (skeletonType || 'none')" aria-hidden="true">
+        <span class="frame-corner tl"></span><span class="frame-corner tr"></span>
+        <span class="frame-corner bl"></span><span class="frame-corner br"></span>
+        <div class="frame-title"></div>
+
+        <!-- Act 1: the movement -->
+        <div class="frame-movement" *ngIf="!skeletonType">
+          <svg viewBox="0 0 190 120">
+            <g class="gear gear-a">
+              <circle cx="78" cy="62" r="30" fill="none" stroke="#8a8798" stroke-width="10" stroke-dasharray="6.5 8.35" stroke-linecap="round" opacity="0.5"/>
+              <circle cx="78" cy="62" r="13" fill="none" stroke="#8a8798" stroke-width="4" opacity="0.5"/>
+              <circle cx="78" cy="62" r="3" fill="#8a8798" opacity="0.55"/>
+            </g>
+            <g class="gear gear-b">
+              <circle cx="130" cy="44" r="19" fill="none" stroke="#6C5CE7" stroke-width="8" stroke-dasharray="5 6.15" stroke-linecap="round" opacity="0.45"/>
+              <circle cx="130" cy="44" r="7" fill="none" stroke="#6C5CE7" stroke-width="3" opacity="0.45"/>
+            </g>
+            <g class="gear gear-bal">
+              <circle cx="150" cy="88" r="13" fill="none" stroke="#b3b0c4" stroke-width="2.5" opacity="0.75"/>
+              <line x1="150" y1="75" x2="150" y2="101" stroke="#b3b0c4" stroke-width="2.5" opacity="0.75"/>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Act 2: dashed wireframe of the decided shape -->
+        <div class="frame-wire" *ngIf="skeletonType" [ngSwitch]="skeletonType">
+          <ng-container *ngSwitchCase="'chart'">
+            <div class="wf-plot">
+              <div class="wf-axis"></div>
+              <i></i><i></i><i></i><i></i><i></i>
+            </div>
+          </ng-container>
+          <ng-container *ngSwitchCase="'kpi'">
+            <div class="wf-kpi"></div>
+            <div class="wf-kpi-sub"></div>
+          </ng-container>
+          <ng-container *ngSwitchCase="'versus'">
+            <div class="wf-versus"><div class="wf-box"></div><div class="wf-vs"></div><div class="wf-box"></div></div>
+          </ng-container>
+          <ng-container *ngSwitchCase="'map'">
+            <div class="wf-map"><span></span><span></span><span></span></div>
+          </ng-container>
+          <ng-container *ngSwitchCase="'fact'">
+            <div class="wf-line"></div><div class="wf-line"></div><div class="wf-line wf-short"></div>
+          </ng-container>
+          <!-- ranking & table share the row layout -->
+          <ng-container *ngSwitchDefault>
+            <div class="wf-rows">
+              <div class="wf-row" *ngFor="let r of [1,2,3,4]"><span class="wf-dot"></span><span class="wf-bar"></span></div>
+            </div>
+          </ng-container>
+        </div>
+
+        <div class="frame-status">{{ statusMsg || 'Starting…' }}</div>
+      </div>
+
+      <!-- Act 3: the real card -->
+      <div class="card-live" *ngIf="card && !isLoading">
+        <ng-container [ngSwitch]="card.cardType">
+          <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>
+          <app-card-kpi     *ngSwitchCase="'kpi'"     [card]="card" size="full" [kpiStyle]="selectedKpiStyle"></app-card-kpi>
+          <app-card-table   *ngSwitchCase="'table'"   [card]="card" size="full" [tableStyle]="selectedTableStyle"></app-card-table>
+          <app-card-versus  *ngSwitchCase="'versus'"  [card]="card" size="full" [versusStyle]="selectedVersusStyle"></app-card-versus>
+          <app-card-map     *ngSwitchCase="'map'"     [card]="card" size="full" [mapStyle]="selectedMapStyle"></app-card-map>
+          <app-weird-card   *ngSwitchDefault           [card]="card" size="full" [fontSize]="factFontSize"></app-weird-card>
+        </ng-container>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Card -->
   <ng-container *ngIf="card && !isLoading">
-
-    <!-- Main full card -->
-    <app-card-badges [card]="card" class="main-badges"></app-card-badges>
-    <div class="main-card-wrap">
-      <ng-container [ngSwitch]="card.cardType">
-        <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>
-        <app-card-kpi     *ngSwitchCase="'kpi'"     [card]="card" size="full" [kpiStyle]="selectedKpiStyle"></app-card-kpi>
-        <app-card-table   *ngSwitchCase="'table'"   [card]="card" size="full" [tableStyle]="selectedTableStyle"></app-card-table>
-        <app-card-versus  *ngSwitchCase="'versus'"  [card]="card" size="full" [versusStyle]="selectedVersusStyle"></app-card-versus>
-        <app-card-map     *ngSwitchCase="'map'"     [card]="card" size="full" [mapStyle]="selectedMapStyle"></app-card-map>
-        <app-weird-card   *ngSwitchDefault           [card]="card" size="full" [fontSize]="factFontSize"></app-weird-card>
-      </ng-container>
-    </div>
 
     <!-- Offscreen 1200x630 social-preview frame — captured to PNG on publish.
          Mirrors the Save-Image look: the real feed card on a white tile,
