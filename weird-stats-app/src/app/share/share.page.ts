@@ -5,6 +5,7 @@ import html2canvas from 'html2canvas';
 import { Graph } from '../models/graph.model';
 import { GraphService } from '../services/graph.service';
 import { AuthService } from '../services/auth.service';
+import { AnalyticsService } from '../services/analytics.service';
 import { LoginComponent } from '../login/login.component';
 
 @Component({
@@ -23,7 +24,12 @@ export class SharePage implements OnInit {
     private toastCtrl: ToastController,
     private authService: AuthService,
     private modalCtrl: ModalController,
+    private analytics: AnalyticsService,
   ) {}
+
+  private get cardId(): string {
+    return this.route.snapshot.paramMap.get('id') || '';
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
@@ -31,6 +37,7 @@ export class SharePage implements OnInit {
   }
 
   async shareTo(network: string): Promise<void> {
+    this.analytics.track('share', { method: network, card_id: this.cardId });
     await this.withAuth(async () => {
       if (!this.graph) return;
       const text = `Weird Stats: ${this.graph.title} — ${this.graph.insight}`;
@@ -75,6 +82,7 @@ export class SharePage implements OnInit {
   }
 
   async download(): Promise<void> {
+    this.analytics.track('share', { method: 'save_image', card_id: this.cardId });
     await this.withAuth(async () => {
       const canvas = await this.renderShareCard();
       if (!canvas) return;
@@ -92,6 +100,7 @@ export class SharePage implements OnInit {
   }
 
   async copyLink(): Promise<void> {
+    this.analytics.track('share', { method: 'copy_link', card_id: this.cardId });
     await this.withAuth(async () => {
       await navigator.clipboard.writeText(window.location.href).catch(() => {});
       const toast = await this.toastCtrl.create({
@@ -108,7 +117,7 @@ export class SharePage implements OnInit {
       await action();
       return;
     }
-    const modal = await this.modalCtrl.create({ component: LoginComponent });
+    const modal = await this.modalCtrl.create({ component: LoginComponent, cssClass: 'login-modal' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data === true) {

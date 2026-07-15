@@ -1,0 +1,49 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <button class="nav-back" (click)="goBack()">
+        <ion-icon name="chevron-back"></ion-icon>
+        <span>Projects</span>
+      </button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="loading" *ngIf="loading">
+    <ion-spinner name="dots"></ion-spinner>
+  </div>
+
+  <ng-container *ngIf="!loading && project">
+    <!-- Identity -->
+    <div class="hero">
+      <div class="mono-tile">{{ initials }}</div>
+      <h1 class="proj-name">{{ project.project_name }}</h1>
+      <p class="proj-meta">
+        {{ statCount }} {{ statCount === 1 ? 'stat' : 'stats' }}<ng-container *ngIf="createdLabel"> · created {{ createdLabel }}</ng-container>
+      </p>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Primary action -->
+    <div class="action-bar">
+      <button class="create-btn" (click)="openCreate()">
+        <ion-icon name="add"></ion-icon> Create
+      </button>
+    </div>
+
+    <!-- Empty state -->
+    <div class="body-empty">
+      <div class="body-empty-icon"><ion-icon name="albums-outline"></ion-icon></div>
+      <p class="body-empty-title">No stats yet</p>
+      <p class="body-empty-text">Add a stat, or import a PDF to generate graphs in bulk.</p>
+    </div>
+  </ng-container>
+
+  <div class="not-found" *ngIf="!loading && !project">
+    <ion-icon name="alert-circle-outline"></ion-icon>
+    <p>Project not found</p>
+    <button class="back-link" (click)="goBack()">Back to Projects</button>
+  </div>
+</ion-content>

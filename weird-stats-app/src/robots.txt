@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Private / internal routes — keep out of the index
+Disallow: /admin
+Disallow: /admin-user
+Disallow: /account
+Disallow: /seed-data
+
+Sitemap: https://weirdstats.ai/sitemap.xml
+Sitemap: https://weirdstats.ai/sitemap-cards.xml

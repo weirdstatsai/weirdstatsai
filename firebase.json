@@ -11,8 +11,44 @@
     ],
     "rewrites": [
       {
+        "source": "/card/**",
+        "run": { "serviceId": "weirdstats-api", "region": "us-central1" }
+      },
+      {
+        "source": "/share/**",
+        "run": { "serviceId": "weirdstats-api", "region": "us-central1" }
+      },
+      {
+        "source": "/og/**",
+        "run": { "serviceId": "weirdstats-api", "region": "us-central1" }
+      },
+      {
+        "source": "/sitemap-cards.xml",
+        "run": { "serviceId": "weirdstats-api", "region": "us-central1" }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "/index.html",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/ngsw.json",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "**/*.@(js|css)",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        ]
       }
     ]
   }

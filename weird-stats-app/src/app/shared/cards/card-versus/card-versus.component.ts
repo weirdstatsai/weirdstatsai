@@ -45,6 +45,24 @@ export class CardVersusComponent implements OnChanges {
     this.pair    = (this.card.rows ?? []).slice(0, 2);
   }
 
+  /** Emojis pulled from the title (e.g. "Chicken vs Beef 🥩🍗") — first two
+   *  become the side illustrations; initials are the fallback. */
+  get sideEmojis(): [string | null, string | null] {
+    const title = this.card?.title ?? '';
+    const matches = title.match(/\p{Extended_Pictographic}(?:️)?(?:‍\p{Extended_Pictographic}(?:️)?)*/gu) ?? [];
+    if (matches.length >= 2) return [matches[0] ?? null, matches[1] ?? null];
+    return [null, null];
+  }
+
+  initials(label: string | undefined): string {
+    return (label ?? '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(w => w[0].toUpperCase())
+      .join('');
+  }
+
   fmt(v: number): string {
     if (Math.abs(v) >= 1_000_000) return (v / 1_000_000).toFixed(1) + 'M';
     if (Math.abs(v) >= 1_000) return (v / 1_000).toFixed(v >= 10_000 ? 0 : 1) + 'K';

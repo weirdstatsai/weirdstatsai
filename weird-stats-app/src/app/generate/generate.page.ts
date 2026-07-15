@@ -98,7 +98,7 @@ export class GeneratePage implements OnInit {
     if (!this.generatedGraph) return;
     this.graphService.add({ ...this.generatedGraph, saved: false });
     this.graphAdded = true;
-    this.router.navigate(['/tabs/home']);
+    this.router.navigate(['/home']);
   }
 
   async save(): Promise<void> {

@@ -1,0 +1,70 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button class="close-btn" (click)="close()">
+        <ion-icon slot="icon-only" name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Add bulk</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <input #pdfInput type="file" accept="application/pdf,.pdf" hidden (change)="onFileSelected($event)" />
+
+  <!-- Upload / picked view -->
+  <div class="import-body" *ngIf="!analyzing">
+    <h1 class="import-title">Import a PDF</h1>
+    <p class="import-sub">We'll read the PDF and turn its data into stat cards for this project.</p>
+
+    <!-- Dropzone (empty) -->
+    <div class="dropzone" *ngIf="!file" (click)="pdfInput.click()">
+      <div class="dropzone-icon"><ion-icon name="cloud-upload-outline"></ion-icon></div>
+      <p class="dropzone-title">Upload from your device</p>
+      <p class="dropzone-hint">PDF · up to 20 MB</p>
+    </div>
+
+    <button class="choose-btn" *ngIf="!file" (click)="pdfInput.click()">
+      <ion-icon name="folder-open-outline"></ion-icon> Choose file
+    </button>
+
+    <!-- Picked file -->
+    <ng-container *ngIf="file">
+      <div class="file-card">
+        <div class="file-icon"><ion-icon name="document-text-outline"></ion-icon></div>
+        <div class="file-meta">
+          <span class="file-name">{{ file.name }}</span>
+          <span class="file-size">{{ sizeLabel }}</span>
+        </div>
+        <button class="file-remove" (click)="clearFile()" aria-label="Remove file">
+          <ion-icon name="close"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Agent note (future fulfillment) -->
+      <div class="agent-note">
+        <ion-icon name="sparkles-outline"></ion-icon>
+        <span>An AI agent will read this PDF and generate graphs automatically.</span>
+      </div>
+
+      <button class="generate-btn" (click)="generate()">
+        <ion-icon name="color-wand-outline"></ion-icon> Generate graphs
+      </button>
+    </ng-container>
+  </div>
+
+  <!-- Analyzing view -->
+  <div class="analyzing" *ngIf="analyzing">
+    <div class="analyzing-bar">
+      <div class="spin"></div>
+      <span>Analyzing {{ file?.name }}…</span>
+    </div>
+    <div class="graph-skeletons">
+      <div class="gsk" *ngFor="let n of [1,2,3,4]">
+        <span class="gsk-line"></span>
+        <span class="gsk-body"></span>
+      </div>
+    </div>
+    <p class="analyzing-caption">Generating stat cards…</p>
+  </div>
+</ion-content>

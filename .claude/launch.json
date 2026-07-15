@@ -6,7 +6,24 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["ng", "serve", "--port", "4200"],
       "port": 4200,
+      "autoPort": true,
       "cwd": "weird-stats-app"
+    },
+    {
+      "name": "weirdstats-api",
+      "runtimeExecutable": ".venv/bin/uvicorn",
+      "runtimeArgs": ["app.main:app", "--host", "0.0.0.0", "--port", "8000"],
+      "port": 8000,
+      "autoPort": false,
+      "cwd": "services/backend"
+    },
+    {
+      "name": "modest-elbakyan-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["ng", "serve", "--port", "4210"],
+      "port": 4210,
+      "autoPort": true,
+      "cwd": ".claude/worktrees/modest-elbakyan-741493/weird-stats-app"
     }
   ]
 }

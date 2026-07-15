@@ -360,6 +360,14 @@ export class CardMapComponent implements OnChanges {
     return v.toLocaleString();
   }
 
+  // True when not a single row matched a country — e.g. the AI mis-tagged a
+  // non-geographic breakdown (companies, products...) as a map card. Showing
+  // an empty world map in that case is pure wasted space, so the template
+  // hides the map graphic and falls back to just the ranked list.
+  get allUnmapped(): boolean {
+    return this.markers.length === 0 && this.unmapped.length > 0;
+  }
+
   get unit(): string {
     return this.card?.rows?.[0]?.unit || this.card?.metric?.unit || '';
   }

@@ -5,25 +5,41 @@
   <ng-container *ngIf="size !== 'alt'">
     <div class="wcard-head">
       <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.icon }} {{ card.uiMeta.category }}</span>
-      <span class="weird-badge" *ngIf="card.uiMeta?.insightBadge">{{ card.uiMeta.insightBadge }}</span>
+      <span class="weird-badge">KPI card</span>
     </div>
   </ng-container>
 
   <!-- ── A: Default — title+illus row, then big number ── -->
   <ng-container *ngIf="kpiStyle === 'default'">
-    <!-- Title + illustration side by side -->
-    <div class="kpi-title-row" *ngIf="size !== 'alt'">
-      <p class="wcard-title">{{ card.title }}</p>
-      <div class="kpi-illus" *ngIf="card.uiMeta?.icon">
-        <span class="illus-emoji">{{ card.uiMeta.icon }}</span>
+    <!-- Feed tile: title on top, icon + number + unit as one centered hero
+         stack that fills the whole portrait tile — no dead space. -->
+    <ng-container *ngIf="size === 'feed'">
+      <p class="wcard-title">{{ card.title | stripEmoji }}</p>
+      <div class="kpi-hero-stack">
+        <div class="kpi-hero-num">
+          <p class="kpi-value" [class.val-long]="displayValue.length > 4">{{ displayValue }}</p>
+          <p class="kpi-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</p>
+        </div>
+        <div class="kpi-illus" *ngIf="card.uiMeta?.icon">
+          <span class="illus-emoji">{{ card.uiMeta.icon }}</span>
+        </div>
       </div>
-    </div>
-    <!-- Big number spanning full width -->
-    <div class="kpi-number-row">
-      <p class="kpi-value">{{ displayValue }}</p>
-      <p class="kpi-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</p>
-    </div>
-    <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
+    </ng-container>
+
+    <!-- Detail/alt: title + illustration side by side, number row, insight -->
+    <ng-container *ngIf="size !== 'feed'">
+      <div class="kpi-title-row" *ngIf="size !== 'alt'">
+        <p class="wcard-title">{{ card.title | stripEmoji }}</p>
+        <div class="kpi-illus" *ngIf="card.uiMeta?.icon">
+          <span class="illus-emoji">{{ card.uiMeta.icon }}</span>
+        </div>
+      </div>
+      <div class="kpi-number-row">
+        <p class="kpi-value">{{ displayValue }}</p>
+        <p class="kpi-unit" *ngIf="card.metric?.unit">{{ card.metric.unit }}</p>
+      </div>
+      <p class="wcard-insight" *ngIf="card.insight">{{ card.insight }}</p>
+    </ng-container>
   </ng-container>
 
   <!-- ── B: Circular ring ── -->

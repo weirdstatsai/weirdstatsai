@@ -4,44 +4,68 @@ $purple: #6C5CE7;
   --background: #fff;
 }
 
-// ── Gradient hero ──────────────────────────────────────────────────────────
+// ── Hero ───────────────────────────────────────────────────────────────────
 .login-hero {
   position: relative;
-  background: linear-gradient(150deg, #6C5CE7 0%, #8C7BFF 55%, #378ADD 100%);
-  padding: 56px 26px 30px;
-  color: #fff;
-  border-radius: 0 0 28px 28px;
+  background: #fff;
+  padding: 44px 26px 24px;
+  color: #14142b;
+  text-align: center;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.hero-badge {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 14px rgba(20, 20, 43, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  line-height: 1;
+}
+
+// Recolors the octopus emoji away from its native reddish tone toward the
+// brand purple — filters apply to the rendered glyph, not just images.
+.logo-emoji {
+  display: inline-block;
+  filter: hue-rotate(220deg) saturate(1.3) brightness(0.95);
 }
 
 .hero-close,
 .hero-back {
   position: absolute;
-  top: 18px;
-  width: 34px;
-  height: 34px;
+  top: 12px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.05);
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  ion-icon { font-size: 19px; color: #fff; }
-  &:active { background: rgba(255,255,255,0.28); }
+  ion-icon { font-size: 18px; color: #555; }
+  &:active { background: rgba(0,0,0,0.09); }
 }
-.hero-close { right: 18px; }
-.hero-back  { left: 18px; }
+.hero-close { right: 12px; }
+.hero-back  { left: 12px; }
 
 .hero-logo {
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.4px;
-  margin: 0 0 14px;
-  span { opacity: 0.8; }
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: #999;
+  margin: 0 0 10px;
+  span { color: $purple; }
 }
 
 .hero-title {
-  font-size: 25px;
+  font-size: 23px;
   font-weight: 800;
   letter-spacing: -0.6px;
   line-height: 1.15;
@@ -50,7 +74,7 @@ $purple: #6C5CE7;
 
 .hero-sub {
   font-size: 13px;
-  opacity: 0.92;
+  color: #888;
   line-height: 1.45;
   margin: 0;
 }
@@ -58,6 +82,7 @@ $purple: #6C5CE7;
 // ── Body ───────────────────────────────────────────────────────────────────
 .login-body {
   padding: 24px 22px 32px;
+  background: #fff;
 }
 
 // ── Provider buttons ───────────────────────────────────────────────────────
@@ -84,9 +109,8 @@ $purple: #6C5CE7;
     width: 22px; height: 22px;
     display: flex; align-items: center; justify-content: center;
     ion-icon { font-size: 19px; }
+    svg { width: 20px; height: 20px; display: block; }
   }
-
-  &.google .prov-icon ion-icon { color: #4285F4; }
 
   &.facebook {
     background: #1877F2;
@@ -248,4 +272,15 @@ $purple: #6C5CE7;
   padding: 10px 14px;
   margin: 16px 0 0;
   ion-icon { font-size: 16px; flex-shrink: 0; }
+}
+
+// ── Desktop/tablet — modal renders as a compact floating card ───────────────
+@media (min-width: 768px) {
+  .login-hero {
+    padding: 36px 32px 20px;
+  }
+
+  .login-body {
+    padding: 24px 32px 32px;
+  }
 }

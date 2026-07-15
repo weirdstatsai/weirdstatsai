@@ -1,31 +1,21 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <span class="logo">WeirdStats<span class="logo-accent">.ai</span></span>
-    </ion-buttons>
-    <ion-buttons slot="end">
-      <ion-button routerLink="/tabs/explore">
-        <ion-icon slot="icon-only" name="compass-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content class="ion-padding">
 
   <!-- Hero -->
   <div class="hero">
+    <ion-icon name="sparkles" class="hero-sparkle sparkle-1"></ion-icon>
+    <ion-icon name="sparkles" class="hero-sparkle sparkle-2"></ion-icon>
+
     <div class="greeting-row" *ngIf="userName">
       <span class="greeting-emoji">{{ userEmoji || '👋' }}</span>
       <span class="greeting-text">Hi, {{ userName }}</span>
     </div>
-    <h1>Ask any question.</h1>
-    <p>Get stats, charts, rankings and surprising insights.</p>
+    <h1>Ask something <span class="accent">weird.</span><br>Get a chart worth <span class="accent">sharing.</span></h1>
 
     <div class="ask-card">
+      <ion-icon name="search-outline" class="ask-search-icon"></ion-icon>
       <textarea
         [(ngModel)]="query"
-        placeholder="e.g. Which country spends the most time on social media?"
+        placeholder="Turn any curious question into surprising stats, rankings, and visual insights in seconds. e.g. Which country spends the most time on social media?"
         class="ask-textarea"
         rows="2"
         (keydown.enter)="$event.preventDefault(); goGenerate(query)">
@@ -35,35 +25,38 @@
       <ion-icon name="sparkles-outline"></ion-icon>
       Generate
     </button>
+
+    <!-- Reset holder — free-plan usage + daily-reset countdown. Only shows once
+         a window has actually started (i.e. after the user's first generation) —
+         a brand-new account has nothing worth reporting yet. -->
+    <div class="usage-chip" *ngIf="usage && !usage.isPremium && usage.resetAt" [class.depleted]="usage.remaining === 0">
+      <ion-icon name="albums-outline"></ion-icon>
+      <span class="usage-text">{{ usage.remaining }} of {{ usage.limit }} cards left today</span>
+      <span class="usage-dot" *ngIf="usageCountdown">·</span>
+      <span class="usage-reset" *ngIf="usageCountdown">Resets in {{ usageCountdown }}</span>
+      <button class="usage-upgrade" (click)="openUpgrade()">Go Premium</button>
+    </div>
   </div>
 
   <!-- Suggestions — shown when no recent cards -->
-  <ng-container *ngIf="recentCards.length === 0 && !isLoading">
-    <div class="section-header">
-      <p class="section-title">Try these</p>
-      <a class="see-all" routerLink="/tabs/explore">See all</a>
-    </div>
-    <div class="suggestions-scroll">
-      <div
-        *ngFor="let s of suggestions; let i = index"
-        class="suggestion-card"
-        (click)="goGenerate(s)">
-        <div class="suggestion-icon">
-          <ion-icon [name]="suggestionIcons[i]"></ion-icon>
-        </div>
-        <p class="suggestion-text">{{ s }}</p>
-      </div>
-    </div>
-  </ng-container>
+  <div class="suggestion-pills" *ngIf="recentCards.length === 0 && !isLoading">
+    <button
+      class="pill"
+      *ngFor="let s of suggestions; let i = index"
+      (click)="goGenerate(s)">
+      <ion-icon [name]="suggestionIcons[i]"></ion-icon>
+      {{ s }}
+    </button>
+  </div>
 
   <!-- Curated home feed — vertical 2-column grid, view only -->
   <ng-container *ngIf="recentCards.length > 0">
     <div class="section-header">
       <p class="section-title">Featured</p>
-      <a class="see-all" routerLink="/tabs/explore">Explore all</a>
+      <a class="see-all" routerLink="/explore" routerDirection="root">Explore all</a>
     </div>
     <div class="home-grid">
-      <div class="home-card" *ngFor="let card of recentCards" (click)="open(card)">
+      <div class="home-card" [class.span-full]="isFullWidth(card)" *ngFor="let card of recentCards" (click)="open(card)">
         <app-weird-card [card]="card.data" size="feed"></app-weird-card>
       </div>
     </div>

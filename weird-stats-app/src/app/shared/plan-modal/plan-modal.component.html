@@ -3,12 +3,18 @@
   <div class="sheet-handle"></div>
 
   <div class="sheet-top">
-    <p class="sheet-eyebrow">{{ mode === 'limit' ? 'Limit reached' : 'Welcome to WeirdStats' }}</p>
-    <h1 class="sheet-title">{{ mode === 'limit' ? 'Upgrade to keep going' : 'Choose your plan' }}</h1>
+    <p class="sheet-eyebrow">
+      {{ mode === 'limit' ? 'Limit reached' : mode === 'upgrade' ? 'Go Premium' : 'Welcome to WeirdStats' }}
+    </p>
+    <h1 class="sheet-title">
+      {{ mode === 'limit' ? 'Upgrade to keep going' : mode === 'upgrade' ? 'Unlock unlimited cards' : 'Choose your plan' }}
+    </h1>
     <p class="sheet-sub">
-      {{ mode === 'limit'
-        ? "You've used all 10 cards in your current window. Upgrade or wait for reset."
-        : 'Pick how you want to create AI-powered stat cards. You can upgrade anytime from Profile.' }}
+      <ng-container [ngSwitch]="mode">
+        <ng-container *ngSwitchCase="'limit'">You've used all 3 free cards for today. Your account resets in {{ resetIn }} — or go Premium for unlimited cards right now.</ng-container>
+        <ng-container *ngSwitchCase="'upgrade'">Get unlimited cards and share without the watermark — anytime, no daily limit.</ng-container>
+        <ng-container *ngSwitchDefault>Pick how you want to create AI-powered stat cards. You can upgrade anytime from Profile.</ng-container>
+      </ng-container>
     </p>
   </div>
 
@@ -20,7 +26,9 @@
     <div class="plan-info">
       <p class="plan-name">Free</p>
       <p class="plan-price">$0 <span class="plan-period">/ month</span></p>
-      <p class="plan-desc">10 cards every 10 days, shareable with watermark.</p>
+      <p class="plan-desc">
+        {{ mode === 'limit' ? ('Resets in ' + resetIn) : '3 cards every day, shareable with watermark.' }}
+      </p>
     </div>
     <div class="plan-radio" [class.active]="selected === 'free'"></div>
   </div>

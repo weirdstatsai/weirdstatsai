@@ -1,0 +1,19 @@
+// TabsPage is an .ion-page (absolute, flex column) — the outlet wrapper takes
+// all space above the bar, and ion-router-outlet inside fills it (Ionic's
+// structure.css makes the outlet position: absolute; inset: 0).
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+.tabs-outlet {
+  position: relative;
+  flex: 1;
+  contain: layout size style;
+}
+
+// Bottom tab bar hidden for now — navigation lives in the shared header
+// (app.component) at every breakpoint instead.
+ion-tab-bar {
+  display: none;
+}

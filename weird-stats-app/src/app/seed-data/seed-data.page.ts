@@ -1,5 +1,7 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { NavController } from '@ionic/angular';
+import { AdminService } from '../services/admin.service';
 import { AiService } from '../services/ai.service';
 import { GraphService } from '../services/graph.service';
 
@@ -45,7 +47,7 @@ const SEED_QUESTIONS: string[] = [
   templateUrl: './seed-data.page.html',
   styleUrls: ['./seed-data.page.scss'],
 })
-export class SeedDataPage implements OnDestroy {
+export class SeedDataPage implements OnInit, OnDestroy {
   jobs: SeedJob[] = SEED_QUESTIONS.map(prompt => ({ prompt, status: 'pending' }));
   isRunning = false;
   currentIndex = -1;
@@ -53,9 +55,18 @@ export class SeedDataPage implements OnDestroy {
 
   constructor(
     private navCtrl: NavController,
+    private router: Router,
+    private adminService: AdminService,
     private aiService: AiService,
     private graphService: GraphService,
   ) {}
+
+  // Dev/admin tool that fires real AI generations — never expose it to
+  // regular users on the live domain.
+  async ngOnInit(): Promise<void> {
+    const isAdmin = await this.adminService.isAdmin();
+    if (!isAdmin) { this.router.navigate(['/home']); }
+  }
 
   get doneCount(): number   { return this.jobs.filter(j => j.status === 'done').length; }
   get failedCount(): number { return this.jobs.filter(j => j.status === 'failed').length; }

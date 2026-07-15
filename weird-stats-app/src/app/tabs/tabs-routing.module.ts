@@ -2,38 +2,49 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { TabsPage } from './tabs.page';
 
+// The TabsPage shell sits at the root path so tab URLs are clean
+// (/home, /explore, /profile) instead of leaking the /tabs prefix.
 const routes: Routes = [
   {
-    path: 'tabs',
+    path: '',
     component: TabsPage,
     children: [
       {
         path: 'home',
+        data: {
+          seo: {
+            title: 'WeirdStats.ai — Ask something weird, get a chart worth sharing',
+            description: 'Turn any curious question into surprising stats, rankings, and visual insights in seconds. WeirdStats.ai makes charts worth sharing.',
+          },
+        },
         loadChildren: () => import('../home/home.module').then(m => m.HomePageModule),
       },
       {
         path: 'explore',
+        data: {
+          seo: {
+            title: 'Explore trending WeirdStats — surprising charts & rankings',
+            description: 'Browse trending stat cards across animals, countries, money, sports and more. Discover charts worth sharing on WeirdStats.ai.',
+          },
+        },
         loadChildren: () => import('../explore/explore.module').then(m => m.ExplorePageModule),
       },
       {
-        path: 'my-graphs',
-        loadChildren: () => import('../my-graphs/my-graphs.module').then(m => m.MyGraphsPageModule),
-      },
-      {
         path: 'profile',
+        data: {
+          seo: {
+            title: 'Your profile — WeirdStats.ai',
+            description: 'Your saved and published WeirdStats stat cards.',
+          },
+        },
         loadChildren: () => import('../profile/profile.module').then(m => m.ProfilePageModule),
       },
       {
         path: '',
-        redirectTo: '/tabs/home',
+        redirectTo: '/home',
         pathMatch: 'full',
       },
     ],
-  },
-  {
-    path: '',
-    redirectTo: '/tabs/home',
-    pathMatch: 'full',
   },
 ];
 

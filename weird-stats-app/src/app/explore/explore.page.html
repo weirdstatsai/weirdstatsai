@@ -1,11 +1,3 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar>
-    <ion-title>
-      <span class="page-title">Explore</span>
-    </ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content>
 
   <!-- Sticky category + search header -->
@@ -49,10 +41,6 @@
          [class.span-full]="isFullWidth(card)"
          (click)="open(card)">
       <app-weird-card [card]="card.data" size="feed"></app-weird-card>
-      <div class="card-creator" *ngIf="card.createdByName">
-        <span class="creator-avatar">{{ card.createdByName.charAt(0).toUpperCase() }}</span>
-        <span class="creator-name">{{ card.createdByName }}</span>
-      </div>
     </div>
   </div>
 

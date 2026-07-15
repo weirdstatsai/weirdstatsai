@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { LoadingController, ToastController } from '@ionic/angular';
+import { LoadingController, ToastController, NavController } from '@ionic/angular';
 import { WeirdCard } from '../models/weird-card.model';
 import { AuthService } from '../services/auth.service';
 import { MembershipService } from '../services/membership.service';
@@ -33,6 +33,7 @@ export class ShareCardPage implements OnInit {
     private membership: MembershipService,
     private toastCtrl: ToastController,
     private loadingCtrl: LoadingController,
+    private navCtrl: NavController,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -55,7 +56,7 @@ export class ShareCardPage implements OnInit {
   /** Build the deep-link URL for this card */
   private cardUrl(): string {
     const base = window.location.origin;
-    return this.cardId ? `${base}/card-detail/${this.cardId}` : base;
+    return this.cardId ? `${base}/card/${this.cardId}` : base;
   }
 
   /** Render the share frame to a PNG data URL */
@@ -160,5 +161,5 @@ export class ShareCardPage implements OnInit {
     await t.present();
   }
 
-  back(): void { this.router.navigate(['/tabs/explore']); }
+  back(): void { this.navCtrl.back(); }
 }

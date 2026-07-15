@@ -1,13 +1,13 @@
-<div class="wcard" [class.full]="size==='full'" [class.alt]="size==='alt'" [class.fs-small]="fontSize==='small'" [class.fs-large]="fontSize==='large'" [style.--accent]="accent" [style.--grad-from]="gradFrom" [style.--grad-to]="gradTo">
+<div class="wcard" [class.full]="size==='full'" [class.alt]="size==='alt'" [class.fs-small]="effectiveFontSize==='small'" [class.fs-large]="effectiveFontSize==='large'" [style.--accent]="accent" [style.--grad-from]="gradFrom" [style.--grad-to]="gradTo">
   <span class="wcard-bg-icon" *ngIf="bgSvg && size==='full'" [innerHTML]="bgSvg"></span>
   <div class="wcard-head">
     <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.icon }} {{ card.uiMeta.category }}</span>
-    <span class="weird-badge" *ngIf="card.uiMeta?.insightBadge">{{ card.uiMeta.insightBadge }}</span>
+    <span class="weird-badge">Fact card</span>
   </div>
 
   <div class="fact-layout">
     <div class="fact-content">
-      <p class="wcard-title">{{ card.title }}</p>
+      <p class="wcard-title">{{ card.title | stripEmoji }}</p>
       <p class="fact-body" *ngIf="card.insight">{{ card.insight }}</p>
     </div>
     <div class="fact-illus" *ngIf="card.uiMeta?.icon">

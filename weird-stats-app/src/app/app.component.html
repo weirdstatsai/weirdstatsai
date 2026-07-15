@@ -1,3 +1,50 @@
 <ion-app>
-  <ion-router-outlet id="main-content"></ion-router-outlet>
+  <!-- Desktop shell (≥850px only — hidden on mobile via CSS). Wraps EVERY
+       route (not just /tabs/*), so card-detail, admin, contact/terms/privacy
+       etc. all get the fixed rail + top nav too. -->
+  <div class="desktop-rail">
+    <a class="rail-logo" routerLink="/home" routerDirection="root">
+      <span class="rail-logo-mark"><span class="logo-emoji">🐙</span></span>
+      <span class="rail-logo-text">WeirdStats<span class="accent">.ai</span></span>
+    </a>
+    <div class="rail-links">
+      <a routerLink="/contact">Contact us</a>
+      <a routerLink="/terms">Terms and conditions</a>
+      <a routerLink="/privacy">Privacy policy</a>
+    </div>
+  </div>
+
+  <div class="desktop-topnav" *ngIf="isRootPage">
+    <a class="topnav-logo" routerLink="/home" routerDirection="root"><span class="logo-emoji">🐙</span> WeirdStats<span class="accent">.ai</span></a>
+    <nav class="topnav-links">
+      <a routerLink="/home" routerDirection="root" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" aria-label="Home" title="Home">
+        <ion-icon name="home-outline"></ion-icon>
+      </a>
+      <a routerLink="/explore" routerDirection="root" routerLinkActive="active" aria-label="Explore" title="Explore">
+        <ion-icon name="compass-outline"></ion-icon>
+      </a>
+      <button class="bell-btn" *ngIf="isLoggedIn" (click)="openNotifications()" aria-label="Notifications" title="Notifications">
+        <ion-icon name="notifications-outline"></ion-icon>
+      </button>
+      <a class="profile-link" *ngIf="isLoggedIn" routerLink="/profile" routerDirection="root" routerLinkActive="active" aria-label="Profile" title="Profile">
+        <span class="profile-avatar">{{ userEmoji || '🙂' }}</span>
+      </a>
+      <button class="login-btn" *ngIf="!isLoggedIn" (click)="openLogin()">Log in</button>
+    </nav>
+  </div>
+
+  <ion-router-outlet id="main-content" [class.no-topnav]="!isRootPage"></ion-router-outlet>
+
+  <!-- Cookie-consent banner — gates analytics (GA4 / Clarity / Hotjar) -->
+  <div class="consent-banner" *ngIf="showConsentBanner">
+    <p class="consent-text">
+      We use cookies and analytics (Google Analytics, Microsoft Clarity, Hotjar) to understand
+      how WeirdStats is used and improve it.
+      <a routerLink="/privacy" routerDirection="root">Privacy policy</a>
+    </p>
+    <div class="consent-actions">
+      <button class="consent-btn decline" (click)="declineConsent()">Decline</button>
+      <button class="consent-btn accept" (click)="acceptConsent()">Accept</button>
+    </div>
+  </div>
 </ion-app>

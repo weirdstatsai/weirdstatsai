@@ -109,8 +109,13 @@ Presentation selection (metric-first):
 * versus -> exactly two main entities compared.
 * ranking-> a SHORT ranked list of at most 5 rows (non-geographic items).
 * table  -> 6 or more rows (top-10, top-25, dense comparison).
-* map    -> ALWAYS use when comparing countries, states, or regions — even with just 2–5 rows.
-            If the data labels are country names or geographic regions, cardType MUST be "map".
+* map    -> ALWAYS use when the ROW LABELS THEMSELVES are countries, states, or regions being
+            compared to each other — even with just 2–5 rows. Judge this by what each row is,
+            not by what the topic mentions: a query about "mobile carriers in India" has rows
+            that are company names (Reliance Jio, Airtel...), not countries, so it must NOT be
+            "map" even though "India" appears in the topic. Only use "map" when swapping any
+            row label for a different country/region would still make sense (e.g. "smartphone
+            penetration by country").
 * fact   -> one strong surprising statement.
 * chart  -> a visual trend/comparison is more useful than a table/card.
 
@@ -186,6 +191,11 @@ uiMeta rules:
   - value: the numeric value (e.g. 44.7, 48)
   - unit: the unit of measurement (e.g. "km/h", "kg", "meters") — REQUIRED, never leave blank
   The metric.unit field should also be set to the same unit for shared context.
+* versus title emoji ORDER RULE: if the title includes emoji representing the two entities
+  (e.g. "Chicken vs. Beef: Protein Power! 🍗🥩"), they MUST appear in the exact same left-to-
+  right order as rows[0] and rows[1] — the frontend assigns the first title emoji to rows[0]'s
+  side and the second to rows[1]'s side purely by position. rows[0]="Chicken Breast" then
+  rows[1]="Lean Beef" requires 🍗 before 🥩 in the title, never the reverse.
   Examples: 2 items → ["pill","vertical","circular"]; 5 close items → ["pill","percent"];
   5 spread items → ["pill","percent","vertical","circular"]
 * backgroundPattern: leaf, dots, waves, grid, stars, map-lines, circles, diagonal-lines,

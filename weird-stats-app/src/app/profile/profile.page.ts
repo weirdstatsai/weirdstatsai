@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { ModalController, ToastController, ActionSheetController, AlertController, PopoverController } from '@ionic/angular';
+import { ModalController, ToastController, ActionSheetController, AlertController } from '@ionic/angular';
 import { Observable, of, switchMap, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
@@ -7,12 +7,15 @@ import { AuthService } from '../services/auth.service';
 import { LoginComponent } from '../login/login.component';
 import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.component';
 import { StoredStatCard } from '../models/weird-card.model';
+import { Project, projectInitials } from '../models/project.model';
+import { ProjectModalComponent } from '../shared/project-modal/project-modal.component';
+import { ProjectService } from '../services/project.service';
+import { AppConfigService } from '../services/app-config.service';
 import { MembershipService } from '../services/membership.service';
 import { AdminService } from '../services/admin.service';
 import { DraftService } from '../services/draft.service';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 import { PublishModalComponent } from '../shared/publish-modal/publish-modal.component';
-import { CardMenuPopoverComponent } from '../shared/card-menu-popover/card-menu-popover.component';
 import { RankStyle } from '../shared/cards/card-ranking/card-ranking.component';
 import { KpiStyle } from '../shared/cards/card-kpi/card-kpi.component';
 import { TableStyle } from '../shared/cards/card-table/card-table.component';
@@ -32,9 +35,12 @@ export class ProfilePage implements OnInit, OnDestroy {
   draftCards: StoredStatCard[] = [];   // from device localStorage
   isLoading = true;
   activeFilter: 'all' | 'chart' | 'map' | 'fact' = 'all';
-  activeTab: 'saved' | 'draft' = 'saved';
+  activeTab: 'saved' | 'draft' | 'projects' = 'saved';
+  projects: Project[] = [];
+  isCreatingProject = false;
   private currentUid = '';
   private sub?: Subscription;
+  private projSub?: Subscription;
 
   // Inline draft alternatives panel
   selectedDraft?: StoredStatCard;
@@ -73,25 +79,26 @@ export class ProfilePage implements OnInit, OnDestroy {
     private modalCtrl: ModalController,
     private actionSheetCtrl: ActionSheetController,
     private alertCtrl: AlertController,
-    private popoverCtrl: PopoverController,
     private router: Router,
     private cdr: ChangeDetectorRef,
     private membership: MembershipService,
     private adminService: AdminService,
     private drafts: DraftService,
+    private projectService: ProjectService,
+    private appConfig: AppConfigService,
   ) {}
 
-  isAdmin = false;
+  /** Projects tab is gated behind the `projects` feature flag. */
+  get showProjectsTab(): boolean {
+    return this.appConfig.isEnabled('projects');
+  }
 
   ngOnInit(): void {
-    this.adminService.isAdmin().then(v => {
-      this.isAdmin = v;
-      this.cdr.detectChanges();
-    });
     this.sub = this.user$.pipe(
       switchMap(user => {
         this.currentUid = user?.uid ?? '';
         this.draftCards = user ? this.drafts.list(user.uid) : [];
+
         if (!user) return of([] as StoredStatCard[]);
         return this.afs
           .collection<StoredStatCard>('stats', ref =>
@@ -110,14 +117,26 @@ export class ProfilePage implements OnInit, OnDestroy {
       },
       error: () => { this.savedCards = []; this.isLoading = false; },
     });
+
+    // Live stream of the user's projects (stored on their user doc)
+    this.projSub = this.user$.pipe(
+      switchMap(user => user ? this.projectService.projects$(user.uid) : of([] as Project[])),
+    ).subscribe(list => {
+      this.projects = [...list].sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+      this.cdr.detectChanges();
+    });
   }
 
   ionViewWillEnter(): void {
     // Refresh local drafts each time the page is shown
     if (this.currentUid) this.draftCards = this.drafts.list(this.currentUid);
+    // Open straight to a specific tab when navigated with a hint (e.g. Back from
+    // a freshly generated draft → Drafts tab).
+    const tab = (history.state as { tab?: 'saved' | 'draft' } | undefined)?.tab;
+    if (tab === 'saved' || tab === 'draft') this.activeTab = tab;
   }
 
-  ngOnDestroy(): void { this.sub?.unsubscribe(); }
+  ngOnDestroy(): void { this.sub?.unsubscribe(); this.projSub?.unsubscribe(); }
 
   getEmoji(uid: string): string | null {
     return localStorage.getItem(EMOJI_STORAGE_KEY + uid);
@@ -127,9 +146,51 @@ export class ProfilePage implements OnInit, OnDestroy {
     this.activeFilter = f;
   }
 
-  setTab(tab: 'saved' | 'draft'): void {
+  setTab(tab: 'saved' | 'draft' | 'projects'): void {
     this.activeTab = tab;
     this.selectedDraft = undefined;
+  }
+
+  // ── Projects ──────────────────────────────────────────────────────────────
+  projectInitials(name: string): string {
+    return projectInitials(name);
+  }
+
+  get projectCount(): number {
+    return this.projects.length;
+  }
+
+  async openCreateProject(): Promise<void> {
+    if (!this.currentUid) return;
+    const modal = await this.modalCtrl.create({
+      component: ProjectModalComponent,
+      cssClass: 'project-modal',
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss();
+    if (!data) return;
+    await this.createProject(data);
+  }
+
+  private async createProject(name: string): Promise<void> {
+    if (!this.currentUid) return;
+    this.activeTab = 'projects';
+    this.isCreatingProject = true;
+    this.cdr.detectChanges();
+    try {
+      await this.projectService.create(this.currentUid, name);
+      // The projects list refreshes via the live subscription.
+    } catch {
+      const t = await this.toastCtrl.create({ message: 'Could not create project', duration: 1500, color: 'danger' });
+      await t.present();
+    } finally {
+      // Keep the wave skeleton briefly so the incoming row animates in
+      setTimeout(() => { this.isCreatingProject = false; this.cdr.detectChanges(); }, 650);
+    }
+  }
+
+  openProject(project: Project): void {
+    this.router.navigate(['/project', project.project_id]);
   }
 
   get draftCount(): number {
@@ -154,6 +215,12 @@ export class ProfilePage implements OnInit, OnDestroy {
     return cards;
   }
 
+  // Wide card types span two grid columns — same set as home/explore.
+  isFullWidth(card: StoredStatCard): boolean {
+    const t = card.data?.cardType;
+    return t === 'map' || t === 'fact' || t === 'ranking' || t === 'table';
+  }
+
   selectDraft(card: StoredStatCard): void {
     if (this.selectedDraft?.id === card.id) {
       this.selectedDraft = undefined;
@@ -165,91 +232,6 @@ export class ProfilePage implements OnInit, OnDestroy {
     this.selectedTableStyle = 'pill';
     this.selectedChartType = (card.data?.chartType as any) ?? 'bar';
     this.cdr.detectChanges();
-  }
-
-  openMenuId: string | null = null;
-
-  toggleCardMenu(id: string): void {
-    this.openMenuId = this.openMenuId === id ? null : id;
-  }
-
-  closeMenu(): void { this.openMenuId = null; }
-
-  async menuAction(action: string, card: StoredStatCard): Promise<void> {
-    this.openMenuId = null;
-    switch (action) {
-      case 'open':    this.openCard(card); break;
-      case 'publish': await this.togglePublish(card); break;
-      case 'edit':    this.editCard(card); break;
-      case 'delete':  await this.deleteCard(card); break;
-    }
-  }
-
-  async showCardMenu(card: StoredStatCard, event: Event): Promise<void> {
-    const isPublished = (card.publishStatus ?? 'draft') !== 'draft';
-    const popover = await this.popoverCtrl.create({
-      component: CardMenuPopoverComponent,
-      componentProps: { isPublished },
-      event,
-      dismissOnSelect: true,
-      showBackdrop: true,
-      backdropDismiss: true,
-      cssClass: 'card-menu-pop',
-    });
-    await popover.present();
-    const { data } = await popover.onWillDismiss();
-    if (!data?.action) return;
-    switch (data.action) {
-      case 'open':    this.openCard(card); break;
-      case 'publish': await this.togglePublish(card); break;
-      case 'edit':    this.editCard(card); break;
-      case 'delete':  await this.deleteCard(card); break;
-    }
-  }
-
-  editCard(card: StoredStatCard): void {
-    this.router.navigate(['/card'], { state: { card, fromSaved: true } });
-  }
-
-  async deleteCard(card: StoredStatCard): Promise<void> {
-    if (!card.id) return;
-    try {
-      if (this.isDraft(card)) {
-        // Local draft — just remove from device
-        this.drafts.remove(this.currentUid, card.id);
-        this.draftCards = this.drafts.list(this.currentUid);
-      } else {
-        await this.afs.collection('stats').doc(card.id).delete();
-      }
-      const t = await this.toastCtrl.create({ message: 'Card deleted', duration: 1500, color: 'danger' });
-      await t.present();
-    } catch {
-      const t = await this.toastCtrl.create({ message: 'Could not delete', duration: 1500, color: 'danger' });
-      await t.present();
-    }
-  }
-
-  async openCardActions(card: StoredStatCard, event: Event): Promise<void> {
-    event.stopPropagation();
-    const status = card.publishStatus ?? 'draft';
-    const isPublished = status !== 'draft';
-    const sheet = await this.actionSheetCtrl.create({
-      header: card.data?.title?.slice(0, 50) ?? 'Card',
-      buttons: [
-        {
-          text: 'Open card',
-          icon: 'eye-outline',
-          handler: () => { setTimeout(() => this.openCard(card), 250); },
-        },
-        {
-          text: isPublished ? 'Move to Drafts' : 'Publish',
-          icon: isPublished ? 'lock-closed-outline' : 'earth-outline',
-          handler: () => { setTimeout(() => this.togglePublish(card), 250); },
-        },
-        { text: 'Cancel', role: 'cancel', icon: 'close' },
-      ],
-    });
-    await sheet.present();
   }
 
   private isDraft(card: StoredStatCard): boolean {
@@ -283,7 +265,7 @@ export class ProfilePage implements OnInit, OnDestroy {
 
   private async _savePrivate(card: StoredStatCard): Promise<void> {
     // Premium members (and admins) save privately straight away — no upsell.
-    const allowed = this.isAdmin || await this.membership.isPremium();
+    const allowed = await this.adminService.isAdmin(this.currentUid) || await this.membership.isPremium();
     if (allowed) {
       await this._saveCard(card, 'private');
       return;
@@ -357,7 +339,7 @@ export class ProfilePage implements OnInit, OnDestroy {
   }
 
   goExplore(): void {
-    this.router.navigate(['/tabs/explore']);
+    this.router.navigate(['/explore']);
   }
 
   async openAvatarPicker(uid: string): Promise<void> {
@@ -373,36 +355,56 @@ export class ProfilePage implements OnInit, OnDestroy {
     if (data) localStorage.setItem(EMOJI_STORAGE_KEY + uid, data);
   }
 
-  async openMenu(): Promise<void> {
-    const user = this.authService.getCurrentUser();
+  async openEditSheet(): Promise<void> {
     const sheet = await this.actionSheetCtrl.create({
       buttons: [
         {
           text: 'Change Display Name',
           icon: 'person-outline',
-          handler: () => this.changeDisplayName(),
+          handler: () => { setTimeout(() => this.changeDisplayName(), 250); },
         },
-        {
-          text: 'Account: ' + (user?.email || user?.phoneNumber || '—'),
-          icon: 'mail-outline',
-          handler: () => false,
-        },
-        { text: 'Help & Support', icon: 'help-circle-outline', handler: () => this.showComingSoon() },
-        { text: 'Sign Out', icon: 'log-out-outline', role: 'destructive', handler: () => this.signOut() },
         { text: 'Cancel', role: 'cancel', icon: 'close' },
       ],
     });
     await sheet.present();
   }
 
+  goAccount(): void {
+    this.router.navigate(['/account']);
+  }
+
   async changeDisplayName(): Promise<void> {
-    const alert = await (await import('@ionic/angular')).AlertController.prototype.constructor;
-    // Use action sheet with input workaround — prompt via a simple approach
     const current = this.authService.getCurrentUser()?.displayName || '';
-    const name = window.prompt('Enter new display name:', current);
-    if (!name || !name.trim()) return;
+    const alert = await this.alertCtrl.create({
+      header: 'Change display name',
+      inputs: [
+        {
+          name: 'name',
+          type: 'text',
+          value: current,
+          placeholder: 'Your display name',
+          attributes: { maxlength: 30, autocapitalize: 'words' },
+        },
+      ],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Save',
+          handler: (data: { name?: string }) => {
+            const name = (data.name ?? '').trim();
+            if (!name) return false; // keep the dialog open on empty input
+            this.saveDisplayName(name);
+            return true;
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  private async saveDisplayName(name: string): Promise<void> {
     try {
-      await this.authService.updateDisplayName(name.trim());
+      await this.authService.updateDisplayName(name);
       const t = await this.toastCtrl.create({ message: 'Name updated!', duration: 1500, color: 'success' });
       await t.present();
     } catch {
@@ -412,7 +414,7 @@ export class ProfilePage implements OnInit, OnDestroy {
   }
 
   async signIn(): Promise<void> {
-    const modal = await this.modalCtrl.create({ component: LoginComponent });
+    const modal = await this.modalCtrl.create({ component: LoginComponent, cssClass: 'login-modal' });
     await modal.present();
   }
 

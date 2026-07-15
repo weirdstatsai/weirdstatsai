@@ -1,5 +1,11 @@
 @use '../card-base' as *;
 
+// The card is the sizing container: cqw units scale type and the watermark
+// with the card's rendered width, so the design tracks the viewport fluidly.
+.wcard {
+  container-type: inline-size;
+}
+
 // Title + illustration side by side
 .kpi-title-row {
   display: flex;
@@ -17,7 +23,17 @@
   }
 }
 
-// Big number sits naturally below title
+// Feed tile title: KPI tiles carry little content, so the title gets to be
+// bigger than the 13px base feed title, scaling fluidly with the card.
+.wcard:not(.full):not(.alt) .wcard-title {
+  font-size: clamp(16px, 6.5cqw, 24px);
+  line-height: 1.25;
+  position: relative;
+  z-index: 1;
+}
+
+// Detail/alt: compact baseline-aligned number row below the title — the
+// insight text follows right below it on .full.
 .kpi-number-row {
   display: flex;
   align-items: flex-end;
@@ -26,16 +42,58 @@
   padding-bottom: 6px;
 }
 
-// Show insight on feed to fill the card
-.wcard-insight {
-  display: -webkit-box !important;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  font-size: 11px;
-  color: #666;
-  line-height: 1.4;
-  margin: 0;
+// Feed tile hero: the number owns the foreground, centered in the leftover
+// portrait height; the emoji becomes an oversized low-opacity watermark
+// bleeding out of the bottom-right corner behind it.
+.kpi-hero-stack {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0;
+  min-height: 0;
+
+  // Unit sits centered under the number, not hugging the card edge.
+  .kpi-hero-num {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  // Background watermark — anchored to the card (nearest positioned
+  // ancestor), not the flex row; .wcard's overflow:hidden crops the bleed.
+  .kpi-illus {
+    position: absolute;
+    right: -8cqw;
+    bottom: -10cqw;
+    width: auto;
+    height: auto;
+    background: none;
+    border-radius: 0;
+    opacity: 0.18;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .illus-emoji { font-size: 58cqw; }
+
+  .kpi-value {
+    font-size: clamp(40px, 20cqw, 68px);
+    letter-spacing: -2px;
+    max-width: 100%;
+  }
+
+  // Longer values ("148.8", "1,234") drop a size so they never clip.
+  .kpi-value.val-long { font-size: clamp(28px, 14.5cqw, 50px); letter-spacing: -1.5px; }
+
+  .kpi-unit {
+    font-size: clamp(13px, 5.5cqw, 18px);
+    margin-top: 2px;
+  }
 }
 
 // Legacy layout (circular/comparison/hero)
@@ -141,7 +199,7 @@
 }
 
 .circ-val {
-  font-size: 18px;
+  font-size: clamp(16px, 7cqw, 24px);
   font-weight: 900;
   color: var(--accent);
   letter-spacing: -0.5px;
@@ -179,7 +237,7 @@
 .comp-main { flex: 1; }
 
 .comp-val {
-  font-size: 42px;
+  font-size: clamp(32px, 16cqw, 52px);
   font-weight: 900;
   color: var(--accent);
   letter-spacing: -2px;
@@ -252,7 +310,7 @@
 }
 
 .hero-val {
-  font-size: 72px;
+  font-size: clamp(48px, 28cqw, 88px);
   font-weight: 900;
   color: var(--accent);
   letter-spacing: -4px;

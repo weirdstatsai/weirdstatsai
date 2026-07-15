@@ -75,6 +75,7 @@ export interface CardUiMeta {
   versusStyles?: string[];
   mapStyles?: string[];
   selectedStyle?: string;
+  factFontSize?: 'small' | 'medium' | 'large';
 }
 
 export interface CardDataMeta {

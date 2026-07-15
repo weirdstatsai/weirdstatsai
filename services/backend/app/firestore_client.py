@@ -104,6 +104,48 @@ def _cache_put(phash: str, card: dict) -> None:
     _prompt_cache[phash] = card
 
 
+def get_stored_card(card_id: str) -> dict | None:
+    """Fetch a full stored card doc (top-level fields + `data`) by document id.
+    Used by the SEO bot-snapshot + OG-image routes. Returns None if missing."""
+    db = _get_db()
+    if db is None:
+        return None
+    try:
+        snap = db.collection("stats").document(card_id).get()
+        if not snap.exists:
+            return None
+        return snap.to_dict()
+    except Exception as e:
+        logger.warning(f"get_stored_card failed for {card_id}: {e}")
+        return None
+
+
+def list_published_cards(limit: int = 5000) -> list[dict]:
+    """Return published card docs for the dynamic sitemap: [{id, updatedAt}].
+    Only cards a user explicitly published (not drafts/private/cache-only)."""
+    db = _get_db()
+    if db is None:
+        return []
+    try:
+        docs = (
+            db.collection("stats")
+            .where("publishStatus", "==", "published")
+            .limit(limit)
+            .get()
+        )
+        out: list[dict] = []
+        for doc in docs:
+            d = doc.to_dict() or {}
+            out.append({
+                "id": doc.id,
+                "updatedAt": d.get("updatedAt") or d.get("createdAt") or "",
+            })
+        return out
+    except Exception as e:
+        logger.warning(f"list_published_cards failed: {e}")
+        return []
+
+
 def save_graph(
     card: dict,
     prompt: str,

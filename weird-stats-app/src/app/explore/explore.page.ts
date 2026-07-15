@@ -10,8 +10,8 @@ interface ExploreCategory {
   emoji: string;
 }
 
-// Fact cards span full width — all others are 3:4 portrait tiles
-const FULL_WIDTH_TYPES: CardType[] = ['fact'];
+// Fact/map/ranking/table cards span two columns — all others are 3:4 tiles
+const FULL_WIDTH_TYPES: CardType[] = ['fact', 'map', 'ranking', 'table'];
 
 @Component({
   selector: 'app-explore',
@@ -76,22 +76,6 @@ export class ExplorePage implements OnInit, OnDestroy {
     return FULL_WIDTH_TYPES.includes(card.data?.cardType);
   }
 
-  isStandalone(card: StoredStatCard, index: number): boolean {
-    if (this.isFullWidth(card)) return false;
-    const cards = this.filteredCards;
-
-    // Count non-full-width cards before to get this card's grid column position
-    let gridPos = 0;
-    for (let i = 0; i < index; i++) {
-      if (!this.isFullWidth(cards[i])) gridPos++;
-    }
-    // Only cards in the left column (even gridPos) can be standalone
-    if (gridPos % 2 !== 0) return false;
-
-    // Standalone if: no next card, OR next card is span-full (forces a row break)
-    const nextCard = cards[index + 1];
-    return !nextCard || this.isFullWidth(nextCard);
-  }
 
   get filteredCards(): StoredStatCard[] {
     const q = this.searchQuery.trim().toLowerCase();

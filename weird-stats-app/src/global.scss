@@ -321,12 +321,12 @@ ion-content {
   }
 }
 
-// ── Fixed mobile frame on larger screens ───────────────────────────────────
-// Keeps WeirdStats looking like a phone app when opened on desktop/web.
+// ── Fixed mobile frame on mid-size screens ─────────────────────────────────
+// Keeps WeirdStats looking like a phone app between 600 and 850px.
 // Change $app-frame-width below to widen/narrow the frame.
 $app-frame-width: 480px;
 
-@media (min-width: 600px) {
+@media (min-width: 600px) and (max-width: 849.98px) {
   body {
     background: #e7e7ec;
   }
@@ -337,7 +337,39 @@ $app-frame-width: 480px;
     right: 0 !important;
     box-shadow: 0 0 60px rgba(0, 0, 0, 0.14);
   }
-  // Keep modals/popovers/action-sheets within the frame too
+}
+
+// ── Desktop shell (≥850px) ──────────────────────────────────────────────────
+// ion-app fills the viewport; AppComponent supplies its own fixed left rail +
+// top-right nav + right gutter around the (still independently scrolling)
+// content outlet — see app.component.scss.
+$desktop-content-max: 1040px;
+
+@media (min-width: 850px) {
+  body {
+    background: #fff;
+  }
+  ion-app {
+    max-width: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  // Cap every page's content to a readable column and centre it, instead of
+  // letting cards/maps sprawl across the full monitor width. Uses ion-content's
+  // own horizontal padding: as the content box grows past $desktop-content-max,
+  // the extra width is split evenly into left/right padding (a fluid margin),
+  // so the actual content never exceeds the cap. Falls back to a 24px gutter on
+  // narrower desktops where there's no excess to absorb.
+  ion-content {
+    --padding-start: max(24px, calc((100% - #{$desktop-content-max}) / 2)) !important;
+    --padding-end:   max(24px, calc((100% - #{$desktop-content-max}) / 2)) !important;
+  }
+}
+
+// Modals/popovers/action-sheets stay phone-width and centered at any width
+// ≥600px — only the main tab content gets the wider desktop treatment.
+@media (min-width: 600px) {
   ion-modal,
   ion-action-sheet,
   ion-popover,
@@ -349,5 +381,71 @@ $app-frame-width: 480px;
     margin-right: auto !important;
     left: 0 !important;
     right: 0 !important;
+  }
+}
+
+// Login modal — a compact auto-height card floating in the middle of the
+// screen on tablet/desktop, instead of the phone-width full-height sheet
+// every other modal uses. Requires the `.ion-page` override below (Ionic's
+// documented recipe for auto-sizing modal content) since the wrapper
+// otherwise stretches to fill --height.
+@media (min-width: 768px) {
+  ion-modal.login-modal {
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    --width: 440px !important;
+    --height: 640px !important;
+    --max-height: 88vh !important;
+    --border-radius: 28px !important;
+    --box-shadow: 0 24px 70px rgba(20,20,43,0.28), 0 4px 16px rgba(0,0,0,0.08) !important;
+  }
+
+  ion-modal.login-modal .ion-page {
+    overflow-y: auto;
+  }
+}
+
+// ── Floating centered "New project" modal ───────────────────────────────────
+ion-modal.project-modal {
+  --width: 86%;
+  --max-width: 380px;
+  --height: auto;
+  --border-radius: 20px;
+  --box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  --backdrop-opacity: 0.45;
+  align-items: center;
+  justify-content: center;
+
+  &::part(content) {
+    border-radius: 20px;
+  }
+
+  // Auto-size the modal to its content height
+  .ion-page {
+    position: relative;
+    display: block;
+    contain: content;
+  }
+}
+
+// ── Elegant bottom sheet ("Add to project") ─────────────────────────────────
+ion-modal.add-sheet-modal {
+  --width: 100%;
+  --height: auto;
+  --border-radius: 26px 26px 0 0;
+  --box-shadow: 0 -10px 44px rgba(0, 0, 0, 0.22);
+  --backdrop-opacity: 0.45;
+  align-items: flex-end;
+  justify-content: center;
+
+  &::part(content) {
+    border-radius: 26px 26px 0 0;
+  }
+
+  .ion-page {
+    position: relative;
+    display: block;
+    contain: content;
   }
 }

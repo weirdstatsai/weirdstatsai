@@ -1,0 +1,23 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="back()" aria-label="Back">
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>{{ content.title }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="static-wrap">
+    <h1>{{ content.title }}</h1>
+    <p class="updated" *ngIf="content.updated">{{ content.updated }}</p>
+    <p class="intro" *ngIf="content.intro">{{ content.intro }}</p>
+
+    <div class="section" *ngFor="let s of content.sections">
+      <h2>{{ s.heading }}</h2>
+      <p *ngFor="let p of s.body">{{ p }}</p>
+    </div>
+  </div>
+</ion-content>

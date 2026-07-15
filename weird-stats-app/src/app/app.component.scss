@@ -11,3 +11,285 @@
     color: var(--ion-color-primary);
   }
 }
+
+// ── Shared shell ──────────────────────────────────────────────────────────
+// Fixed left rail (logo + legal links, ≥1024px only) + fixed top nav (every
+// breakpoint — header icons replace the bottom tab bar, which is hidden for
+// now), wrapped around the ROOT router-outlet so every route gets it — not
+// just /tabs/* children.
+$topnav-height: 48px;
+
+// The rail only exists above 1024px; below that it collapses to 0 so the
+// topnav and main content reclaim its space.
+:host {
+  --rail-width: 0px;
+
+  @media (min-width: 1024px) {
+    --rail-width: 250px;
+  }
+}
+
+// ── Fixed left rail — logo + legal links, never scrolls, ≥1024px only ────
+.desktop-rail {
+  display: none;
+
+  @media (min-width: 1024px) {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--rail-width);
+    padding: 20px 8px;
+    background: #fff;
+    border-right: 0.5px solid rgba(0, 0, 0, 0.08);
+    z-index: 20;
+    box-sizing: border-box;
+  }
+}
+
+.rail-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 100px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.rail-logo-mark {
+  width: 100px;
+  height: 100px;
+  border-radius: 26px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(20, 20, 43, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  line-height: 1;
+}
+
+// Recolors the octopus emoji away from its native reddish tone toward the
+// brand purple — filters apply to the rendered glyph, not just images.
+.logo-emoji {
+  display: inline-block;
+  filter: hue-rotate(220deg) saturate(1.3) brightness(0.95);
+}
+
+.rail-logo-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+  text-align: center;
+  line-height: 1.3;
+  .accent { color: #6C5CE7; }
+}
+
+.rail-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+
+  a {
+    font-size: 10px;
+    color: #999;
+    text-align: center;
+    line-height: 1.35;
+    text-decoration: none;
+    &:hover { color: #6C5CE7; }
+  }
+}
+
+// ── Fixed top bar — primary nav, right-aligned — every breakpoint ─────────
+.desktop-topnav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px;
+  position: fixed;
+  top: 0;
+  left: var(--rail-width);
+  right: 0;
+  height: $topnav-height;
+  padding: 0 24px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
+  z-index: 20;
+  box-sizing: border-box;
+
+  a {
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    text-decoration: none;
+    &.active { color: #6C5CE7; }
+    &:hover { color: #6C5CE7; }
+  }
+}
+
+.topnav-logo {
+  margin-right: auto;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.5px;
+  color: #1a1a2e !important;
+  &:hover { color: #1a1a2e !important; }
+  .accent { color: #6C5CE7; }
+
+  // The rail (≥1024px) already carries the logo — avoid showing it twice.
+  @media (min-width: 1024px) {
+    display: none;
+  }
+}
+
+.topnav-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+
+  a, .bell-btn {
+    display: flex;
+    align-items: center;
+
+    ion-icon {
+      font-size: 24px;
+      color: #666;
+    }
+
+    &.active ion-icon,
+    &:hover ion-icon { color: #6C5CE7; }
+  }
+
+  .bell-btn {
+    font-family: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+}
+
+.profile-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.login-btn {
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #6C5CE7 0%, #8C7BFF 100%);
+  border: none;
+  border-radius: 20px;
+  padding: 7px 16px;
+  cursor: pointer;
+  &:active { opacity: 0.9; }
+}
+
+// ── Push the ROOT outlet below the topnav (and beside the rail, if visible)
+// — every page's own ion-content still scrolls independently within this box.
+ion-router-outlet#main-content {
+  position: fixed !important;
+  top: $topnav-height;
+  left: var(--rail-width);
+  right: 0;
+  bottom: 0;
+  // Ionic's own shadow styles set width/height: 100% on the host, which
+  // wins over the browser's auto-from-offsets sizing for a fixed element
+  // with both left and right set — force it back to auto so the explicit
+  // offsets above are what actually determines the box.
+  width: auto !important;
+  height: auto !important;
+  // Cap the content column and center it in the remaining space (left +
+  // right insets with auto margins), with or without the rail.
+  max-width: 850px;
+  margin-left: auto;
+  margin-right: auto;
+
+  // Sub-pages have no topnav — their own toolbar takes the header space.
+  &.no-topnav {
+    top: 0;
+  }
+}
+
+// ── Cookie-consent banner ────────────────────────────────────────────────────
+.consent-banner {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 30000;
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 0.5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(20, 20, 43, 0.18);
+}
+
+.consent-text {
+  flex: 1 1 260px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #444;
+
+  a {
+    color: #6C5CE7;
+    font-weight: 600;
+    text-decoration: none;
+  }
+}
+
+.consent-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.consent-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+
+  &.decline {
+    background: rgba(0, 0, 0, 0.06);
+    color: #555;
+    &:active { background: rgba(0, 0, 0, 0.1); }
+  }
+
+  &.accept {
+    background: linear-gradient(135deg, #6C5CE7 0%, #8C7BFF 100%);
+    color: #fff;
+    &:active { opacity: 0.88; }
+  }
+}

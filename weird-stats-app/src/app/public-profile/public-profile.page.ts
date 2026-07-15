@@ -45,7 +45,7 @@ export class PublicProfilePage implements OnInit {
     this.router.navigate(['/card'], { state: { card, viewOnly: true } });
   }
 
-  back(): void { this.router.navigate(['/tabs/explore']); }
+  back(): void { this.router.navigate(['/explore']); }
 
   initial(): string { return this.displayName.charAt(0).toUpperCase() || '?'; }
 }

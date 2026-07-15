@@ -1,14 +1,30 @@
 @use '../card-base' as *;
 
-// ── Shared ────────────────────────────────────────────────────────────────
-.pill-rank, .clean-rank {
-  font-size: 10px; font-weight: 800; color: #bbb; width: 12px; flex-shrink: 0;
+// The card is the sizing container: cqw units scale type and chrome with the
+// card's rendered width, so the design tracks the viewport fluidly.
+.wcard {
+  container-type: inline-size;
 }
 
+// ── Shared ────────────────────────────────────────────────────────────────
+.pill-rank, .clean-rank {
+  font-size: clamp(10px, 2.2cqw, 14px);
+  font-weight: 800;
+  color: #bbb;
+  width: clamp(12px, 3cqw, 18px);
+  flex-shrink: 0;
+}
+
+// Each style's row list owns all remaining tile height; space-evenly
+// stretches few rows apart and packs many rows tighter, so the bottom
+// never sits empty.
 .pill-rows {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  justify-content: space-evenly;
+  flex: 1;
+  min-height: 0;
+  gap: clamp(4px, 1.2cqw, 10px);
   margin-bottom: 4px;
 }
 
@@ -19,18 +35,18 @@
 }
 
 .pill-rank {
-  font-size: 10px;
+  font-size: clamp(10px, 2.2cqw, 14px);
   font-weight: 800;
   color: #bbb;
-  width: 12px;
+  width: clamp(12px, 3cqw, 18px);
   flex-shrink: 0;
 }
 
 .pill-label {
-  font-size: 11px;
+  font-size: clamp(12px, 2.6cqw, 15px);
   font-weight: 700;
   color: #1a1a2e;
-  flex: 0 0 72px;
+  flex: 0 0 clamp(78px, 22cqw, 130px);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -41,7 +57,7 @@
 .pill-wrap {
   flex: 1;
   position: relative;
-  height: 24px;
+  height: clamp(24px, 5.5cqw, 32px);
   background: rgba(0,0,0,0.06);
   border-radius: 20px;
   overflow: hidden;
@@ -62,7 +78,7 @@
 .pill-val {
   position: relative;
   z-index: 1;
-  font-size: 10px;
+  font-size: clamp(10px, 2.4cqw, 13px);
   font-weight: 800;
   color: #fff;
   padding: 0 8px;
@@ -72,27 +88,103 @@
 .full .pill-val { font-size: 12px; }
 
 .pill-unit {
-  font-size: 9px;
+  font-size: clamp(9px, 2cqw, 11px);
   font-weight: 600;
   opacity: 0.85;
 }
 
 // ── Style: bars ───────────────────────────────────────────────────────────
-.bar-rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+.bar-rows {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  flex: 1;
+  min-height: 0;
+  gap: clamp(4px, 1.4cqw, 12px);
+  margin-bottom: 4px;
+}
 .bar-row { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .bar-row-top { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
-.bar-label { font-size: 11px; font-weight: 700; color: #1a1a2e; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.bar-value { font-size: 11px; font-weight: 800; color: var(--accent); white-space: nowrap; flex-shrink: 0; }
-.bar-track { height: 6px; background: rgba(0,0,0,0.07); border-radius: 6px; overflow: hidden; margin-left: 18px; max-width: 70%; }
+.bar-label {
+  font-size: clamp(13px, 2.8cqw, 17px);
+  font-weight: 700;
+  color: #1a1a2e;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.bar-value {
+  font-size: clamp(13px, 2.8cqw, 17px);
+  font-weight: 800;
+  color: var(--accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.bar-track {
+  height: clamp(6px, 1.5cqw, 9px);
+  background: rgba(0,0,0,0.07);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-left: clamp(18px, 4cqw, 24px);
+  max-width: 70%;
+}
 .bar-fill { height: 100%; border-radius: 6px; background: var(--accent); transition: width 0.5s ease; }
 
 // ── Style: rows ───────────────────────────────────────────────────────────
-.clean-rows { display: flex; flex-direction: column; margin-bottom: 4px; }
+.clean-rows {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  flex: 1;
+  min-height: 0;
+  margin-bottom: 4px;
+}
 .clean-row {
   display: flex; align-items: center; gap: 8px;
-  padding: 7px 0;
+  padding: clamp(5px, 1.4cqw, 10px) 0;
   border-bottom: 0.5px solid rgba(0,0,0,0.06);
   &:last-child { border-bottom: none; }
 }
-.clean-label { font-size: 12px; font-weight: 600; color: #1a1a2e; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.clean-val { font-size: 12px; font-weight: 800; color: var(--accent); white-space: nowrap; }
+.clean-label {
+  font-size: clamp(13px, 2.8cqw, 16px);
+  font-weight: 600;
+  color: #1a1a2e;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.clean-val {
+  font-size: clamp(13px, 2.8cqw, 16px);
+  font-weight: 800;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+// Wide 2-column feed tiles get a fluid headline that tracks the card width;
+// .full detail view keeps its own (more specific) title size.
+.wcard-title {
+  font-size: clamp(18px, 4.2cqw, 26px);
+  line-height: 1.25;
+}
+
+// Compact tiles (mobile full-width, alt) can't fit five rows without the
+// last one clipping at the tile edge — show four and let the detail page
+// carry the full list. Never applies to the .full detail view.
+@container (max-width: 420px) {
+  .wcard:not(.full) {
+    .pill-row:nth-child(n+5),
+    .bar-row:nth-child(n+5),
+    .clean-row:nth-child(n+5) {
+      display: none;
+    }
+  }
+}
+
+.table-empty {
+  font-size: 13px;
+  color: #999;
+  margin: 0;
+}

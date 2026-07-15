@@ -38,6 +38,10 @@ export class CardTableComponent implements OnChanges {
     return (this.card.rows ?? []).slice(0, limit);
   }
 
+  get hasRows(): boolean {
+    return this.rows.length > 0;
+  }
+
   fmt(v: number): string {
     if (Math.abs(v) >= 1_000_000) return (v / 1_000_000).toFixed(1) + 'M';
     if (Math.abs(v) >= 1_000) return (v / 1_000).toFixed(v >= 10_000 ? 0 : 1) + 'K';

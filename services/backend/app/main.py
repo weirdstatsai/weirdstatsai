@@ -6,14 +6,17 @@ from typing import AsyncGenerator
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
 
 from app.agent_client import request_chart_from_agent, research_agent, format_agent
-from app.firestore_client import save_graph, find_cached_card
+from app.firestore_client import (
+    save_graph, find_cached_card, get_stored_card, list_published_cards,
+)
 from app.validator import validate_card
 from app.schemas import WeirdCard, GenerateRequest
+from app import seo
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -25,6 +28,10 @@ import os
 _default_origins = [
     "http://localhost:4200", "http://localhost:8100",
     "http://localhost:8080", "capacitor://localhost", "ionic://localhost",
+    # Custom domain + new project hosting
+    "https://weirdstats.ai", "https://www.weirdstats.ai",
+    "https://weirdstats-ai.web.app", "https://weirdstats-ai.firebaseapp.com",
+    # Legacy project (kept until fully retired)
     "https://weirdstatsai-aaaf7.web.app",
     "https://weirdstatsai-aaaf7.firebaseapp.com",
 ]
@@ -41,6 +48,54 @@ app.add_middleware(
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok"}
+
+
+# ── SEO: bot-snapshot rendering for shareable card URLs ─────────────────────
+# Firebase Hosting rewrites /card/**, /share/**, /og/**, /sitemap-cards.xml to
+# this service. Bots get purpose-built HTML/images; humans get the SPA shell.
+
+async def _card_route(card_id: str, request: Request) -> Response:
+    # These responses branch on User-Agent (bot snapshot vs SPA shell). Firebase's
+    # CDN caches by URL, NOT by UA, so a cached bot snapshot would be served to
+    # humans (and vice-versa). Force `no-store` so every request reaches Cloud Run
+    # and gets UA-correct content. The og-image + sitemap routes below don't
+    # branch on UA, so they stay publicly cacheable.
+    no_store = {"Cache-Control": "private, no-store"}
+    ua = request.headers.get("user-agent", "")
+    if seo.is_bot(ua):
+        doc = get_stored_card(card_id)
+        html = seo.build_snapshot_html(card_id, doc)
+        return HTMLResponse(html, headers=no_store)
+    shell = await seo.get_spa_shell()
+    return HTMLResponse(shell, headers=no_store)
+
+
+@app.get("/card/{card_id}")
+async def card_page(card_id: str, request: Request) -> Response:
+    return await _card_route(card_id, request)
+
+
+@app.get("/share/{card_id}")
+async def share_page(card_id: str, request: Request) -> Response:
+    return await _card_route(card_id, request)
+
+
+@app.get("/og/card/{ref}")
+async def og_card_image(ref: str) -> Response:
+    card_id = ref[:-4] if ref.endswith(".png") else ref
+    doc = get_stored_card(card_id)
+    png = seo.compose_og_image(doc)
+    if png is None:
+        return RedirectResponse(seo.DEFAULT_OG_IMAGE, status_code=307)
+    return Response(png, media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/sitemap-cards.xml")
+async def sitemap_cards() -> Response:
+    xml = seo.build_cards_sitemap(list_published_cards())
+    return Response(xml, media_type="application/xml",
+                    headers={"Cache-Control": "public, max-age=3600"})
 
 
 def _fallback_card(prompt: str, reason: str) -> dict:
@@ -79,14 +134,21 @@ async def generate_stream(req: GenerateRequest) -> StreamingResponse:
             yield _sse("error", {"message": "Research failed. Try again."})
             return
 
-        # Step 2: format
+        # Step 2: format — retry once before surfacing an error, since the
+        # format/validate step occasionally fails transiently on the first try.
         yield _sse("status", {"message": "Building your card…", "step": 2})
         try:
             raw = await format_agent(brief)
             card = validate_card(raw)
-        except Exception as e:
-            yield _sse("error", {"message": "Could not format card. Try again."})
-            return
+        except Exception:
+            logger.warning("Stream format failed, retrying once", exc_info=True)
+            try:
+                raw = await format_agent(brief)
+                card = validate_card(raw)
+            except Exception:
+                logger.warning("Stream format failed twice", exc_info=True)
+                yield _sse("error", {"message": "Could not format card. Try again."})
+                return
 
         # Step 3: save a cache-only copy (not user-owned) + return.
         # Drafts live on the device; a card only enters a user's collection

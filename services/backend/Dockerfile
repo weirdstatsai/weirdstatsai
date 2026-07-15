@@ -6,6 +6,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# Scalable font for the per-card OG image composer (Pillow needs a real TTF).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install deps first for better layer caching
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

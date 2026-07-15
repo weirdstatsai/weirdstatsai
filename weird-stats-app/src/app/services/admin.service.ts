@@ -6,22 +6,32 @@ import { firstValueFrom } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private _isAdmin: boolean | null = null;
+  private _checkedUid: string | null = null;
 
   constructor(
     private afs: AngularFirestore,
     private afAuth: AngularFireAuth,
   ) {}
 
-  async isAdmin(): Promise<boolean> {
-    if (this._isAdmin !== null) return this._isAdmin;
-    const user = await firstValueFrom(this.afAuth.authState);
-    if (!user) return false;
-    const snap = await firstValueFrom(this.afs.doc(`users/${user.uid}`).get());
+  // Pass the uid when the caller already has a reliably-resolved user (e.g. from
+  // a live auth subscription) — this avoids racing afAuth.authState here, which
+  // can still be mid-restore on a cold app load and would otherwise report
+  // "not admin" before the persisted session finishes attaching.
+  async isAdmin(uid?: string): Promise<boolean> {
+    let targetUid = uid;
+    if (!targetUid) {
+      const user = await firstValueFrom(this.afAuth.authState);
+      targetUid = user?.uid;
+    }
+    if (!targetUid) return false; // no user yet — NOT cached, so the next real check can still run
+    if (this._isAdmin !== null && this._checkedUid === targetUid) return this._isAdmin;
+    const snap = await firstValueFrom(this.afs.doc(`users/${targetUid}`).get());
     this._isAdmin = !!(snap.data() as any)?.isAdmin;
+    this._checkedUid = targetUid;
     return this._isAdmin;
   }
 
-  resetCache(): void { this._isAdmin = null; }
+  resetCache(): void { this._isAdmin = null; this._checkedUid = null; }
 
   async getAllUsers(): Promise<any[]> {
     // Derive unique users from stats collection (publicly readable)
