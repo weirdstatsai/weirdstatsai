@@ -8,18 +8,42 @@ service cloud.firestore {
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
+    // A client write must never set the premium plan — premium is granted only
+    // server-side by the Stripe webhook (Admin SDK, which bypasses these rules).
+    function grantsPremium(data) {
+      return data.get('plan', 'free') == 'premium';
+    }
+
+    // Billing fields are owned by the server; clients must leave them untouched.
+    function billingUnchanged(before, after) {
+      return after.get('planExpiry', null) == before.get('planExpiry', null) &&
+             after.get('stripeCustomerId', '') == before.get('stripeCustomerId', '') &&
+             after.get('stripeSubscriptionId', '') == before.get('stripeSubscriptionId', '');
+    }
+
     // Stats — public read, backend writes
     match /stats/{statId} {
       allow read: if true;
       allow write: if true;
     }
 
-    // Users — owner can read/write their own; admin can read/write any
+    // Users — owner can read/write their own; admin can read/write any.
+    // Owners may manage their profile and free-tier usage counters, but cannot
+    // grant themselves premium or touch server-owned billing fields.
     match /users/{userId} {
       allow read: if request.auth != null &&
                      (request.auth.uid == userId || isAdmin());
-      allow write: if request.auth != null &&
-                      (request.auth.uid == userId || isAdmin());
+
+      allow write: if isAdmin();
+
+      allow create: if request.auth != null && request.auth.uid == userId &&
+                       !grantsPremium(request.resource.data);
+
+      allow update: if request.auth != null && request.auth.uid == userId &&
+                       !grantsPremium(request.resource.data) &&
+                       billingUnchanged(resource.data, request.resource.data);
+
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
     match /users/{userId}/plan/{docId} {

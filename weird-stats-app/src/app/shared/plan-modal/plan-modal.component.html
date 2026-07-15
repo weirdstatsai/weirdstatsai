@@ -38,6 +38,8 @@
     <div class="plan-radio" [class.active]="selected === 'premium'"></div>
   </div>
 
+  <p class="plan-error" *ngIf="error">{{ error }}</p>
+
   <button class="continue-btn" [class.loading]="loading" (click)="confirm()" [disabled]="loading">
     <ion-spinner *ngIf="loading" name="dots"></ion-spinner>
     <span *ngIf="!loading">{{ selected === 'premium' ? 'Continue with Premium' : 'Continue' }}</span>

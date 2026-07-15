@@ -60,6 +60,11 @@ export class MembershipService {
     await this.afs.doc(`users/${uid}`).set(data, { merge: true });
   }
 
+  /**
+   * @deprecated Premium is granted server-side by the Stripe webhook. This
+   * client-side write is now rejected by Firestore security rules — use
+   * BillingService.startCheckout() to upgrade. Kept only for reference.
+   */
   async setPremium(): Promise<void> {
     const uid = await this.uid();
     if (!uid) return;

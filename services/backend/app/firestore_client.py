@@ -64,6 +64,51 @@ def _get_db():
     return _db
 
 
+def verify_id_token(token: str) -> dict | None:
+    """Verify a Firebase ID token and return its decoded claims, or None.
+
+    Reuses the Admin SDK app initialised by `_get_db()`."""
+    if _get_db() is None:
+        logger.warning("Firestore/Admin SDK unavailable — cannot verify ID token")
+        return None
+    try:
+        from firebase_admin import auth as fb_auth
+
+        return fb_auth.verify_id_token(token)
+    except Exception as e:
+        logger.warning(f"ID token verification failed: {e}")
+        return None
+
+
+def get_user(uid: str) -> dict | None:
+    """Read users/{uid}, or None if missing/unavailable."""
+    db = _get_db()
+    if db is None:
+        return None
+    try:
+        snap = db.collection("users").document(uid).get()
+        return snap.to_dict() if snap.exists else None
+    except Exception as e:
+        logger.warning(f"Failed to read users/{uid}: {e}")
+        return None
+
+
+def set_user_plan(uid: str, fields: dict) -> bool:
+    """Server-side merge-write to users/{uid} — used by the Stripe webhook to
+    grant or revoke premium. Bypasses Firestore security rules (Admin SDK)."""
+    db = _get_db()
+    if db is None:
+        logger.warning("Firestore unavailable — cannot update user plan")
+        return False
+    try:
+        db.collection("users").document(uid).set(fields, merge=True)
+        logger.info(f"Updated plan for users/{uid}: {sorted(fields.keys())}")
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to update user plan for {uid}: {e}")
+        return False
+
+
 def find_cached_card(prompt: str) -> dict | None:
     """Dedup: return an existing card for this normalized prompt, or None.
     Checks in-memory cache first (O(1)), falls back to Firestore."""

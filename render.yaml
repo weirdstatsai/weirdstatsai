@@ -19,3 +19,11 @@ services:
         value: gpt-4o-mini
       - key: MAX_WEB_SEARCHES
         value: "2"
+      - key: STRIPE_SECRET_KEY
+        sync: false                       # set in Render dashboard (secret)
+      - key: STRIPE_PRICE_ID
+        sync: false                       # recurring Premium price id
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false                       # signing secret for the webhook endpoint
+      - key: BILLING_RETURN_URL
+        value: https://weirdstatsai-aaaf7.web.app

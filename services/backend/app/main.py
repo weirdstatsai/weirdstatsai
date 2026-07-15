@@ -14,6 +14,7 @@ from app.agent_client import request_chart_from_agent, research_agent, format_ag
 from app.firestore_client import save_graph, find_cached_card
 from app.validator import validate_card
 from app.schemas import WeirdCard, GenerateRequest
+from app.billing import router as billing_router
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -36,6 +37,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+app.include_router(billing_router)
 
 
 @app.get("/health")
