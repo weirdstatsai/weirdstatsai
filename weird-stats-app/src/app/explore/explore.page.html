@@ -2,17 +2,7 @@
 
   <!-- Sticky category + search header -->
   <div class="sticky-header">
-    <div class="category-chips">
-      <div
-        *ngFor="let c of categories"
-        class="category-chip"
-        [class.active]="activeCategory === c.id"
-        (click)="setCategory(c.id)">
-        <span class="chip-emoji">{{ c.emoji }}</span>{{ c.label }}
-      </div>
-    </div>
-
-    <div class="search-bar">
+        <div class="search-bar">
       <ion-icon name="search-outline" class="search-icon"></ion-icon>
       <input
         [(ngModel)]="searchQuery"
@@ -22,6 +12,17 @@
         (input)="onSearchChange()" />
       <ion-icon name="close-circle" *ngIf="searchQuery.trim()" class="search-clear" (click)="searchQuery=''; onSearchChange()"></ion-icon>
     </div>
+    <div class="category-chips">
+      <div
+        *ngFor="let c of categories"
+        class="category-chip"
+        [class.active]="activeCategory === c.id"
+        (click)="setCategory(c.id)">
+        {{ c.label }}
+      </div>
+    </div>
+
+
   </div>
 
   <!-- Loading skeleton -->

@@ -4,7 +4,7 @@
   <ng-container *ngIf="size !== 'alt'">
     <span class="wcard-bg-icon" *ngIf="bgSvg && size==='full'" [innerHTML]="bgSvg"></span>
   <div class="wcard-head">
-      <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.icon }} {{ card.uiMeta.category }}</span>
+      <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.category }}</span>
       <span class="weird-badge">Chart card</span>
     </div>
     <p class="wcard-title">{{ card.title | stripEmoji }}</p>

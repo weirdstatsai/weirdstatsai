@@ -121,7 +121,6 @@ $topnav-height: 48px;
   padding: 0 24px;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
-  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
   z-index: 20;
   box-sizing: border-box;
 
@@ -137,7 +136,7 @@ $topnav-height: 48px;
 
 .topnav-logo {
   margin-right: auto;
-  font-size: 18px !important;
+  font-size: 20px !important;
   font-weight: 700 !important;
   letter-spacing: -0.5px;
   color: #1a1a2e !important;
@@ -153,14 +152,14 @@ $topnav-height: 48px;
 .topnav-links {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 18px;
 
   a, .bell-btn {
     display: flex;
     align-items: center;
 
     ion-icon {
-      font-size: 21px;
+      font-size: 24px;
       color: #666;
     }
 

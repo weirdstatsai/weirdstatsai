@@ -1,7 +1,7 @@
 <div class="wcard" [class.full]="size==='full'" [class.alt]="size==='alt'" [class.fs-small]="effectiveFontSize==='small'" [class.fs-large]="effectiveFontSize==='large'" [style.--accent]="accent" [style.--grad-from]="gradFrom" [style.--grad-to]="gradTo">
   <span class="wcard-bg-icon" *ngIf="bgSvg && size==='full'" [innerHTML]="bgSvg"></span>
   <div class="wcard-head">
-    <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.icon }} {{ card.uiMeta.category }}</span>
+    <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.category }}</span>
     <span class="weird-badge">Fact card</span>
   </div>
 

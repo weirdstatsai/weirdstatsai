@@ -35,35 +35,50 @@ from firebase_admin import credentials, firestore
 APPLY = "--apply" in sys.argv
 DO_EXPLORE = "--explore" in sys.argv
 
-key_path = os.getenv("FIREBASE_SERVICE_ACCOUNT_KEY", "firebase-adminsdk.json")
-if not os.path.isabs(key_path):
+# HARD-PINNED to the current production project. The backend .env in this repo
+# still carries the OLD project id (weirdstatsai-aaaf7), so we deliberately do
+# NOT read FIREBASE_PROJECT_ID here — a data migration must never target the
+# wrong database. gcloud Application Default Credentials already default to
+# weirdstats-ai, which is the identity the live backend uses.
+PROJECT_ID = "weirdstats-ai"
+
+key_path = os.getenv("FIREBASE_SERVICE_ACCOUNT_KEY", "")
+if key_path and not os.path.isabs(key_path):
     key_path = str(Path(__file__).parent / key_path)
 
 if not firebase_admin._apps:
-    cred = credentials.Certificate(key_path)
-    firebase_admin.initialize_app(cred, {
-        "projectId": os.getenv("FIREBASE_PROJECT_ID", "weirdstats-ai"),
-    })
+    if key_path and os.path.exists(key_path):
+        cred = credentials.Certificate(key_path)
+        print(f"Auth: service account key ({key_path})")
+    else:
+        cred = credentials.ApplicationDefault()
+        print("Auth: Application Default Credentials")
+    firebase_admin.initialize_app(cred, {"projectId": PROJECT_ID})
+
+print(f"Target project: {PROJECT_ID}\n")
 
 db = firestore.client()
 stats = db.collection("stats")
 
 
-def backfill(query, field, extra_when_missing=None):
+def backfill(query, field, extra_when_missing=None, skip=None):
     """Set `field` = True on every doc matched by `query` that doesn't already
-    have it. `extra_when_missing` is a dict of additional fields to set only if
-    absent (e.g. homeAddedAt)."""
+    have it. `extra_when_missing` is a dict of fields to set only if absent
+    (e.g. homeAddedAt). `skip(doc_dict) -> bool` excludes a doc from the pass."""
     changed = 0
     for snap in query.stream():
         d = snap.to_dict() or {}
         if d.get(field) is True:
+            continue
+        if skip and skip(d):
             continue
         patch = {field: True}
         for k, v in (extra_when_missing or {}).items():
             if not d.get(k):
                 patch[k] = v
         changed += 1
-        print(f"  {'WRITE' if APPLY else 'would set'} {snap.id}: {patch}")
+        title = (d.get("data") or {}).get("title", "")
+        print(f"  {'WRITE' if APPLY else 'would set'} {snap.id} [{title[:40]}]: {list(patch)}")
         if APPLY:
             snap.reference.update(patch)
     return changed
@@ -81,12 +96,19 @@ print(f"  {home_n} card(s) {'updated' if APPLY else 'to update'}\n")
 
 expl_n = 0
 if DO_EXPLORE:
-    print(f"== Explore backfill (published -> showOnExplore) {'[APPLY]' if APPLY else '[dry-run]'}")
-    expl_n = backfill(stats.where("publishStatus", "==", "published"), "showOnExplore")
+    print(f"== Explore backfill (published & not home-curated -> showOnExplore) "
+          f"{'[APPLY]' if APPLY else '[dry-run]'}")
+    # Preserve the OLD Explore split exactly: Explore = published AND NOT
+    # home-curated (Home cards stayed off Explore). So skip homeFeatured docs.
+    expl_n = backfill(
+        stats.where("publishStatus", "==", "published"),
+        "showOnExplore",
+        skip=lambda d: d.get("homeFeatured") is True or d.get("showOnHome") is True,
+    )
     print(f"  {expl_n} card(s) {'updated' if APPLY else 'to update'}\n")
 else:
     print("== Explore backfill skipped (pass --explore to seed showOnExplore "
-          "from all published cards; omit to curate Explore from scratch)\n")
+          "from published cards; omit to curate Explore from scratch)\n")
 
 print(f"Done. Home: {home_n}, Explore: {expl_n}. "
       f"{'Changes written.' if APPLY else 'Dry-run — re-run with --apply to write.'}")

@@ -187,7 +187,10 @@
       "Bash(gh pr *)",
       "Bash(curl -s -m 15 https://weirdstats-api-636419392315.us-central1.run.app/health)",
       "Bash(curl -s -o /dev/null -w \"weirdstats.ai: HTTP %{http_code}\\\\n\" https://weirdstats.ai)",
-      "Bash(curl -s -o /dev/null -w \"weirdstats-ai.web.app: HTTP %{http_code}\\\\n\" https://weirdstats-ai.web.app)"
+      "Bash(curl -s -o /dev/null -w \"weirdstats-ai.web.app: HTTP %{http_code}\\\\n\" https://weirdstats-ai.web.app)",
+      "Bash(grep -rn \"cat-badge\" . --include=\"*.html\")",
+      "Bash(grep -rln \"cat-badge\" .)",
+      "Bash(grep -rn \"uiMeta.icon\\\\|uiMeta?.icon\" .)"
     ]
   }
 }
