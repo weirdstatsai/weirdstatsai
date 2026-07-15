@@ -62,8 +62,14 @@ lifecycle field: **`draft | private | published`**. (`StoredStatCard.status` and
 - `updatedAt` bumps on create/claim/publish/unpublish/edit; Explore/Drafts/Saved sort
   by `(updatedAt ?? createdAt)` desc = latest first.
 - **Profile** derives Drafts & Saved from one `stats where createdBy==uid` query, split
-  by publishStatus. **Explore** = `where publishStatus=='published'`. **Home** =
-  `where homeFeatured==true` (admin-curated).
+  by publishStatus. **Explore** = `where showOnExplore==true`. **Home** =
+  `where showOnHome==true`. Both feeds are **admin-curated via two boolean flags**
+  (`showOnExplore` / `showOnHome`), toggled from a saved card's options menu (admin-only,
+  gated by `AdminService.isAdmin` in the UI and Firestore rules). Enabling a flag also
+  flips `publishStatus:'published'` (public + shareable) and renders the OG image. The
+  card-detail header shows an explicit **Save + discard** on a freshly generated card and
+  only reveals the options menu (`isUnsavedDraft` getter) once saved. Legacy `homeFeatured`
+  is superseded by `showOnHome` (still read-allowed in rules for back-compat).
 - OG (link-preview) image: offscreen `.og-frame` 1200×630, `fitOgTile()` scales the card
   to fit (no clipped title/story). Regenerated on edit of a published card.
 
@@ -101,7 +107,15 @@ it can't be deleted cleanly yet — leave it alone.
   emulator tests is necessary but not sufficient; verify reads on prod after a rules deploy
   (with rollback ready).
 - Firestore **security rules are currently hardened**: `stats` is owner-only for
-  drafts/private, public-read only for `publishStatus=='published'` or `homeFeatured==true`.
+  drafts/private, public-read only for `publishStatus=='published'`, `showOnHome==true`,
+  `showOnExplore==true`, or `homeFeatured==true`. Non-admins can't ENABLE the feed flags
+  (`noNonAdminFeedEnable()` on update — they may leave or turn OFF a flag, so making a card
+  private clears it; must-be-false on create). Making a card private/draft clears both feed
+  flags (card-detail `_updateStatus`/`_promoteDraft`, profile `_saveCard`/`_moveToDrafts`)
+  so a private card is never left publicly readable. ⚠️ Rules + the feed-flag changes are
+  **edited but NOT deployed** — deploy rules and re-verify on prod. Existing
+  `homeFeatured`/published cards need a one-time backfill or the feeds start empty:
+  `services/backend/backfill_feed_flags.py` (dry-run by default; `--apply`, `--explore`).
 - Dev frontend `environment.ts` `apiUrl` = `http://localhost:8000` (local backend). Prod
   uses the Cloud Run URL. So the local app hits the LOCAL backend.
 - Explore's `error:` handler silently sets `cards=[]` — a failed query shows "No cards yet"

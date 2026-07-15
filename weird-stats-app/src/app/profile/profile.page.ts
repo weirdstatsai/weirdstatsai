@@ -315,10 +315,14 @@ export class ProfilePage implements OnInit, OnDestroy {
   // moves it between the Drafts and Saved tabs automatically.
   private async _saveCard(card: StoredStatCard, status: 'published' | 'private'): Promise<void> {
     try {
-      await this.afs.collection('stats').doc(card.id).update({ publishStatus: status, updatedAt: new Date().toISOString() });
+      const patch: Record<string, unknown> = { publishStatus: status, updatedAt: new Date().toISOString() };
+      // A private card must not stay on the public feeds — clear the curated
+      // flags (owners are allowed to disable them; see Firestore rules).
+      if (status === 'private') { patch['showOnHome'] = false; patch['showOnExplore'] = false; }
+      await this.afs.collection('stats').doc(card.id).update(patch);
       this.selectedDraft = undefined;
       this.activeTab = 'saved';
-      const msg = status === 'published' ? 'Saved publicly — live on Explore!' : 'Saved privately';
+      const msg = status === 'published' ? 'Saved publicly — anyone with the link can view it.' : 'Saved privately';
       const t = await this.toastCtrl.create({ message: msg, duration: 1800, color: 'primary' });
       await t.present();
     } catch {
@@ -332,7 +336,10 @@ export class ProfilePage implements OnInit, OnDestroy {
     // A project card must never be pulled out of its project this way.
     if (card.projectId) return;
     try {
-      await this.afs.collection('stats').doc(card.id).update({ publishStatus: 'draft', updatedAt: new Date().toISOString() });
+      // Back to a private draft — take it off the public feeds too.
+      await this.afs.collection('stats').doc(card.id).update({
+        publishStatus: 'draft', showOnHome: false, showOnExplore: false, updatedAt: new Date().toISOString(),
+      });
       this.activeTab = 'draft';
       const t = await this.toastCtrl.create({ message: 'Moved to Drafts', duration: 1600, color: 'medium' });
       await t.present();

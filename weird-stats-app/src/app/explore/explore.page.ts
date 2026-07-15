@@ -42,21 +42,19 @@ export class ExplorePage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Published cards only, newest first — filtered server-side so this query
-    // stays valid under owner-only security rules (a fetch-all query is rejected
-    // once drafts are private). Requires the (publishStatus, createdAt DESC)
-    // composite index [CICAgOjXh4EK], confirmed READY in prod. homeFeatured
-    // cards live on Home, so they're excluded client-side.
+    // Explore feed: admin-curated cards flagged showOnExplore (toggled from a
+    // card's options menu). Single-equality query — served by the automatic
+    // single-field index, no composite needed, and valid under owner-only
+    // security rules (the flag is public-readable). Sorted latest-first
+    // client-side (updatedAt ?? createdAt).
     this.sub = this.afs
       .collection<StoredStatCard>('stats', ref =>
-        ref.where('publishStatus', '==', 'published').orderBy('createdAt', 'desc').limit(200))
+        ref.where('showOnExplore', '==', true).limit(200))
       .valueChanges()
       .subscribe({
         next: docs => {
           this.cards = docs
             .filter(d => d.data?.title && d.data?.cardType)
-            // Admin-curated cards live on Home, not Explore.
-            .filter(d => !d.homeFeatured)
             // Latest first — most recently published/updated at the top.
             .sort((a, b) => ((b.updatedAt ?? b.createdAt) ?? '').localeCompare((a.updatedAt ?? a.createdAt) ?? ''));
           this.isLoading = false;

@@ -86,7 +86,7 @@ export class AdminPage implements OnInit {
   async loadHomeCards(): Promise<void> {
     try {
       const snap = await firstValueFrom(
-        this.afs.collection<StoredStatCard>('stats', ref => ref.where('homeFeatured', '==', true)).get()
+        this.afs.collection<StoredStatCard>('stats', ref => ref.where('showOnHome', '==', true)).get()
       );
       this.homeCards = snap.docs
         .map(d => ({ ...(d.data() as StoredStatCard), id: d.id }))
@@ -159,7 +159,7 @@ export class AdminPage implements OnInit {
       createdAt: data.createdAt ?? now,
       prompt: topic,
       promptHash: '',
-      homeFeatured: true,
+      showOnHome: true,
       homeAddedAt: now,
       data,
     };
@@ -171,11 +171,12 @@ export class AdminPage implements OnInit {
     if (!card.id) return;
     const alert = await this.alertCtrl.create({
       header: 'Remove from Home?',
-      message: 'This deletes the curated card.',
+      message: 'This takes the card off the Home feed (the card itself is kept).',
       buttons: [
         { text: 'Cancel', role: 'cancel' },
         { text: 'Remove', role: 'destructive', handler: async () => {
-          await this.afs.doc(`stats/${card.id}`).delete();
+          // Flip the flag off — keep the card (deleting it was destructive).
+          await this.afs.doc(`stats/${card.id}`).update({ showOnHome: false });
           this.homeCards = this.homeCards.filter(c => c.id !== card.id);
           this.toast('Removed from Home');
         }},

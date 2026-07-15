@@ -151,10 +151,17 @@ export interface StoredStatCard {
    *  present, else falls back to the generated Pillow template. */
   ogImage?: string;
   /** Admin-curated card pushed to the Home feed. Home shows these; Explore
-   *  shows the public user-published cards (which don't have this flag). */
+   *  shows the public user-published cards (which don't have this flag).
+   *  @deprecated superseded by `showOnHome` — kept for read back-compat. */
   homeFeatured?: boolean;
   /** ISO time the card was pushed to Home (ordering + shuffle windows). */
   homeAddedAt?: string;
+  /** Admin-controlled: card is featured on the Home feed. The Home query reads
+   *  this flag directly. Only admins may enable it (enforced in Firestore rules). */
+  showOnHome?: boolean;
+  /** Admin-controlled: card is surfaced on the Explore feed. The Explore query
+   *  reads this flag directly. Only admins may enable it (Firestore rules). */
+  showOnExplore?: boolean;
   data: WeirdCard;
 }
 

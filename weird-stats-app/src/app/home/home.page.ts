@@ -82,12 +82,13 @@ export class HomePage implements OnInit, OnDestroy {
     // no extra Firestore reads, just a local clock tick.
     this.usageTimer = setInterval(() => this.tickCountdown(), 60_000);
 
-    // Home feed: admin-curated cards only (pushed from the admin panel). Public
-    // user-shared cards live on Explore now. Order is shuffled on a rotating
-    // window so repeat visitors see a fresh arrangement.
+    // Home feed: admin-curated cards flagged showOnHome (toggled from a card's
+    // options menu, or the admin panel). Single-equality query — served by the
+    // automatic single-field index, no composite needed. Order is shuffled on a
+    // rotating window so repeat visitors see a fresh arrangement.
     this.cardSub = this.afs
       .collection<StoredStatCard>('stats', ref =>
-        ref.where('homeFeatured', '==', true).limit(60)
+        ref.where('showOnHome', '==', true).limit(60)
       )
       .valueChanges({ idField: 'id' })
       .subscribe({

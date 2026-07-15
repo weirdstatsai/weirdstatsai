@@ -12,40 +12,68 @@
 }
 
 .status-msg {
-  font-size: 19px;
-  font-weight: 600;
-  color: #444;
-  min-height: 26px;
+  font-size: 26px;
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #2d2a3a;
+  min-height: 34px;
   transition: all 0.3s ease;
+}
+
+.status-sub {
+  font-size: 15px;
+  font-weight: 500;
+  color: #8a8798;
+  margin: 2px 0 4px;
 }
 
 .status-steps {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 8px;
+  gap: 8px;
+  margin-top: 14px;
   width: 100%;
-  max-width: 280px;
+  max-width: 340px;
 }
 
 .step {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 16px;
-  color: rgba(0,0,0,0.25);
-  padding: 9px 16px;
-  border-radius: 20px;
-  transition: all 0.3s ease;
+  gap: 12px;
+  font-size: 17px;
+  font-weight: 500;
+  color: rgba(0,0,0,0.28);
+  padding: 11px 16px;
+  border-radius: 22px;
+  transition: all 0.35s ease;
   border: 1px solid transparent;
+  text-align: left;
 
-  ion-icon { font-size: 18px; }
+  .step-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+  }
+
+  ion-icon { font-size: 20px; }
+  ion-spinner { width: 20px; height: 20px; color: #6C5CE7; }
+
+  .step-text { line-height: 1.2; }
 
   &.active {
     color: #6C5CE7;
-    background: rgba(108, 92, 231, 0.08);
-    border-color: rgba(108, 92, 231, 0.2);
-    font-weight: 600;
+    background: rgba(108, 92, 231, 0.09);
+    border-color: rgba(108, 92, 231, 0.22);
+    font-weight: 700;
+  }
+
+  &.done {
+    color: #3aa76d;
+    ion-icon { color: #3aa76d; }
   }
 }
 
@@ -688,6 +716,24 @@ $alt-tile-w: min(45vw, 190px);
   transition: transform 0.12s, opacity 0.15s;
   &:hover { opacity: 0.9; }
   &:active { transform: scale(0.96); }
+}
+
+// Header "Save" button shown on a freshly generated, not-yet-saved card.
+.save-draft-btn {
+  --background: #6C5CE7;
+  --background-hover: #5b4bd6;
+  --background-activated: #5b4bd6;
+  --color: #fff;
+  --border-radius: 999px;
+  --padding-start: 18px;
+  --padding-end: 18px;
+  --box-shadow: none;
+  height: 34px;
+  margin-inline-end: 4px;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .create-cta {

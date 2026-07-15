@@ -23,26 +23,44 @@ service cloud.firestore {
       function willOwn() {
         return request.auth != null && request.resource.data.createdBy == request.auth.uid;
       }
+      // Enabling the curated-feed flags is admin-only. A non-admin write may
+      // leave a flag as-is or turn it OFF (e.g. an owner making a card private
+      // clears them), but may never turn one ON that wasn't already on. Missing
+      // field defaults to false, so a plain owner edit that omits them passes.
+      function noNonAdminFeedEnable() {
+        return (request.resource.data.get('showOnHome', false) == false
+                || resource.data.get('showOnHome', false) == true)
+            && (request.resource.data.get('showOnExplore', false) == false
+                || resource.data.get('showOnExplore', false) == true);
+      }
 
       allow read: if resource.data.publishStatus == 'published'
                   || resource.data.homeFeatured == true
+                  || resource.data.showOnHome == true
+                  || resource.data.showOnExplore == true
                   || isOwner()
                   || isAdmin();
 
       // Creating a card client-side (rare — the backend normally creates it):
-      // the new doc must be owned by the requester.
-      allow create: if willOwn() || isAdmin();
+      // the new doc must be owned by the requester, and a non-admin can't
+      // create it already flagged onto the Home/Explore feeds.
+      allow create: if isAdmin()
+                    || (willOwn()
+                        && request.resource.data.get('showOnHome', false) == false
+                        && request.resource.data.get('showOnExplore', false) == false);
 
       // Claiming an anonymous backend cache doc as your draft, or editing your
       // own card: the result must be owned by you, and you may only take over a
       // doc that is currently yours or unowned (the backend writes createdBy
-      // "Anonymous" for cache copies).
+      // "Anonymous" for cache copies). Non-admins can't touch the feed flags.
       allow update: if isAdmin()
-                    || (willOwn() && (
+                    || (willOwn()
+                        && (
                           resource.data.createdBy == request.auth.uid ||
                           resource.data.createdBy == 'Anonymous' ||
                           !('createdBy' in resource.data)
-                       ));
+                        )
+                        && noNonAdminFeedEnable());
 
       allow delete: if isOwner() || isAdmin();
     }

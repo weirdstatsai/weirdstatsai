@@ -21,9 +21,17 @@
       <ion-icon name="shield-checkmark-outline"></ion-icon> Admin view
     </div>
     <ion-buttons slot="end">
-      <!-- Owner viewing their own shared card has nothing to report/manage
-           here (they manage from their profile), so hide the menu for them. -->
-      <ion-button (click)="isAdminView ? presentAdminActions() : viewOnly ? presentViewActions() : presentActions()" *ngIf="card && !(viewOnly && isOwner)" aria-label="Options">
+      <!-- Freshly generated & not yet saved: explicit Save + discard, no menu.
+           The options menu (publish / share / delete) only appears once saved. -->
+      <ng-container *ngIf="card && isUnsavedDraft">
+        <ion-button (click)="discardDraft()" aria-label="Discard">
+          <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+        </ion-button>
+        <ion-button class="save-draft-btn" (click)="saveDraft()">Save</ion-button>
+      </ng-container>
+      <!-- Saved / existing card: the options menu. Owner viewing their own
+           shared card manages from their profile, so hide the menu for them. -->
+      <ion-button (click)="isAdminView ? presentAdminActions() : viewOnly ? presentViewActions() : presentActions()" *ngIf="card && !isUnsavedDraft && !(viewOnly && isOwner)" aria-label="Options">
         <ion-icon slot="icon-only" name="ellipsis-vertical-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -34,16 +42,19 @@
 
   <!-- Loading status header (the frame below carries the visual work) -->
   <div class="state gen-state" *ngIf="isLoading && showLoadingUi">
-    <p class="status-msg">{{ statusMsg || 'Starting…' }}</p>
+    <p class="status-msg">{{ genStepLabel || statusMsg || 'Getting started…' }}</p>
+    <p class="status-sub">Hang tight — building your stat card ✨</p>
     <div class="status-steps">
-      <div class="step" [class.active]="statusMsg.includes('Searching')">
-        <ion-icon name="search-outline"></ion-icon> Searching web
-      </div>
-      <div class="step" [class.active]="statusMsg.includes('Building')">
-        <ion-icon name="construct-outline"></ion-icon> Building card
-      </div>
-      <div class="step" [class.active]="statusMsg.includes('Almost')">
-        <ion-icon name="checkmark-outline"></ion-icon> Saving
+      <div class="step"
+           *ngFor="let s of genSteps; let i = index"
+           [class.active]="i === genStepIndex"
+           [class.done]="i < genStepIndex">
+        <span class="step-mark">
+          <ion-icon *ngIf="i < genStepIndex" name="checkmark-outline"></ion-icon>
+          <ion-spinner *ngIf="i === genStepIndex" name="crescent"></ion-spinner>
+          <ion-icon *ngIf="i > genStepIndex" [name]="s.icon"></ion-icon>
+        </span>
+        <span class="step-text">{{ s.label }}</span>
       </div>
     </div>
   </div>
@@ -361,8 +372,9 @@
       </div>
     </div>
 
-    <!-- Edit panel (shown when editing or saved card) -->
-    <div class="edit-panel" *ngIf="(editing || isSaved) && card.cardType !== 'fact' && !viewOnly">
+    <!-- Edit panel — accent + badge, always available on the owner's editable
+         view (view-only shared links never show it). -->
+    <div class="edit-panel" *ngIf="!viewOnly && card.cardType !== 'fact'">
       <p class="edit-label">Accent color</p>
       <div class="swatches">
         <button

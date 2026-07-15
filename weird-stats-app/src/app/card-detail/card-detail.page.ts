@@ -55,6 +55,50 @@ export class CardDetailPage implements OnInit {
   frameLeaving = false;
   private loadingGateTimer?: ReturnType<typeof setTimeout>;
 
+  // ── Narrated generation steps ─────────────────────────────────────────────
+  // The backend reports 3 coarse phases (step 1 research → 2 build → 3 save).
+  // We narrate them as a livelier list of captions so the wait feels like real
+  // work in progress. A ticker auto-advances the highlight within the phase the
+  // backend is actually in, and never runs ahead of it (holds at a phase's last
+  // caption until the backend moves on) so it stays honest.
+  readonly genSteps: Array<{ icon: string; label: string; phase: number }> = [
+    { icon: 'bulb-outline',       label: 'Understanding your question', phase: 1 },
+    { icon: 'search-outline',     label: 'Researching & gathering the facts', phase: 1 },
+    { icon: 'globe-outline',      label: 'Scanning trusted sources', phase: 1 },
+    { icon: 'analytics-outline',  label: 'Crunching the numbers', phase: 2 },
+    { icon: 'color-wand-outline', label: 'Designing your stat card', phase: 2 },
+    { icon: 'sparkles-outline',   label: 'Adding the finishing touches', phase: 3 },
+  ];
+  genStepIndex = 0;
+  private backendStep = 0;
+  private genTicker?: ReturnType<typeof setInterval>;
+
+  /** Begin narrating the steps; auto-advance within the current backend phase. */
+  private startGenSteps(): void {
+    this.genStepIndex = 0;
+    this.backendStep = 0;
+    clearInterval(this.genTicker);
+    this.genTicker = setInterval(() => {
+      // Furthest caption the phase the backend is currently in allows.
+      const cap = this.genSteps.reduce(
+        (acc, s, i) => (s.phase <= this.backendStep ? i : acc), 0);
+      if (this.genStepIndex < cap) {
+        this.ngZone.run(() => this.genStepIndex++);
+      }
+    }, 1400);
+  }
+
+  private stopGenSteps(): void {
+    clearInterval(this.genTicker);
+    this.genTicker = undefined;
+  }
+
+  /** Caption for the currently-highlighted generation step (empty once done). */
+  get genStepLabel(): string {
+    const s = this.genSteps[this.genStepIndex];
+    return s ? s.label : '';
+  }
+
   /** Arm the 300ms gate: only show loading UI if we're still waiting by then. */
   private beginLoadingUi(): void {
     clearTimeout(this.loadingGateTimer);
@@ -76,6 +120,8 @@ export class CardDetailPage implements OnInit {
       this.frameLeaving = true;
       setTimeout(() => { this.frameVisible = false; this.frameLeaving = false; }, 520);
     }
+    this.genStepIndex = this.genSteps.length;   // all steps done
+    this.stopGenSteps();
   }
 
   /** Error/abort: tear the loading UI down instantly (no choreography). */
@@ -84,6 +130,7 @@ export class CardDetailPage implements OnInit {
     this.showLoadingUi = false;
     this.frameVisible = false;
     this.frameLeaving = false;
+    this.stopGenSteps();
   }
   viewOnly = false;
   // Logged-out visitor on a shared /card/:id link — drives the sign-in bar
@@ -93,7 +140,6 @@ export class CardDetailPage implements OnInit {
   isOwner = false;
   // A guest just generated this card — held locally, prompt them to sign in.
   guestUnsaved = false;
-  editing = false;
   isSaved = false;
   isAdminView = false;
   returnUrl = '';
@@ -241,6 +287,17 @@ export class CardDetailPage implements OnInit {
   }
 
   /**
+   * True only for a just-generated card the user hasn't committed to their
+   * drafts yet. In this state the header shows an explicit Save button + a
+   * discard (trash) icon instead of the options menu. Everything else — a card
+   * opened from Drafts/Saved, or one the user has just Saved — shows the menu,
+   * where publish / share / (admin) feed-curation options live.
+   */
+  get isUnsavedDraft(): boolean {
+    return this.fromGenerate && !this.isSaved && !this.viewOnly;
+  }
+
+  /**
    * Product-metrics event for opening a card. `entry` distinguishes a card
    * opened from the in-app feed vs a shared/deep link. When the share UI is
    * shown (view-only), also record a share-options impression.
@@ -381,7 +438,6 @@ export class CardDetailPage implements OnInit {
     this.storedCard = undefined;
     this.errorMsg = '';
     this.isSaved = false;
-    this.editing = false;
     this.viewOnly = !!state?.viewOnly;
     this.isAdminView = !!state?.isAdminView;
     this.returnUrl = state?.returnUrl ?? '';
@@ -457,6 +513,7 @@ export class CardDetailPage implements OnInit {
     this.errorMsg = '';
     this.skeletonType = '';
     this.beginLoadingUi();
+    this.startGenSteps();
 
     const user = await firstValueFrom(this.authService.user$);
     const uid = user?.uid ?? null;
@@ -491,6 +548,7 @@ export class CardDetailPage implements OnInit {
           this.ngZone.run(async () => {
             if (event.type === 'status') {
               this.statusMsg = event.message;
+              this.backendStep = event.step ?? this.backendStep;
             } else if (event.type === 'shape') {
               // Backend knows the card type before the (slower) format step
               // finishes — render a matching skeleton so the wait feels shorter.
@@ -553,10 +611,41 @@ export class CardDetailPage implements OnInit {
     }
   }
 
+  /**
+   * Admin-only feed-curation buttons (Publish to / Remove from Explore & Home).
+   * Returned for any saved card — including community cards an admin doesn't
+   * own — so the admin can curate the whole published pool, not just their own
+   * cards. Empty for non-admins. Labels toggle on the card's current flags.
+   */
+  private async _feedToggleButtons(): Promise<any[]> {
+    const id = this.storedCard?.id;
+    if (!id) return [];
+    const user = await firstValueFrom(this.authService.user$);
+    if (!user || !(await this.adminService.isAdmin(user.uid))) return [];
+    const onExplore = !!this.storedCard?.showOnExplore;
+    const onHome = !!this.storedCard?.showOnHome;
+    return [
+      {
+        text: onExplore ? 'Remove from Explore' : 'Publish to Explore',
+        icon: 'compass-outline',
+        handler: () => this._setFeedFlag('showOnExplore', !onExplore,
+          onExplore ? 'Removed from Explore' : 'Published to Explore!'),
+      },
+      {
+        text: onHome ? 'Remove from Home' : 'Publish to Home',
+        icon: 'home-outline',
+        handler: () => this._setFeedFlag('showOnHome', !onHome,
+          onHome ? 'Removed from Home' : 'Published to Home!'),
+      },
+    ];
+  }
+
   async presentViewActions(): Promise<void> {
-    // Sharing now lives inline on the page; the menu is just Report + Cancel.
+    // Sharing lives inline on the page; the menu is Report + Cancel — plus the
+    // admin feed-curation toggles when an admin is viewing a community card.
     const sheet = await this.actionSheetCtrl.create({
       buttons: [
+        ...await this._feedToggleButtons(),
         {
           text: 'Report',
           icon: 'flag-outline',
@@ -767,40 +856,37 @@ export class CardDetailPage implements OnInit {
     const user = await firstValueFrom(this.authService.user$);
     const buttons: any[] = [];
     const hasStoredId = !!this.storedCard?.id;
+    // Saving a fresh card moved to the header (Save button); by the time this
+    // menu is reachable the card is always stored, so key off publishStatus.
 
-    if (!hasStoredId) {
-      // Freshly generated — nothing stored yet
-      if (user) {
-        buttons.push({ text: 'Save to Drafts', icon: 'bookmark-outline', handler: () => this.saveCard() });
-      } else {
-        buttons.push({ text: 'Sign in to save', icon: 'log-in-outline', handler: () => this.promptSignIn() });
+    if (hasStoredId) {
+      if (this.isDraftCard()) {
+        buttons.push({ text: 'Publish…', icon: 'earth-outline', handler: () => this.publishFlow() });
+      } else if (this.storedCard?.publishStatus === 'private') {
+        buttons.push(
+          { text: 'Make public', icon: 'earth-outline', handler: () => this.makePublic() },
+          { text: 'Duplicate card', icon: 'copy-outline', handler: () => this.duplicateCard() },
+        );
+      } else if (this.storedCard?.publishStatus === 'published') {
+        buttons.push(
+          { text: 'Make private', icon: 'lock-closed-outline', handler: () => this.makePrivate() },
+          { text: 'Duplicate card', icon: 'copy-outline', handler: () => this.duplicateCard() },
+        );
       }
-    } else if (this.isDraftCard()) {
-      buttons.push({ text: 'Publish…', icon: 'earth-outline', handler: () => this.publishFlow() });
-    } else if (this.storedCard?.publishStatus === 'private') {
-      buttons.push(
-        { text: 'Make public', icon: 'earth-outline', handler: () => this.makePublic() },
-        { text: 'Duplicate card', icon: 'copy-outline', handler: () => this.duplicateCard() },
-      );
-    } else if (this.storedCard?.publishStatus === 'published') {
-      buttons.push(
-        { text: 'Make private', icon: 'lock-closed-outline', handler: () => this.makePrivate() },
-        { text: 'Duplicate card', icon: 'copy-outline', handler: () => this.duplicateCard() },
-      );
     }
 
-    buttons.push(
-      {
-        text: 'Edit card',
-        icon: 'create-outline',
-        handler: () => { this.editing = !this.editing; },
-      },
-      {
+    // Admin-only feed curation (Publish to / Remove from Explore & Home).
+    buttons.push(...await this._feedToggleButtons());
+
+    // Sharing is only offered once the card is public — a draft/private card
+    // has no shareable link yet. The publish flow above is the path to unlock it.
+    if (this.storedCard?.publishStatus === 'published') {
+      buttons.push({
         text: 'Share card',
         icon: 'share-social-outline',
         handler: () => this.goShare(),
-      },
-    );
+      });
+    }
 
     if (user && hasStoredId) {
       buttons.push({
@@ -837,7 +923,7 @@ export class CardDetailPage implements OnInit {
     const { data } = await modal.onWillDismiss();
     if (!data?.choice) return;
     if (data.choice === 'public') {
-      await this._promoteDraft('published', 'Saved publicly — live on Explore!');
+      await this._promoteDraft('published', 'Saved publicly — anyone with the link can view it.');
     } else {
       await this._savePrivateFlow();
     }
@@ -869,6 +955,9 @@ export class CardDetailPage implements OnInit {
     const createdByName = (card.createdByName || '').trim() || (await this.userName());
     const createdByEmoji = (card.createdByEmoji || '').trim()
       || await firstValueFrom(this.emoji.emoji$(uid)).catch(() => '') || '';
+    // A private card must never carry the public-feed flags (they grant public
+    // read on their own). Drafts never have them, but clear defensively.
+    const feedClear = status === 'private' ? { showOnHome: false, showOnExplore: false } : {};
     try {
       await this.afs.doc(`stats/${card.id}`).set({
         ...card,
@@ -878,8 +967,9 @@ export class CardDetailPage implements OnInit {
         createdByEmoji,
         createdAt: card.createdAt ?? new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        ...feedClear,
       }, { merge: true });
-      this.storedCard = { ...card, publishStatus: status, createdByName, createdByEmoji };
+      this.storedCard = { ...card, publishStatus: status, createdByName, createdByEmoji, ...feedClear };
       this.toast(msg);
       // Public cards get shared — render the real-card social preview now.
       if (status === 'published') this.generateOgImage();
@@ -889,7 +979,7 @@ export class CardDetailPage implements OnInit {
   }
 
   private async makePublic(): Promise<void> {
-    await this._updateStatus('published', 'Now public — live on Explore!');
+    await this._updateStatus('published', 'Now public — anyone with the link can view it.');
   }
 
   private async makePrivate(): Promise<void> {
@@ -911,12 +1001,52 @@ export class CardDetailPage implements OnInit {
   private async _updateStatus(status: 'private' | 'published', msg: string): Promise<void> {
     const id = this.storedCard?.id;
     if (!id) return;
+    const patch: Record<string, unknown> = { publishStatus: status };
+    // A private card must not stay on the public feeds — the showOnHome/
+    // showOnExplore flags grant public read on their own, so clear them when
+    // going private (owners are allowed to *disable* the flags in the rules).
+    if (status === 'private') { patch['showOnHome'] = false; patch['showOnExplore'] = false; }
     try {
-      await this.afs.doc(`stats/${id}`).update({ publishStatus: status });
-      this.storedCard = { ...this.storedCard!, publishStatus: status };
+      await this.afs.doc(`stats/${id}`).update(patch);
+      this.storedCard = {
+        ...this.storedCard!,
+        publishStatus: status,
+        ...(status === 'private' ? { showOnHome: false, showOnExplore: false } : {}),
+      };
       this.toast(msg);
       // Public cards get shared — render the real-card social preview now.
       if (status === 'published') this.generateOgImage();
+    } catch {
+      this.toast('Could not update card.');
+    }
+  }
+
+  /**
+   * Admin-only: toggle whether this saved card appears on the Home or Explore
+   * feed. The feed queries read these flags directly. Enabling a flag also
+   * publishes the card (so it's publicly visible + shareable) and renders its
+   * social-preview image; disabling just clears the flag. Firestore rules
+   * enforce that only admins can enable the flags.
+   */
+  private async _setFeedFlag(field: 'showOnHome' | 'showOnExplore', value: boolean, msg: string): Promise<void> {
+    const id = this.storedCard?.id;
+    if (!id) return;
+    const now = new Date().toISOString();
+    const patch: Record<string, unknown> = { [field]: value, updatedAt: now };
+    // A card on a public feed must be public — publish it on enable.
+    if (value) patch['publishStatus'] = 'published';
+    // Stamp Home-added time so the admin panel's Home list orders correctly.
+    if (field === 'showOnHome' && value) patch['homeAddedAt'] = now;
+    try {
+      await this.afs.doc(`stats/${id}`).update(patch);
+      this.storedCard = {
+        ...this.storedCard!,
+        [field]: value,
+        ...(value ? { publishStatus: 'published' as const } : {}),
+        ...(field === 'showOnHome' && value ? { homeAddedAt: now } : {}),
+      };
+      this.toast(msg);
+      if (value) this.generateOgImage();
     } catch {
       this.toast('Could not update card.');
     }
@@ -958,26 +1088,48 @@ export class CardDetailPage implements OnInit {
     await alert.present();
   }
 
-  /** Save a freshly generated card as a device-local draft (never Firestore). */
-  async saveCard(): Promise<void> {
+  /**
+   * Commit a freshly generated card to the user's drafts and flip the header
+   * into the saved state (which reveals the options menu). Stays on the page so
+   * the user can immediately publish / manage it. Guests are prompted to sign in
+   * first. Idempotent — a signed-in generation already auto-claimed the doc, so
+   * this just re-persists and marks it saved.
+   */
+  async saveDraft(): Promise<void> {
     if (!this.card) { this.toast('No card to save.'); return; }
     const user = await firstValueFrom(this.authService.user$);
-    if (!user) { this.toast('Sign in to save cards.'); return; }
+    if (!user) { this.promptSignIn(); return; }
     const doc: StoredStatCard = {
       id: this.storedCard?.id || this.afs.createId(),
       status: 'completed',
-      publishStatus: 'draft',
+      publishStatus: this.storedCard?.publishStatus ?? 'draft',
       createdBy: user.uid,
+      createdByName: this.storedCard?.createdByName ?? (user.displayName || '').trim(),
+      createdByEmoji: this.storedCard?.createdByEmoji ?? '',
       createdAt: this.storedCard?.createdAt ?? new Date().toISOString(),
       prompt: this.storedCard?.prompt ?? '',
       promptHash: this.storedCard?.promptHash ?? '',
       data: this.card,
     };
-    this.drafts.add(user.uid, doc);
-    this.isSaved = true;
+    await this.drafts.add(user.uid, doc);
     this.storedCard = doc;
+    this.isSaved = true;
     this.toast('Saved to Drafts!');
-    this.router.navigate(['/profile'], { state: { tab: 'draft' } });
+  }
+
+  /** Discard a freshly generated, not-yet-saved card. Signed-in: same confirm +
+   *  doc/OG cleanup as a normal delete. Guest: the card is only in localStorage
+   *  (plus an "Anonymous" backend cache doc they can't delete under the rules),
+   *  so just drop the local copy and leave — no Firestore delete to fail on. */
+  async discardDraft(): Promise<void> {
+    const user = await firstValueFrom(this.authService.user$);
+    if (!user) {
+      try { localStorage.removeItem(CardDetailPage.PENDING_KEY); } catch { /* ignore */ }
+      this.guestUnsaved = false;
+      this.router.navigate(['/home']);
+      return;
+    }
+    await this.confirmDelete();
   }
 
   private async confirmDelete(): Promise<void> {
@@ -1074,6 +1226,12 @@ export class CardDetailPage implements OnInit {
 
   goShare(): void {
     if (!this.card || !this.ensureShareable()) return;
+    // A card must be published before it can be shared — until then there's no
+    // public link. Owners publish via the options menu (Publish… / Make public).
+    if (this.storedCard?.publishStatus !== 'published') {
+      this.toast('Publish this card first to share it.');
+      return;
+    }
     this.router.navigate(['/share-card'], {
       state: { card: this.card, cardId: this.storedCard?.id ?? null },
     });
