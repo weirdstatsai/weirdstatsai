@@ -1,6 +1,6 @@
 <div class="wcard" [class.full]="size==='full'" [class.alt]="size==='alt'"
      [style.--accent]="accent" [style.--grad-from]="gradFrom" [style.--grad-to]="gradTo"
-     [attr.data-style]="rankStyle">
+     [attr.data-style]="effStyle">
 
   <!-- Header -->
   <span class="wcard-bg-icon" *ngIf="bgSvg && size==='full'" [innerHTML]="bgSvg"></span>
@@ -12,7 +12,7 @@
   <p class="wcard-title">{{ card.title | stripEmoji }}</p>
 
   <!-- ── Style: bars (default) ─────────────────────────────────────────── -->
-  <ng-container *ngIf="rankStyle === 'bars'">
+  <ng-container *ngIf="effStyle === 'bars'">
     <div class="rows">
       <div class="row" *ngFor="let row of rows; let i = index">
         <div class="row-top">
@@ -26,7 +26,7 @@
   </ng-container>
 
   <!-- ── Style: pill (bar inside value pill) ───────────────────────────── -->
-  <ng-container *ngIf="rankStyle === 'pill'">
+  <ng-container *ngIf="effStyle === 'pill'">
     <div class="rows">
       <div class="row" *ngFor="let row of rows; let i = index">
         <div class="row-top">
@@ -42,7 +42,7 @@
   </ng-container>
 
   <!-- ── Style: percent (bar + % of max) ──────────────────────────────── -->
-  <ng-container *ngIf="rankStyle === 'percent'">
+  <ng-container *ngIf="effStyle === 'percent'">
     <div class="rows">
       <div class="row" *ngFor="let row of rows; let i = index">
         <div class="row-top">
@@ -60,7 +60,7 @@
   </ng-container>
 
   <!-- ── Style: vertical bars ─────────────────────────────────────────── -->
-  <ng-container *ngIf="rankStyle === 'vertical'">
+  <ng-container *ngIf="effStyle === 'vertical'">
     <div class="vert-cols">
       <div class="vert-col" *ngFor="let row of rows; let i = index">
         <div class="vert-val">{{ fmt(row.value) }}<br><span class="vert-unit" *ngIf="row.unit">{{ row.unit }}</span></div>
@@ -77,7 +77,7 @@
   </ng-container>
 
   <!-- ── Style: circular progress ─────────────────────────────────────── -->
-  <ng-container *ngIf="rankStyle === 'circular'">
+  <ng-container *ngIf="effStyle === 'circular'">
     <div class="rows">
       <div class="circ-row" *ngFor="let row of rows; let i = index">
         <div class="circ-left">
@@ -103,7 +103,7 @@
   </ng-container>
 
   <!-- ── Style: sparkline + bar ───────────────────────────────────────── -->
-  <ng-container *ngIf="rankStyle === 'sparkline'">
+  <ng-container *ngIf="effStyle === 'sparkline'">
     <div class="rows">
       <div class="row" *ngFor="let row of rows; let i = index">
         <div class="row-top">
@@ -119,6 +119,21 @@
         </div>
       </div>
     </div>
+  </ng-container>
+
+  <!-- ── Style: list (no metric — a curated ordered list) ─────────────────
+       Chosen automatically when the rows carry no real values to rank by, so
+       "top X" cards read as a clean list instead of empty bars/gauges. -->
+  <ng-container *ngIf="effStyle === 'list'">
+    <ol class="rank-list">
+      <li class="rank-list-item" *ngFor="let row of rows; let i = index">
+        <span class="rl-rank">{{ row.rank ?? (i + 1) }}</span>
+        <span class="rl-body">
+          <span class="label">{{ row.label }}</span>
+          <span class="rl-extra" *ngIf="row.extra">{{ row.extra }}</span>
+        </span>
+      </li>
+    </ol>
   </ng-container>
 
   <p class="rank-empty" *ngIf="!hasRows">No ranking data available.</p>

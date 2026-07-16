@@ -1,0 +1,49 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="admin-toolbar">
+    <ion-buttons slot="start">
+      <ion-button (click)="back()" class="back-btn">
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <div class="admin-title-wrap">
+      <ion-icon name="people-outline" class="title-icon"></ion-icon>
+      <ion-title class="admin-title">Users</ion-title>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="admin-content">
+
+  <div class="loading-state" *ngIf="isLoading">
+    <ion-spinner name="dots"></ion-spinner>
+    <p>Loading users…</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading">
+    <div class="tab-body">
+      <div class="search-row">
+        <ion-icon name="search-outline"></ion-icon>
+        <input [(ngModel)]="searchQuery" placeholder="Search by name or email" class="search-in"/>
+        <ion-icon name="close-outline" *ngIf="searchQuery" (click)="searchQuery=''" class="clear-icon"></ion-icon>
+      </div>
+
+      <p class="list-count">{{ filteredUsers.length }} {{ filteredUsers.length === 1 ? 'user' : 'users' }}</p>
+
+      <div class="user-list">
+        <div class="user-item" *ngFor="let u of filteredUsers" (click)="openUser(u.uid)">
+          <div class="u-avatar">{{ (u.displayName || '?').charAt(0).toUpperCase() }}</div>
+          <div class="u-info">
+            <p class="u-name">{{ u.displayName || 'Unknown' }}</p>
+            <p class="u-sub">{{ u.cardCount }} cards
+              <span class="u-plan premium" *ngIf="u.plan === 'premium'">Premium</span>
+              <span class="u-ban" *ngIf="u.banned">Banned</span>
+            </p>
+          </div>
+          <ion-icon name="chevron-forward-outline" class="u-arrow"></ion-icon>
+        </div>
+        <p class="empty-state" *ngIf="filteredUsers.length === 0">No users found</p>
+      </div>
+    </div>
+  </ng-container>
+
+</ion-content>

@@ -21,6 +21,32 @@
   </div>
 
   <div class="account-section">
+    <!-- Current plan -->
+    <div class="account-row plan-row">
+      <div class="row-icon-wrap" [class.admin]="isPremium">
+        <ion-icon [name]="isPremium ? 'star' : 'star-outline'"></ion-icon>
+      </div>
+      <span class="row-label">{{ planLabel }}</span>
+    </div>
+
+    <!-- Upgrade / view plans -->
+    <div class="account-row" *ngIf="!isPremium" [routerLink]="['/pricing']">
+      <div class="row-icon-wrap">
+        <ion-icon name="rocket-outline"></ion-icon>
+      </div>
+      <span class="row-label">Upgrade to Premium</span>
+      <ion-icon name="chevron-forward-outline" class="row-arrow"></ion-icon>
+    </div>
+
+    <!-- Manage subscription (Stripe customer portal) -->
+    <div class="account-row" *ngIf="hasSubscription" (click)="manageBilling()">
+      <div class="row-icon-wrap">
+        <ion-icon name="card-outline"></ion-icon>
+      </div>
+      <span class="row-label">Manage subscription</span>
+      <ion-icon name="chevron-forward-outline" class="row-arrow"></ion-icon>
+    </div>
+
     <div class="account-row" *ngIf="isAdmin" [routerLink]="['/admin']">
       <div class="row-icon-wrap admin">
         <ion-icon name="shield-checkmark-outline"></ion-icon>

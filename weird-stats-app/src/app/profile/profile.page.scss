@@ -71,7 +71,7 @@ $yellow: #BA7517;
 
 // ── Name / bio ────────────────────────────────────────────────────────────
 .profile-name {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 800;
   color: var(--ion-color-dark);
   margin: 14px 0 3px;
@@ -79,9 +79,9 @@ $yellow: #BA7517;
 }
 
 .profile-bio {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--ion-color-medium);
-  margin: 0 0 2px;
+  margin: 0 0 15px;
   line-height: 1.5;
 }
 
@@ -280,9 +280,7 @@ $yellow: #BA7517;
     transform: scale(0.97);
   }
 
-  // Saved-card visibility borders
-  &.is-public  { box-shadow: 0 0 0 2.5px $green; }
-  &.is-private { box-shadow: 0 0 0 2.5px $purple; }
+  // Public/Private is shown by the top-right status badge now — no colored border.
 
   &:active { opacity: 0.9; }
 
@@ -295,22 +293,23 @@ $yellow: #BA7517;
 }
 
 // ── Status badge (Public / Private) ───────────────────────────────────────
+// Private-only indicator — a small lock icon at the top-right (public cards
+// show nothing, since public is the default).
 .status-badge {
   position: absolute;
-  bottom: 8px;
-  left: 8px;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
   display: flex;
   align-items: center;
-  gap: 3px;
-  font-size: 9px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 20px;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   color: #fff;
   backdrop-filter: blur(4px);
-  ion-icon { font-size: 10px; }
+  ion-icon { font-size: 12px; }
 
-  &.public  { background: rgba(29, 158, 117, 0.9); }
   &.private { background: rgba(108, 92, 231, 0.9); }
 }
 
@@ -1032,6 +1031,94 @@ $yellow: #BA7517;
 
 // ── Projects tab ──────────────────────────────────────────────────────────
 .projects-wrap { padding: 8px 12px 32px; }
+
+// ── Projects: Premium-locked view ──────────────────────────────────────────
+.status-tab .tab-lock {
+  font-size: 11px !important;
+  margin-left: 3px;
+  color: var(--ion-color-primary);
+  opacity: 0.85;
+}
+.status-tab.locked ion-icon:first-child { opacity: 0.7; }
+
+.projects-locked {
+  position: relative;
+  padding: 12px;
+  min-height: 320px;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.locked-blur {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  filter: blur(5px);
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+
+  .proj-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--ion-card-background, #fff);
+    border: 1px solid var(--ion-color-step-100, #ececf6);
+    border-radius: 14px; padding: 14px;
+  }
+  .proj-thumb {
+    width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 14px; color: #fff;
+    background: linear-gradient(135deg, var(--ion-color-primary), #8a7bf0);
+  }
+  .proj-meta { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  .proj-name { font-weight: 700; font-size: 15px; color: var(--ion-text-color, #1a1a2e); }
+  .proj-sub { font-size: 12.5px; color: var(--ion-color-step-500, #8a8798); }
+  .proj-arrow { color: var(--ion-color-step-400, #b3b0c4); }
+}
+
+.locked-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  padding: 24px;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--ion-background-color, #fff) 45%, transparent) 0%,
+    color-mix(in srgb, var(--ion-background-color, #fff) 78%, transparent) 100%);
+}
+.lock-badge {
+  width: 62px; height: 62px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--ion-color-primary);
+  box-shadow: 0 12px 30px -8px var(--ion-color-primary);
+  ion-icon { font-size: 28px; color: #fff; }
+}
+.locked-title {
+  font-size: 18px; font-weight: 800; color: var(--ion-text-color, #1a1a2e);
+  margin: 6px 0 0; letter-spacing: -0.01em;
+}
+.locked-sub {
+  font-size: 13.5px; color: var(--ion-color-step-600, #6b6878);
+  line-height: 1.5; margin: 0; max-width: 320px;
+}
+.locked-cta {
+  margin-top: 8px;
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 46px; padding: 0 22px;
+  background: var(--ion-color-primary); color: #fff;
+  border: none; border-radius: 999px;
+  font: inherit; font-size: 14.5px; font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.12s, opacity 0.15s;
+  ion-icon { font-size: 16px; }
+  &:hover { opacity: 0.93; }
+  &:active { transform: scale(0.97); }
+}
 
 .proj-empty {
   display: flex;

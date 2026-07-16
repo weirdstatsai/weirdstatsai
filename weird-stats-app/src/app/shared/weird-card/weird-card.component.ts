@@ -6,7 +6,7 @@ import { TableStyle } from '../cards/card-table/card-table.component';
 import { VersusStyle } from '../cards/card-versus/card-versus.component';
 import { MapStyle } from '../cards/card-map/card-map.component';
 
-const RANK_STYLES: RankStyle[] = ['bars', 'pill', 'percent', 'vertical', 'circular', 'sparkline'];
+const RANK_STYLES: RankStyle[] = ['bars', 'pill', 'percent', 'vertical', 'circular', 'sparkline', 'list'];
 const KPI_STYLES: KpiStyle[] = [
   'default', 'circular', 'comparison', 'hero',
   'sparkline', 'progress', 'gauge', 'delta',

@@ -21,174 +21,82 @@
 
   <ng-container *ngIf="!isLoading">
 
-    <!-- Metric cards -->
+    <!-- Metric cards — each opens its own admin page -->
     <div class="metrics">
-      <div class="metric-card">
+      <button class="metric-card link" (click)="goUsers()">
         <ion-icon name="people-outline" class="metric-icon"></ion-icon>
-        <p class="metric-num">{{ users.length }}</p>
+        <p class="metric-num">{{ usersCount }}</p>
         <p class="metric-lbl">Total users</p>
-      </div>
-      <div class="metric-card warn" *ngIf="flaggedCards.length > 0">
-        <ion-icon name="flag-outline" class="metric-icon"></ion-icon>
-        <p class="metric-num">{{ flaggedCards.length }}</p>
-        <p class="metric-lbl">Flagged</p>
-      </div>
-      <div class="metric-card ok" *ngIf="flaggedCards.length === 0">
-        <ion-icon name="checkmark-circle-outline" class="metric-icon"></ion-icon>
-        <p class="metric-num">All clear</p>
-        <p class="metric-lbl">No reports</p>
-      </div>
-    </div>
+        <ion-icon name="chevron-forward-outline" class="metric-arrow"></ion-icon>
+      </button>
 
-    <!-- Section tabs -->
-    <div class="section-tabs">
-      <button class="stab" [class.active]="activeTab === 'home'" (click)="activeTab = 'home'">
-        Home feed
-        <span class="stab-badge accent" *ngIf="homeCards.length > 0">{{ homeCards.length }}</span>
-      </button>
-      <button class="stab" [class.active]="activeTab === 'users'" (click)="activeTab = 'users'">
-        Users
-      </button>
-      <button class="stab" [class.active]="activeTab === 'flagged'" (click)="activeTab = 'flagged'">
-        Flagged
-        <span class="stab-badge" *ngIf="flaggedCards.length > 0">{{ flaggedCards.length }}</span>
+      <button class="metric-card link" [class.warn]="flaggedCount > 0" [class.ok]="flaggedCount === 0" (click)="goFlagged()">
+        <ion-icon [name]="flaggedCount > 0 ? 'flag-outline' : 'checkmark-circle-outline'" class="metric-icon"></ion-icon>
+        <p class="metric-num">{{ flaggedCount > 0 ? flaggedCount : 'All clear' }}</p>
+        <p class="metric-lbl">{{ flaggedCount > 0 ? 'Flagged' : 'No reports' }}</p>
+        <ion-icon name="chevron-forward-outline" class="metric-arrow"></ion-icon>
       </button>
     </div>
 
-    <!-- ── Home feed curation ── -->
-    <div *ngIf="activeTab === 'home'" class="tab-body">
-
-      <!-- Custom topic -->
-      <div class="home-block hero-block">
-        <div class="block-lead">
-          <div class="lead-icon"><ion-icon name="sparkles"></ion-icon></div>
-          <div class="lead-text">
-            <p class="block-title">Push a stat to Home</p>
-            <p class="block-sub">Type any topic, or pick a trending one below — it generates a card and pins it to Home instantly.</p>
-          </div>
-        </div>
-        <div class="topic-input">
-          <input [(ngModel)]="customTopic" placeholder="e.g. Which country drinks the most coffee?"
-                 (keydown.enter)="generateCustom()" [disabled]="!!generatingTopic" class="topic-in"/>
-          <button class="gen-btn" (click)="generateCustom()" [disabled]="!!generatingTopic || !customTopic.trim()">
-            <ion-icon name="sparkles-outline"></ion-icon>
-            <span>Generate</span>
-          </button>
-        </div>
-        <p class="gen-status" *ngIf="generatingTopic">
-          <ion-spinner name="crescent"></ion-spinner>
-          <span>{{ genStatus || 'Generating' }} — “{{ generatingTopic }}”</span>
-        </p>
-      </div>
-
-      <!-- Trending -->
-      <div class="home-block">
-        <div class="block-head">
-          <div class="block-lead compact">
-            <div class="lead-icon flame"><ion-icon name="flame"></ion-icon></div>
-            <div class="lead-text">
-              <p class="block-title">Trending now</p>
-              <p class="block-sub tight">Live from Google Trends, news &amp; politics</p>
-            </div>
-          </div>
-          <button class="refresh-btn" (click)="loadTrends()" [disabled]="trendsLoading">
-            <ion-icon name="refresh-outline"></ion-icon>
-          </button>
-        </div>
-        <div class="trends-loading" *ngIf="trendsLoading">
-          <ion-spinner name="dots"></ion-spinner> Fetching trends…
-        </div>
-        <ng-container *ngIf="!trendsLoading">
-          <div class="trend-group" *ngFor="let src of sourceOrder">
-            <ng-container *ngIf="trendsFor(src).length">
-              <p class="trend-src">{{ sourceMeta[src].label }}</p>
-              <div class="trend-list">
-                <button class="trend-chip" *ngFor="let t of trendsFor(src)"
-                        (click)="generateToHome(t.topic)"
-                        [disabled]="!!generatingTopic"
-                        [class.busy]="generatingTopic === t.topic">
-                  <span class="trend-txt">{{ t.topic }}</span>
-                  <ion-spinner *ngIf="generatingTopic === t.topic" name="crescent"></ion-spinner>
-                  <ion-icon *ngIf="generatingTopic !== t.topic" name="add-circle-outline"></ion-icon>
-                </button>
-              </div>
-            </ng-container>
-          </div>
-          <p class="empty-state" *ngIf="trends.length === 0">No trending topics right now.</p>
-        </ng-container>
-      </div>
-
-      <!-- On Home now -->
-      <div class="home-block">
+    <!-- ── Trending → push to Home ── -->
+    <div class="home-block trending-block">
+      <div class="block-head">
         <div class="block-lead compact">
-          <div class="lead-icon home"><ion-icon name="home"></ion-icon></div>
+          <div class="lead-icon flame"><ion-icon name="flame"></ion-icon></div>
           <div class="lead-text">
-            <p class="block-title">On Home now <span class="count-pill">{{ homeCards.length }}</span></p>
-            <p class="block-sub tight" *ngIf="homeCards.length">Shuffled for visitors every few hours</p>
+            <p class="block-title">Trending now</p>
+            <p class="block-sub tight">Live from Google Trends, news &amp; politics</p>
           </div>
         </div>
-        <div class="home-cards">
-          <div class="home-card-row" *ngFor="let c of homeCards">
-            <div class="hc-info">
-              <p class="hc-title">{{ c.data?.title }}</p>
-              <p class="hc-meta">{{ c.data?.uiMeta?.category || 'Other' }} · {{ c.data?.cardType }} card</p>
+        <button class="refresh-btn" (click)="loadTrends()" [disabled]="trendsLoading">
+          <ion-icon name="refresh-outline"></ion-icon>
+        </button>
+      </div>
+      <div class="trends-loading" *ngIf="trendsLoading">
+        <ion-spinner name="dots"></ion-spinner> Fetching trends…
+      </div>
+      <ng-container *ngIf="!trendsLoading">
+        <div class="trend-group" *ngFor="let src of sourceOrder">
+          <ng-container *ngIf="trendsFor(src).length">
+            <p class="trend-src">{{ sourceMeta[src].label }}</p>
+            <div class="trend-list">
+              <button class="trend-chip" *ngFor="let t of trendsFor(src)"
+                      (click)="generateToHome(t.topic)"
+                      [disabled]="!!generatingTopic"
+                      [class.busy]="generatingTopic === t.topic">
+                <span class="trend-txt">{{ t.topic }}</span>
+                <ion-spinner *ngIf="generatingTopic === t.topic" name="crescent"></ion-spinner>
+                <ion-icon *ngIf="generatingTopic !== t.topic" name="add-circle-outline"></ion-icon>
+              </button>
             </div>
-            <button class="hc-remove" (click)="removeFromHome(c)" title="Remove from Home">
-              <ion-icon name="trash-outline"></ion-icon>
-            </button>
-          </div>
-          <div class="home-empty" *ngIf="homeCards.length === 0">
-            <ion-icon name="home-outline"></ion-icon>
-            <p>Home feed is empty. Push a topic above to fill it.</p>
-          </div>
+          </ng-container>
         </div>
-      </div>
+        <p class="empty-state" *ngIf="trends.length === 0">No trending topics right now.</p>
+      </ng-container>
     </div>
 
-    <!-- Users -->
-    <div *ngIf="activeTab === 'users'" class="tab-body">
-      <div class="search-row">
-        <ion-icon name="search-outline"></ion-icon>
-        <input [(ngModel)]="searchQuery" placeholder="Search by name or email" class="search-in"/>
-        <ion-icon name="close-outline" *ngIf="searchQuery" (click)="searchQuery=''" class="clear-icon"></ion-icon>
-      </div>
-
-      <div class="user-list">
-        <div class="user-item" *ngFor="let u of filteredUsers" (click)="openUser(u.uid)">
-          <div class="u-avatar">{{ (u.displayName || '?').charAt(0).toUpperCase() }}</div>
-          <div class="u-info">
-            <p class="u-name">{{ u.displayName || 'Unknown' }}</p>
-            <p class="u-sub">{{ u.cardCount }} cards
-              <span class="u-plan premium" *ngIf="u.plan === 'premium'">Premium</span>
-              <span class="u-ban" *ngIf="u.banned">Banned</span>
-            </p>
-          </div>
-          <ion-icon name="chevron-forward-outline" class="u-arrow"></ion-icon>
+    <!-- ── Home feed ── -->
+    <div class="home-block">
+      <div class="block-lead compact">
+        <div class="lead-icon home"><ion-icon name="home"></ion-icon></div>
+        <div class="lead-text">
+          <p class="block-title">On Home now <span class="count-pill">{{ homeCards.length }}</span></p>
+          <p class="block-sub tight" *ngIf="homeCards.length">Shuffled for visitors every few hours</p>
         </div>
-        <p class="empty-state" *ngIf="filteredUsers.length === 0">No users found</p>
       </div>
-    </div>
-
-    <!-- Flagged -->
-    <div *ngIf="activeTab === 'flagged'" class="tab-body">
-      <div class="flagged-list">
-        <div class="flagged-item" *ngFor="let c of flaggedCards">
-          <div class="f-info">
-            <p class="f-title">{{ c.data?.title }}</p>
-            <p class="f-meta">{{ c.createdByName || 'Unknown' }} · {{ c.flagCount }} reports</p>
+      <div class="home-cards">
+        <div class="home-card-row" *ngFor="let c of homeCards">
+          <div class="hc-info">
+            <p class="hc-title">{{ c.data?.title }}</p>
+            <p class="hc-meta">{{ c.data?.uiMeta?.category || 'Other' }} · {{ c.data?.cardType }} card</p>
           </div>
-          <div class="f-actions">
-            <button class="f-btn ok" (click)="dismissFlag(c.id)" title="Dismiss">
-              <ion-icon name="checkmark-outline"></ion-icon>
-            </button>
-            <button class="f-btn del" (click)="deleteCard(c.id)" title="Delete">
-              <ion-icon name="trash-outline"></ion-icon>
-            </button>
-          </div>
+          <button class="hc-remove" (click)="removeFromHome(c)" title="Remove from Home">
+            <ion-icon name="trash-outline"></ion-icon>
+          </button>
         </div>
-        <div class="flagged-empty" *ngIf="flaggedCards.length === 0">
-          <ion-icon name="checkmark-circle-outline"></ion-icon>
-          <p>No flagged content</p>
+        <div class="home-empty" *ngIf="homeCards.length === 0">
+          <ion-icon name="home-outline"></ion-icon>
+          <p>Home feed is empty. Publish a card to Home from its ⋮ menu.</p>
         </div>
       </div>
     </div>

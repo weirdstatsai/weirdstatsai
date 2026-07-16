@@ -12,7 +12,7 @@ import { environment } from '../../environments/environment';
 import { WeirdCard, StoredStatCard, ACCENT_COLORS } from '../models/weird-card.model';
 import { cardHasData } from '../shared/card-data.util';
 import { AuthService } from '../services/auth.service';
-import { RankStyle } from '../shared/cards/card-ranking/card-ranking.component';
+import { RankStyle, rankAltStylesFor } from '../shared/cards/card-ranking/card-ranking.component';
 import { TableStyle } from '../shared/cards/card-table/card-table.component';
 import { KpiStyle, kpiAltStylesFor } from '../shared/cards/card-kpi/card-kpi.component';
 import { VersusStyle } from '../shared/cards/card-versus/card-versus.component';
@@ -336,12 +336,13 @@ export class CardDetailPage implements OnInit {
   private _buildAltStyles(): void {
     const ui = this.card?.uiMeta;
 
-    // Ranking alts
-    const rankKeys = ui?.rankStyles?.length
-      ? ui.rankStyles : ['pill', 'percent', 'vertical', 'circular'];
-    this.rankAltStyles = rankKeys
-      .filter(s => this.styleLabels[s])
-      .map(s => ({ key: s as RankStyle, label: this.styleLabels[s] }));
+    // Ranking alts — data-gated: a value-less "top X" list offers only "List";
+    // a real metric offers the numeric styles (+ List). Keep the selected style
+    // valid for what's offered.
+    this.rankAltStyles = rankAltStylesFor(this.card);
+    if (!this.rankAltStyles.some(s => s.key === this.selectedRankStyle)) {
+      this.selectedRankStyle = this.rankAltStyles[0]?.key ?? 'bars';
+    }
 
     // Versus alts
     const versusKeys = ui?.versusStyles?.length
@@ -379,7 +380,7 @@ export class CardDetailPage implements OnInit {
     const saved = ui?.selectedStyle;
     if (saved) {
       const ct = this.card?.cardType;
-      if (ct === 'ranking' && this.styleLabels[saved]) this.selectedRankStyle = saved as RankStyle;
+      if (ct === 'ranking' && this.rankAltStyles.some(s => s.key === saved)) this.selectedRankStyle = saved as RankStyle;
       else if (ct === 'kpi') this.selectedKpiStyle = saved as KpiStyle;
       else if (ct === 'table') this.selectedTableStyle = saved as TableStyle;
       else if (ct === 'versus') this.selectedVersusStyle = saved as VersusStyle;

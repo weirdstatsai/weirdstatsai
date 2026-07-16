@@ -17,17 +17,14 @@ interface Trend { topic: string; source: 'trends' | 'news' | 'politics'; }
   styleUrls: ['./admin.page.scss'],
 })
 export class AdminPage implements OnInit {
-  users: any[] = [];
-  flaggedCards: any[] = [];
-  activeTab: 'home' | 'users' | 'flagged' = 'home';
+  usersCount = 0;
+  flaggedCount = 0;
+  homeCards: StoredStatCard[] = [];
   isLoading = true;
-  searchQuery = '';
 
-  // ── Home-feed curation ──
+  // ── Trending (Google Trends / news / politics) → push to Home ──
   trends: Trend[] = [];
   trendsLoading = false;
-  customTopic = '';
-  homeCards: StoredStatCard[] = [];
   /** Topic currently being generated (prompt string) → shows a spinner. */
   generatingTopic: string | null = null;
   genStatus = '';
@@ -59,11 +56,24 @@ export class AdminPage implements OnInit {
     this.isLoading = false;
     this.loadHomeCards();
     this.loadTrends();
-    this.loadUsers();
-    this.loadFlagged();
+    this.loadCounts();
   }
 
-  // ── Home feed ─────────────────────────────────────────────────────────────
+  /** Metric counts only — the full lists live on their own admin pages. */
+  private async loadCounts(): Promise<void> {
+    try {
+      const users = await this.adminService.getAllUsers();
+      this.usersCount = users.filter(u => !u.isAdmin).length;
+    } catch { this.usersCount = 0; }
+    try {
+      const snap = await firstValueFrom(
+        this.afs.collection('stats', ref => ref.where('flagCount', '>', 0)).get()
+      );
+      this.flaggedCount = snap.size;
+    } catch { this.flaggedCount = 0; }
+  }
+
+  // ── Trending ────────────────────────────────────────────────────────────
   trendsFor(source: Trend['source']): Trend[] {
     return this.trends.filter(t => t.source === source);
   }
@@ -81,24 +91,6 @@ export class AdminPage implements OnInit {
     } finally {
       this.trendsLoading = false;
     }
-  }
-
-  async loadHomeCards(): Promise<void> {
-    try {
-      const snap = await firstValueFrom(
-        this.afs.collection<StoredStatCard>('stats', ref => ref.where('showOnHome', '==', true)).get()
-      );
-      this.homeCards = snap.docs
-        .map(d => ({ ...(d.data() as StoredStatCard), id: d.id }))
-        .sort((a, b) => (b.homeAddedAt ?? '').localeCompare(a.homeAddedAt ?? ''));
-    } catch {
-      this.homeCards = [];
-    }
-  }
-
-  generateCustom(): void {
-    const t = this.customTopic.trim();
-    if (t) { this.generateToHome(t); this.customTopic = ''; }
   }
 
   /** Generate a card from a topic and push it straight to the Home feed. */
@@ -167,6 +159,20 @@ export class AdminPage implements OnInit {
     this.ngZone.run(() => this.loadHomeCards());
   }
 
+  // ── Home feed ───────────────────────────────────────────────────────────
+  async loadHomeCards(): Promise<void> {
+    try {
+      const snap = await firstValueFrom(
+        this.afs.collection<StoredStatCard>('stats', ref => ref.where('showOnHome', '==', true)).get()
+      );
+      this.homeCards = snap.docs
+        .map(d => ({ ...(d.data() as StoredStatCard), id: d.id }))
+        .sort((a, b) => (b.homeAddedAt ?? '').localeCompare(a.homeAddedAt ?? ''));
+    } catch {
+      this.homeCards = [];
+    }
+  }
+
   async removeFromHome(card: StoredStatCard): Promise<void> {
     if (!card.id) return;
     const alert = await this.alertCtrl.create({
@@ -175,7 +181,6 @@ export class AdminPage implements OnInit {
       buttons: [
         { text: 'Cancel', role: 'cancel' },
         { text: 'Remove', role: 'destructive', handler: async () => {
-          // Flip the flag off — keep the card (deleting it was destructive).
           await this.afs.doc(`stats/${card.id}`).update({ showOnHome: false });
           this.homeCards = this.homeCards.filter(c => c.id !== card.id);
           this.toast('Removed from Home');
@@ -185,64 +190,8 @@ export class AdminPage implements OnInit {
     await alert.present();
   }
 
-  // ── Users / flagged (existing) ────────────────────────────────────────────
-  async loadUsers(): Promise<void> {
-    const allUsers = await this.adminService.getAllUsers();
-    const statsSnap = await firstValueFrom(this.afs.collection('stats').get());
-    const countMap = new Map<string, number>();
-    for (const doc of statsSnap.docs) {
-      const uid = (doc.data() as any).createdBy;
-      if (uid) countMap.set(uid, (countMap.get(uid) ?? 0) + 1);
-    }
-    this.users = allUsers
-      .filter(u => !u.isAdmin)
-      .map(u => ({ ...u, cardCount: countMap.get(u.uid) ?? 0 }))
-      .sort((a, b) => (b.cardCount - a.cardCount));
-  }
-
-  async loadFlagged(): Promise<void> {
-    try {
-      const snap = await firstValueFrom(
-        this.afs.collection('stats', ref => ref.where('flagCount', '>', 0)).get()
-      );
-      this.flaggedCards = snap.docs.map(d => ({ id: d.id, ...d.data() as any }));
-    } catch { this.flaggedCards = []; }
-  }
-
-  get filteredUsers(): any[] {
-    const q = this.searchQuery.toLowerCase();
-    if (!q) return this.users;
-    return this.users.filter(u =>
-      (u.displayName ?? '').toLowerCase().includes(q) ||
-      (u.email ?? '').toLowerCase().includes(q)
-    );
-  }
-
-  openUser(uid: string): void {
-    this.router.navigate(['/admin-user', uid]);
-  }
-
-  async deleteCard(cardId: string): Promise<void> {
-    const alert = await this.alertCtrl.create({
-      header: 'Delete card?',
-      message: 'This cannot be undone.',
-      buttons: [
-        { text: 'Cancel', role: 'cancel' },
-        { text: 'Delete', role: 'destructive', handler: async () => {
-          await this.adminService.deleteCard(cardId);
-          this.flaggedCards = this.flaggedCards.filter(c => c.id !== cardId);
-          this.toast('Card deleted');
-        }},
-      ],
-    });
-    await alert.present();
-  }
-
-  async dismissFlag(cardId: string): Promise<void> {
-    await this.afs.doc(`stats/${cardId}`).update({ flagCount: 0 });
-    this.flaggedCards = this.flaggedCards.filter(c => c.id !== cardId);
-    this.toast('Flag dismissed');
-  }
+  goUsers(): void { this.router.navigate(['/admin-users']); }
+  goFlagged(): void { this.router.navigate(['/admin-flagged']); }
 
   private async toast(msg: string): Promise<void> {
     const t = await this.toastCtrl.create({ message: msg, duration: 1800, position: 'bottom' });

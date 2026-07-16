@@ -1,0 +1,82 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="back()" aria-label="Back">
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Pricing</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="pricing-wrap">
+
+    <header class="hero">
+      <span class="eyebrow">Pricing</span>
+      <h1>Ask something weird.<br><em>Unlimited</em> stat cards.</h1>
+      <p class="sub">Start free with three cards a day. Go Premium for unlimited cards and clean, watermark-free sharing.</p>
+      <div class="current-pill" *ngIf="isPremium">
+        <ion-icon name="star"></ion-icon> You’re on Premium
+      </div>
+    </header>
+
+    <div class="plans">
+      <!-- Free -->
+      <div class="plan" [class.selected]="selected === 'free'" (click)="selected = 'free'">
+        <p class="plan-name">Free</p>
+        <div class="price"><span class="amt">$0</span><span class="per">forever</span></div>
+        <p class="plan-note">For the casually curious.</p>
+        <ul class="feats">
+          <li><ion-icon name="checkmark"></ion-icon> 3 stat cards every day</li>
+          <li><ion-icon name="checkmark"></ion-icon> Every card style &amp; editing</li>
+          <li><ion-icon name="checkmark"></ion-icon> Save &amp; publish to your profile</li>
+          <li class="dim"><ion-icon name="remove"></ion-icon> Sharing includes a watermark</li>
+        </ul>
+        <button class="btn ghost" (click)="back()">Keep using Free</button>
+      </div>
+
+      <!-- Paid options -->
+      <div class="plan" *ngFor="let p of paid" [class.featured]="p.featured"
+           [class.selected]="selected === p.id" (click)="selected = p.id">
+        <span class="ribbon" *ngIf="p.badge">{{ p.badge }}</span>
+        <p class="plan-name">{{ p.name }}</p>
+        <div class="price"><span class="amt">{{ p.price }}</span><span class="per">{{ p.period }}</span></div>
+        <p class="plan-note">{{ p.note }}</p>
+        <ul class="feats">
+          <li><ion-icon name="checkmark"></ion-icon> <b>Unlimited</b> stat cards</li>
+          <li><ion-icon name="checkmark"></ion-icon> Watermark-free sharing</li>
+          <li><ion-icon name="checkmark"></ion-icon> Keep cards private</li>
+        </ul>
+        <button class="btn primary" [class.loading]="loading === p.id"
+                [disabled]="loading" (click)="choose(p.id)">
+          <ion-spinner *ngIf="loading === p.id" name="dots"></ion-spinner>
+          <span *ngIf="loading !== p.id">Choose {{ p.name }}</span>
+        </button>
+      </div>
+    </div>
+
+    <p class="tax-note">Taxes calculated at checkout · secure payments by Stripe · cancel anytime</p>
+
+    <!-- Comparison -->
+    <section class="compare">
+      <h2>Free vs Premium</h2>
+      <p class="csub">Same weird cards. Premium just takes the limits off.</p>
+      <div class="ctable-wrap">
+        <table class="ctable">
+          <thead>
+            <tr><th>What’s included</th><th class="col">Free</th><th class="col prem">Premium</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of compare">
+              <td>{{ r.label }}</td>
+              <td class="col" [class.yes]="r.free === '✓'" [class.no]="r.free === '—'">{{ r.free }}</td>
+              <td class="col" [class.yes]="r.premium === '✓'" [class.no]="r.premium === '—'">{{ r.premium }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+</ion-content>

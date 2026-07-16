@@ -38,6 +38,14 @@ const routes: Routes = [
     loadChildren: () => import('./admin/admin.module').then(m => m.AdminPageModule),
   },
   {
+    path: 'admin-users',
+    loadChildren: () => import('./admin-users/admin-users.module').then(m => m.AdminUsersPageModule),
+  },
+  {
+    path: 'admin-flagged',
+    loadChildren: () => import('./admin-flagged/admin-flagged.module').then(m => m.AdminFlaggedPageModule),
+  },
+  {
     path: 'admin-user/:uid',
     loadChildren: () => import('./admin-user/admin-user.module').then(m => m.AdminUserPageModule),
   },
@@ -76,6 +84,17 @@ const routes: Routes = [
     path: 'project/:id',
     loadChildren: () => import('./project-detail/project-detail.module').then(m => m.ProjectDetailPageModule),
   },
+  {
+    path: 'pricing',
+    data: { seo: { title: 'Pricing — WeirdStats.ai', description: 'WeirdStats Free and Premium plans — unlimited stat cards and watermark-free sharing.' } },
+    loadChildren: () => import('./pricing/pricing.module').then(m => m.PricingPageModule),
+  },
+  // Stripe checkout return pages.
+  {
+    path: 'billing/success',
+    loadChildren: () => import('./billing/billing-success.module').then(m => m.BillingSuccessPageModule),
+  },
+  { path: 'billing/cancel', redirectTo: '/home', pathMatch: 'full' },
   // Anything unmatched (removed legacy routes, typos, stale links) → home.
   { path: '**', redirectTo: '/home' },
 ];

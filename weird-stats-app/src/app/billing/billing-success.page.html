@@ -1,0 +1,25 @@
+<ion-content class="ion-padding">
+  <div class="billing-return">
+
+    <div class="return-icon" [class.done]="state === 'done'">
+      <ion-spinner *ngIf="state === 'activating'" name="crescent"></ion-spinner>
+      <ion-icon *ngIf="state !== 'activating'" name="checkmark-circle"></ion-icon>
+    </div>
+
+    <h1 class="return-title">
+      {{ state === 'activating' ? 'Activating Premium…' :
+         state === 'done' ? "You're Premium! 🎉" : 'Payment received' }}
+    </h1>
+
+    <p class="return-sub">
+      {{ state === 'activating' ? 'Confirming your payment with Stripe.' :
+         state === 'done' ? 'Unlimited cards and watermark-free sharing are unlocked.' :
+         "Your payment went through — your account will update in a moment. You can head to your profile now." }}
+    </p>
+
+    <button class="return-btn" *ngIf="state !== 'activating'" (click)="goProfile()">
+      Go to Profile
+    </button>
+
+  </div>
+</ion-content>

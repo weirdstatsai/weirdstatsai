@@ -1,0 +1,73 @@
+$purple: #6C5CE7;
+$red:    #D85A30;
+
+.admin-toolbar {
+  --background: #fff;
+  --border-width: 0;
+}
+.admin-title-wrap {
+  display: flex; align-items: center; gap: 6px;
+  position: absolute; left: 50%; transform: translateX(-50%);
+}
+.title-icon { font-size: 18px; color: $purple; }
+.admin-title { font-size: 17px; font-weight: 800; color: #1a1a2e; position: static; }
+.back-btn { --color: #1a1a2e; }
+.admin-content { --background: #F6F6F9; }
+
+.loading-state {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 80px 20px; gap: 10px;
+  p { font-size: 13px; color: #aaa; margin: 0; }
+}
+
+.tab-body { padding: 16px 16px 32px; }
+
+.search-row {
+  display: flex; align-items: center; gap: 8px;
+  background: #fff; border-radius: 12px; padding: 10px 14px;
+  border: 0.5px solid rgba(0,0,0,0.08); margin-bottom: 10px;
+  ion-icon { font-size: 16px; color: #bbb; flex-shrink: 0; }
+}
+.search-in {
+  flex: 1; border: none; outline: none; font-size: 14px;
+  font-family: inherit; background: transparent;
+  &::placeholder { color: #ccc; }
+}
+.clear-icon { cursor: pointer; color: #ccc; }
+
+.list-count {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: #aaa; margin: 0 2px 12px;
+}
+
+.user-list { display: flex; flex-direction: column; gap: 6px; }
+
+.user-item {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; border-radius: 14px; padding: 12px 14px;
+  border: 0.5px solid rgba(0,0,0,0.07); cursor: pointer;
+  transition: background 0.1s;
+  &:active { background: rgba(0,0,0,0.02); }
+}
+
+.u-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, $purple, #378ADD);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+
+.u-info { flex: 1; min-width: 0; }
+.u-name { font-size: 14px; font-weight: 600; color: #1a1a2e; margin: 0 0 3px; }
+.u-sub {
+  font-size: 12px; color: #aaa; margin: 0;
+  display: flex; align-items: center; gap: 6px;
+}
+.u-plan {
+  font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px;
+  &.premium { background: rgba($purple,0.1); color: $purple; }
+}
+.u-ban { font-size: 10px; font-weight: 700; color: $red; }
+.u-arrow { font-size: 15px; color: #ddd; }
+
+.empty-state { text-align: center; color: #ccc; font-size: 13px; padding: 32px 0; }

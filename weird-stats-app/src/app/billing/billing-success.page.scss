@@ -1,0 +1,52 @@
+.billing-return {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+  padding: 24px;
+}
+
+.return-icon {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-spinner { width: 44px; height: 44px; color: #6C5CE7; }
+  ion-icon { font-size: 68px; color: #3aa76d; }
+}
+
+.return-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.return-sub {
+  font-size: 15px;
+  color: #6b6878;
+  margin: 0;
+  max-width: 320px;
+  line-height: 1.45;
+}
+
+.return-btn {
+  margin-top: 10px;
+  height: 46px;
+  padding: 0 26px;
+  border: none;
+  border-radius: 999px;
+  background: #6C5CE7;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s, opacity 0.15s;
+  &:active { transform: scale(0.97); }
+  &:hover { opacity: 0.92; }
+}

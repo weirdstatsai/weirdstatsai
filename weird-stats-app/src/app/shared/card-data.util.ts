@@ -9,6 +9,22 @@ import { WeirdCard } from '../models/weird-card.model';
  * repairs/degrades hollow cards at generation time, so this is defence-in-depth
  * for cards already stored before that fix, and a guard on share/publish.
  */
+/**
+ * True when a ranking/table has real, comparable numbers to rank BY — i.e. ≥2
+ * labelled rows whose values aren't all zero and aren't all identical (there's
+ * variance to order on). When false, the items are a curated *list* ("top
+ * animes"), not a measured ranking, and should render as a clean ordered list
+ * rather than a numeric ranking with empty bars/gauges. Single source of truth
+ * for both the render-time style gate and the alternatives picker.
+ */
+export function rowsHaveMetric(card: WeirdCard | null | undefined): boolean {
+  const vals = (card?.rows ?? [])
+    .filter(r => r && String(r.label ?? '').trim())
+    .map(r => Number(r?.value))
+    .filter(v => Number.isFinite(v));
+  return vals.length >= 2 && new Set(vals).size > 1;
+}
+
 export function cardHasData(card: WeirdCard | null | undefined): boolean {
   if (!card) return false;
   const rows = (card.rows ?? []).filter(r => r && String(r.label ?? '').trim());

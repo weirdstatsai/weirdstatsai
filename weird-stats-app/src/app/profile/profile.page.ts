@@ -16,7 +16,7 @@ import { AdminService } from '../services/admin.service';
 import { DraftService } from '../services/draft.service';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 import { PublishModalComponent } from '../shared/publish-modal/publish-modal.component';
-import { RankStyle } from '../shared/cards/card-ranking/card-ranking.component';
+import { RankStyle, rankAltStylesFor } from '../shared/cards/card-ranking/card-ranking.component';
 import { KpiStyle, kpiAltStylesFor } from '../shared/cards/card-kpi/card-kpi.component';
 import { TableStyle } from '../shared/cards/card-table/card-table.component';
 import { EmojiService } from '../services/emoji.service';
@@ -35,6 +35,7 @@ export class ProfilePage implements OnInit, OnDestroy {
   isLoading = true;
   activeFilter: 'all' | 'chart' | 'map' | 'fact' = 'all';
   activeTab: 'saved' | 'draft' | 'projects' = 'saved';
+  isPremium = false;
   projects: Project[] = [];
   projectCounts: Record<string, number> = {};
   isCreatingProject = false;
@@ -66,11 +67,10 @@ export class ProfilePage implements OnInit, OnDestroy {
   ];
   readonly chartAltTypes: Array<'bar' | 'line' | 'doughnut'> = ['bar', 'line', 'doughnut'];
 
+  // Data-gated (same rule as card-detail): a value-less "top X" list only
+  // offers "List"; a real metric offers the numeric styles.
   get rankAltStyles(): Array<{ key: RankStyle; label: string }> {
-    const styles = this.selectedDraft?.data?.uiMeta?.rankStyles ?? ['pill', 'percent', 'vertical', 'circular'];
-    return styles
-      .filter(s => this.rankStyleLabels[s])
-      .map(s => ({ key: s as RankStyle, label: this.rankStyleLabels[s] }));
+    return rankAltStylesFor(this.selectedDraft?.data);
   }
 
   constructor(
@@ -99,7 +99,8 @@ export class ProfilePage implements OnInit, OnDestroy {
     this.sub = this.user$.pipe(
       switchMap(user => {
         this.currentUid = user?.uid ?? '';
-        if (!user) { this.draftCards = []; return of([] as StoredStatCard[]); }
+        if (!user) { this.draftCards = []; this.isPremium = false; return of([] as StoredStatCard[]); }
+        this.membership.isPremium().then(p => (this.isPremium = p)).catch(() => {});
 
         return this.afs
           .collection<StoredStatCard>('stats', ref =>
@@ -216,7 +217,24 @@ export class ProfilePage implements OnInit, OnDestroy {
     }
   }
 
+  /** Projects is Premium-only. Non-premium taps on the locked tab/section open
+   *  the subscription popup. */
+  async openProjectsUpgrade(ev?: Event): Promise<void> {
+    ev?.stopPropagation();
+    const modal = await this.modalCtrl.create({
+      component: PlanModalComponent,
+      componentProps: { mode: 'upgrade' },
+      breakpoints: [0, 1], initialBreakpoint: 1,
+      handle: false,
+    });
+    await modal.present();
+    await modal.onWillDismiss();
+    // Reflect an upgrade completed elsewhere / just now.
+    this.membership.isPremium().then(p => (this.isPremium = p)).catch(() => {});
+  }
+
   openProject(project: Project): void {
+    if (!this.isPremium) { this.openProjectsUpgrade(); return; }
     this.router.navigate(['/project', project.project_id]);
   }
 

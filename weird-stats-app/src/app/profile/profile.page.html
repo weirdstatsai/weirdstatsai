@@ -21,8 +21,7 @@
       <ng-template #authNameBlock>
         <p class="profile-name">{{ user.displayName || user.phoneNumber || 'WeirdStats User' }}</p>
       </ng-template>
-      <p class="profile-bio">Collecting the world's weirdest stats 📊</p>
-      <p class="profile-email">{{ user.email }}</p>
+      <p class="profile-bio">Collecting the world's weirdest stats...</p>
 
       <div class="profile-actions">
         <button class="action-btn primary" (click)="openEditSheet()">
@@ -46,9 +45,11 @@
         <span>Drafts</span>
         <span class="tab-count-badge">{{ draftCount }}</span>
       </button>
-      <button class="status-tab" *ngIf="showProjectsTab" [class.active]="activeTab === 'projects'" (click)="setTab('projects')">
+      <button class="status-tab" *ngIf="showProjectsTab" [class.active]="activeTab === 'projects'"
+              [class.locked]="!isPremium" (click)="setTab('projects')">
         <ion-icon name="folder-outline"></ion-icon>
         <span>Projects</span>
+        <ion-icon name="lock-closed" class="tab-lock" *ngIf="!isPremium"></ion-icon>
       </button>
     </div>
 
@@ -156,12 +157,9 @@
              (click)="openCard(sc)">
           <app-weird-card [card]="sc.data" size="feed"></app-weird-card>
 
-          <!-- Status badge on saved cards -->
-          <div class="status-badge public" *ngIf="sc.publishStatus === 'published'">
-            <ion-icon name="earth-outline"></ion-icon> Public
-          </div>
+          <!-- Public is the default, so no badge. Private shows a lock icon only. -->
           <div class="status-badge private" *ngIf="sc.publishStatus === 'private'">
-            <ion-icon name="lock-closed-outline"></ion-icon> Private
+            <ion-icon name="lock-closed-outline"></ion-icon>
           </div>
         </div>
       </div>
@@ -182,8 +180,33 @@
         </button>
       </div>
 
-      <!-- ── Projects tab ── -->
-      <div class="projects-wrap" *ngIf="showProjectsTab && activeTab === 'projects'">
+      <!-- ── Projects tab — Premium locked view ── -->
+      <div class="projects-locked" *ngIf="showProjectsTab && activeTab === 'projects' && !isPremium"
+           (click)="openProjectsUpgrade($event)">
+        <!-- Blurred teaser behind the lock -->
+        <div class="locked-blur" aria-hidden="true">
+          <div class="proj-row" *ngFor="let g of [0,1,2]">
+            <div class="proj-thumb">{{ ['WS','AI','📊'][g] }}</div>
+            <div class="proj-meta">
+              <span class="proj-name">Your project</span>
+              <span class="proj-sub">Group of stat cards</span>
+            </div>
+            <ion-icon name="chevron-forward" class="proj-arrow"></ion-icon>
+          </div>
+        </div>
+        <!-- Lock overlay -->
+        <div class="locked-overlay">
+          <div class="lock-badge"><ion-icon name="lock-closed"></ion-icon></div>
+          <p class="locked-title">Projects is a Premium feature</p>
+          <p class="locked-sub">Group your stats into projects, build on them, and keep them private — with WeirdStats Premium.</p>
+          <button class="locked-cta" (click)="openProjectsUpgrade($event)">
+            <ion-icon name="star"></ion-icon> Unlock with Premium
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Projects tab (Premium) ── -->
+      <div class="projects-wrap" *ngIf="showProjectsTab && activeTab === 'projects' && isPremium">
 
         <!-- Empty: first appearance -->
         <div class="proj-empty" *ngIf="projects.length === 0 && !isCreatingProject">

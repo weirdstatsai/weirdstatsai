@@ -315,6 +315,50 @@
   }
 }
 
+// ── Style: list (no metric) — a clean ordered list, no values/bars/gauges ──
+.rank-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.rank-list-item {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 2.8cqw, 15px);
+  padding: clamp(9px, 2.4cqw, 13px) 0;
+
+  & + .rank-list-item { border-top: 1px solid rgba(0, 0, 0, 0.06); }
+}
+.rl-rank {
+  width: clamp(22px, 5.2cqw, 30px);
+  height: clamp(22px, 5.2cqw, 30px);
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: clamp(11px, 2.4cqw, 14px);
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.rl-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  .label { white-space: normal; }
+}
+.rl-extra {
+  font-size: clamp(11px, 2.4cqw, 13.5px);
+  font-weight: 500;
+  color: #6b6878;
+  line-height: 1.35;
+}
+
 .rank-empty {
   font-size: 13px;
   color: #999;

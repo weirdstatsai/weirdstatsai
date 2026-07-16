@@ -258,6 +258,15 @@ ROW-COUNT RULE (strict): if rows has more than 5 items AND cardType is NOT "map"
 cardType MUST be "table" and presentationType "top-10" or "top-25".
 cardType "ranking" may never exceed 5 rows. Keep cardType, presentationType, and row count consistent.
 
+LIST vs METRIC RULE (ranking/table — important): a ranking must be ranked BY a real,
+comparable number. When the brief HAS one, put it in each row's "value" (with "unit"),
+ordered highest first. When the items have NO honest comparable metric — a curated
+"top/best X" like "top anime 2025", "best movies", "greatest players" — do NOT fabricate
+scores or leave every "value" the same: set "value": 0 for every row AND put a SHORT
+qualitative note (2–6 words: studio, genre, year, why it stands out) in each row's "extra".
+The frontend renders these as a clean ordered LIST (rank + name + note). A curated list is
+a perfectly good card; an invented number is not. Only use real values when they're real.
+
 MAP RULE (overrides ROW-COUNT RULE): if every row label is a COUNTRY, cardType MUST be
 "map" regardless of row count — even with 10, 20, or more rows. Sub-national geography
 (states, districts, provinces, cities) is NEVER "map" — the map renders countries only;

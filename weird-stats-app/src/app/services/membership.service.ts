@@ -12,6 +12,11 @@ export interface UserPlan {
   windowCount: number;             // cards generated in this window
   totalGenerated: number;          // lifetime total
   planChosenAt: string | null;     // ISO date — when they chose a plan
+  // Set ONLY by the Stripe webhook (backend, Admin SDK). Never client-written.
+  planType?: 'monthly_auto' | 'monthly_once' | 'yearly_auto';
+  autoRenew?: boolean;
+  subscriptionId?: string | null;
+  stripeCustomerId?: string;
 }
 
 export const FREE_WINDOW_DAYS = 1;

@@ -65,12 +65,35 @@ service cloud.firestore {
       allow delete: if isOwner() || isAdmin();
     }
 
-    // Users — owner can read/write their own; admin can read/write any
+    // Users — owner can read/write their own profile + usage; admin can do any.
+    // The plan/billing fields and the isAdmin flag are set ONLY by the backend
+    // (Admin SDK, which bypasses these rules) or another admin — a client can
+    // never self-grant premium or admin.
     match /users/{userId} {
-      allow read: if request.auth != null &&
-                     (request.auth.uid == userId || isAdmin());
-      allow write: if request.auth != null &&
-                      (request.auth.uid == userId || isAdmin());
+      function ownsDoc() { return request.auth != null && request.auth.uid == userId; }
+      // A non-admin write may keep these fields as-is (or downgrade plan to
+      // free), but never enable premium/admin or touch the Stripe-owned fields.
+      function noSelfEscalation() {
+        return (request.resource.data.get('plan', 'free') == resource.data.get('plan', 'free')
+                || request.resource.data.get('plan', 'free') == 'free')
+            && request.resource.data.get('planExpiry', null) == resource.data.get('planExpiry', null)
+            && request.resource.data.get('stripeCustomerId', '') == resource.data.get('stripeCustomerId', '')
+            && request.resource.data.get('subscriptionId', '') == resource.data.get('subscriptionId', '')
+            && request.resource.data.get('autoRenew', false) == resource.data.get('autoRenew', false)
+            && request.resource.data.get('planType', '') == resource.data.get('planType', '')
+            && request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false);
+      }
+
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      // A client-created user doc can't come pre-loaded as premium/admin.
+      allow create: if isAdmin()
+                    || (ownsDoc()
+                        && request.resource.data.get('plan', 'free') != 'premium'
+                        && request.resource.data.get('isAdmin', false) == false
+                        && !('stripeCustomerId' in request.resource.data)
+                        && !('subscriptionId' in request.resource.data));
+      allow update: if isAdmin() || (ownsDoc() && noSelfEscalation());
+      allow delete: if isAdmin() || ownsDoc();
     }
 
     match /users/{userId}/plan/{docId} {

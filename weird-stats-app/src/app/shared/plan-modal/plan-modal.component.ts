@@ -1,6 +1,18 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { ModalController, ToastController } from '@ionic/angular';
 import { MembershipService } from '../../services/membership.service';
+import { BillingService, BillingPlan } from '../../services/billing.service';
+
+type PlanId = 'free' | BillingPlan;
+
+interface PlanOption {
+  id: PlanId;
+  name: string;
+  price: string;
+  period: string;
+  desc: string;
+  badge?: string;
+}
 
 @Component({
   selector: 'app-plan-modal',
@@ -12,21 +24,32 @@ export class PlanModalComponent implements OnInit {
   // 'upgrade' — non-blocking: user tapped "Go Premium" with cards still left.
   @Input() mode: 'onboard' | 'limit' | 'upgrade' = 'onboard';
 
-  // In 'limit'/'upgrade' mode the user already has a plan — default the
-  // selector to Premium so "Continue" reads as an upgrade prompt, not a no-op.
-  selected: 'free' | 'premium' = 'free';
+  // Paid options (ids match the backend PLANS keys). Prices are display copy —
+  // the real charge is set by the Stripe Price the backend references.
+  readonly paidPlans: PlanOption[] = [
+    { id: 'monthly_auto', name: 'Monthly',       price: '$9.99',  period: '/ month',
+      desc: 'Auto-renews monthly. Cancel anytime.', badge: 'Popular' },
+    { id: 'monthly_once', name: 'Monthly pass',  price: '$9.99',  period: 'one-time',
+      desc: 'One 30-day pass. No auto-renew.' },
+    { id: 'yearly_auto',  name: 'Yearly',        price: '$100',   period: '/ year',
+      desc: 'Auto-renews yearly — 2 months free.', badge: 'Best value' },
+  ];
+
+  selected: PlanId = 'monthly_auto';
   loading = false;
   resetIn = 'soon';
 
   constructor(
     private modalCtrl: ModalController,
     private membership: MembershipService,
+    private billing: BillingService,
+    private toastCtrl: ToastController,
   ) {}
 
   async ngOnInit(): Promise<void> {
-    if (this.mode === 'limit' || this.mode === 'upgrade') {
-      this.selected = 'premium';
-    }
+    // In limit/upgrade the user already has free; default to the popular paid
+    // plan so "Continue" reads as an upgrade, not a no-op.
+    this.selected = this.mode === 'onboard' ? 'free' : 'monthly_auto';
     if (this.mode === 'limit') {
       const { resetAt } = await this.membership.getUsage();
       this.resetIn = resetAt ? this.formatCountdown(resetAt) : 'soon';
@@ -43,26 +66,37 @@ export class PlanModalComponent implements OnInit {
     return `${h}h ${m}m`;
   }
 
-  select(plan: 'free' | 'premium'): void {
-    this.selected = plan;
+  select(id: PlanId): void {
+    this.selected = id;
+  }
+
+  get continueLabel(): string {
+    if (this.selected === 'free') return 'Continue';
+    const p = this.paidPlans.find(x => x.id === this.selected);
+    return `Continue — ${p?.price}${p?.period === 'one-time' ? '' : p?.period}`;
   }
 
   async confirm(): Promise<void> {
     this.loading = true;
     try {
-      if (this.selected === 'premium') {
-        // TODO: wire to RevenueCat / Stripe when payment is ready
-        // For now, mark as premium directly (demo mode)
-        await this.membership.setPremium();
-      } else if (this.mode === 'onboard') {
-        // First-time plan choice only — in 'limit'/'upgrade' mode the user
-        // already has a free plan, and re-initializing it would reset their
-        // usage window and let them bypass the daily cap.
-        await this.membership.initPlan('free');
+      if (this.selected === 'free') {
+        // First-time plan choice only — in limit/upgrade the user already has a
+        // free plan, and re-initializing would reset their usage window.
+        if (this.mode === 'onboard') await this.membership.initPlan('free');
+        await this.modalCtrl.dismiss({ plan: 'free' });
+        return;
       }
-      await this.modalCtrl.dismiss({ plan: this.selected });
-    } finally {
+      // Paid: hand off to Stripe Checkout. This redirects the whole page away,
+      // so we don't dismiss — the user returns via /billing/success.
+      await this.billing.startCheckout(this.selected);
+      // (If startCheckout resolves without navigating, the URL was missing.)
+    } catch (e: any) {
       this.loading = false;
+      const msg = e?.message === 'not-signed-in'
+        ? 'Please sign in first to upgrade.'
+        : 'Could not start checkout. Please try again.';
+      const t = await this.toastCtrl.create({ message: msg, duration: 2200, color: 'danger' });
+      await t.present();
     }
   }
 

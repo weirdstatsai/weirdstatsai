@@ -18,37 +18,42 @@
     </p>
   </div>
 
-  <!-- Free plan -->
-  <div class="plan-card" [class.selected]="selected === 'free'" (click)="select('free')">
+  <!-- Free plan (onboarding only — in limit/upgrade the user already has free) -->
+  <div class="plan-card" *ngIf="mode === 'onboard'"
+       [class.selected]="selected === 'free'" (click)="select('free')">
     <div class="plan-icon free-icon">
       <ion-icon name="add-outline"></ion-icon>
     </div>
     <div class="plan-info">
       <p class="plan-name">Free</p>
       <p class="plan-price">$0 <span class="plan-period">/ month</span></p>
-      <p class="plan-desc">
-        {{ mode === 'limit' ? ('Resets in ' + resetIn) : '3 cards every day, shareable with watermark.' }}
-      </p>
+      <p class="plan-desc">3 cards every day, shareable with watermark.</p>
     </div>
     <div class="plan-radio" [class.active]="selected === 'free'"></div>
   </div>
 
-  <!-- Premium plan -->
-  <div class="plan-card premium" [class.selected]="selected === 'premium'" (click)="select('premium')">
+  <!-- Paid options -->
+  <div class="plan-card premium" *ngFor="let p of paidPlans"
+       [class.selected]="selected === p.id" (click)="select(p.id)">
     <div class="plan-icon premium-icon">
       <ion-icon name="star-outline"></ion-icon>
     </div>
     <div class="plan-info">
-      <p class="plan-name">Premium</p>
-      <p class="plan-price">$10 <span class="plan-period">/ month</span></p>
-      <p class="plan-desc">Unlimited cards, share without watermark.</p>
+      <p class="plan-name">
+        {{ p.name }}
+        <span class="plan-badge" *ngIf="p.badge">{{ p.badge }}</span>
+      </p>
+      <p class="plan-price">{{ p.price }} <span class="plan-period">{{ p.period }}</span></p>
+      <p class="plan-desc">{{ p.desc }}</p>
     </div>
-    <div class="plan-radio" [class.active]="selected === 'premium'"></div>
+    <div class="plan-radio" [class.active]="selected === p.id"></div>
   </div>
+
+  <p class="plan-tax-note">Taxes calculated at checkout. Payments secured by Stripe.</p>
 
   <button class="continue-btn" [class.loading]="loading" (click)="confirm()" [disabled]="loading">
     <ion-spinner *ngIf="loading" name="dots"></ion-spinner>
-    <span *ngIf="!loading">{{ selected === 'premium' ? 'Continue with Premium' : 'Continue' }}</span>
+    <span *ngIf="!loading">{{ continueLabel }}</span>
   </button>
 
   <button class="skip-btn" (click)="continueFree()" *ngIf="mode === 'onboard'">

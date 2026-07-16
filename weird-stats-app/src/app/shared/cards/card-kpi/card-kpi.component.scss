@@ -14,7 +14,7 @@
 // be bigger than the 13px base title, scaling fluidly with the card. Alt
 // shares this exact layout with feed, so both get it.
 .wcard:not(.full) .wcard-title {
-  font-size: clamp(16px, 6.5cqw, 24px);
+  font-size: clamp(18px, 6.5cqw, 24px);
   line-height: 1.25;
   position: relative;
   z-index: 1;

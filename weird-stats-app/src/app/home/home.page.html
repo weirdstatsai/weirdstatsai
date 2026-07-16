@@ -12,12 +12,11 @@
     <h1>Ask something <span class="accent">weird.</span><br>Get a chart worth <span class="accent">sharing.</span></h1>
 
     <div class="ask-card">
-      <ion-icon name="search-outline" class="ask-search-icon"></ion-icon>
       <textarea
         [(ngModel)]="query"
-        placeholder="Turn any curious question into surprising stats, rankings, and visual insights in seconds. e.g. Which country spends the most time on social media?"
+        placeholder="Turn any curious question into surprising stats. e.g. Which country spends the most time on social media?"
         class="ask-textarea"
-        rows="2"
+        rows="3"
         (keydown.enter)="$event.preventDefault(); goGenerate(query)">
       </textarea>
     </div>

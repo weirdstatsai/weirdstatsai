@@ -9,15 +9,23 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
+<ion-content>
   <div class="static-wrap">
-    <h1>{{ content.title }}</h1>
-    <p class="updated" *ngIf="content.updated">{{ content.updated }}</p>
-    <p class="intro" *ngIf="content.intro">{{ content.intro }}</p>
+    <header class="doc-head">
+      <span class="doc-eyebrow" *ngIf="content.eyebrow">{{ content.eyebrow }}</span>
+      <h1>{{ content.title }}</h1>
+      <p class="updated" *ngIf="content.updated">{{ content.updated }}</p>
+      <p class="intro" *ngIf="content.intro">{{ content.intro }}</p>
+    </header>
 
-    <div class="section" *ngFor="let s of content.sections">
-      <h2>{{ s.heading }}</h2>
-      <p *ngFor="let p of s.body">{{ p }}</p>
-    </div>
+    <section class="section" *ngFor="let s of content.sections; let i = index">
+      <h2><span class="sec-num" *ngIf="content.numbered">{{ i + 1 }}.</span>{{ s.heading }}</h2>
+      <p *ngFor="let p of (s.body || [])">{{ p }}</p>
+      <ul class="bullets" *ngIf="s.bullets?.length">
+        <li *ngFor="let b of s.bullets || []">{{ b }}</li>
+      </ul>
+    </section>
+
+    <p class="doc-foot" *ngIf="content.foot">{{ content.foot }}</p>
   </div>
 </ion-content>

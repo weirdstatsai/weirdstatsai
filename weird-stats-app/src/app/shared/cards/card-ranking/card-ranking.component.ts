@@ -2,8 +2,32 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { getAnimalSvg } from '../../animal-icons';
 import { WeirdCard, CardRow, ACCENT_COLORS } from '../../../models/weird-card.model';
+import { rowsHaveMetric } from '../../card-data.util';
 
-export type RankStyle = 'bars' | 'pill' | 'percent' | 'vertical' | 'circular' | 'sparkline';
+export type RankStyle = 'bars' | 'pill' | 'percent' | 'vertical' | 'circular' | 'sparkline' | 'list';
+
+const RANK_LABELS: Record<string, string> = {
+  bars: 'Bars', pill: 'Value pill', percent: 'Percentage',
+  vertical: 'Vertical', circular: 'Circular', sparkline: 'Sparkline', list: 'List',
+};
+
+/**
+ * Data-gated ranking styles, mirroring `kpiAltStylesFor`. When the rows carry no
+ * real metric (a curated "top X" list), the ONLY honest style is a plain ordered
+ * list — the numeric styles (bars/gauges) would render empty. When there is a
+ * real metric, every relative style works, plus List as a minimalist option.
+ * `CardRankingComponent.effStyle` enforces the same gate at render time.
+ */
+export function rankAltStylesFor(card: WeirdCard | undefined): Array<{ key: RankStyle; label: string }> {
+  const listOpt = { key: 'list' as RankStyle, label: 'List' };
+  if (!rowsHaveMetric(card)) return [listOpt];
+  const keys = card?.uiMeta?.rankStyles?.length
+    ? card.uiMeta.rankStyles : ['pill', 'percent', 'vertical', 'circular'];
+  const numeric = keys
+    .filter(s => RANK_LABELS[s] && s !== 'list')
+    .map(s => ({ key: s as RankStyle, label: RANK_LABELS[s] }));
+  return [...numeric, listOpt];
+}
 
 @Component({
   selector: 'app-card-ranking',
@@ -31,6 +55,14 @@ export class CardRankingComponent implements OnChanges {
     this.accent   = (ACCENT_COLORS as readonly string[]).includes(h) ? h : ACCENT_COLORS[0];
     this.gradFrom = this.card?.uiMeta?.gradientFrom || '#f5f3ff';
     this.gradTo   = this.card?.uiMeta?.gradientTo   || '#ffffff';
+  }
+
+  /** The style actually rendered. A numeric style is downgraded to a plain
+   *  ordered list when the rows have no real metric (all-zero / no variance),
+   *  so a curated "top X" list never shows empty bars or 0% gauges. */
+  get effStyle(): RankStyle {
+    if (this.rankStyle === 'list') return 'list';
+    return rowsHaveMetric(this.card) ? this.rankStyle : 'list';
   }
 
   get rows(): CardRow[] {

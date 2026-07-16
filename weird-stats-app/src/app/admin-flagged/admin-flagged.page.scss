@@ -1,0 +1,55 @@
+$purple: #6C5CE7;
+$green:  #1D9E75;
+$red:    #D85A30;
+
+.admin-toolbar {
+  --background: #fff;
+  --border-width: 0;
+}
+.admin-title-wrap {
+  display: flex; align-items: center; gap: 6px;
+  position: absolute; left: 50%; transform: translateX(-50%);
+}
+.title-icon { font-size: 18px; color: $red; }
+.admin-title { font-size: 17px; font-weight: 800; color: #1a1a2e; position: static; }
+.back-btn { --color: #1a1a2e; }
+.admin-content { --background: #F6F6F9; }
+
+.loading-state {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 80px 20px; gap: 10px;
+  p { font-size: 13px; color: #aaa; margin: 0; }
+}
+
+.tab-body { padding: 16px 16px 32px; }
+
+.flagged-list { display: flex; flex-direction: column; gap: 8px; }
+
+.flagged-item {
+  display: flex; align-items: center; gap: 10px;
+  background: #fff; border-radius: 14px; padding: 12px 14px;
+  border: 0.5px solid rgba($red,0.15);
+}
+
+.f-info { flex: 1; min-width: 0; }
+.f-title {
+  font-size: 13px; font-weight: 600; color: #1a1a2e; margin: 0 0 3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.f-meta { font-size: 11px; color: #aaa; margin: 0; }
+
+.f-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.f-btn {
+  width: 32px; height: 32px; border-radius: 10px; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  ion-icon { font-size: 16px; }
+  &.ok  { background: rgba($green,0.1); ion-icon { color: $green; } }
+  &.del { background: rgba($red,0.1);   ion-icon { color: $red;   } }
+}
+
+.flagged-empty {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 48px 0; gap: 8px;
+  ion-icon { font-size: 40px; color: rgba($green,0.4); }
+  p { font-size: 13px; color: #bbb; margin: 0; }
+}

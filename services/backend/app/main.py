@@ -46,6 +46,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Stripe billing (checkout / customer portal / webhook). Self-contained router;
+# billing endpoints return 503 until the STRIPE_* env vars are configured.
+from app.billing import router as billing_router
+app.include_router(billing_router)
+
 
 @app.get("/health")
 async def health() -> dict:
