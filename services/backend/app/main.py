@@ -215,6 +215,21 @@ async def admin_trending(geo: str = "US") -> dict:
 # Firebase Hosting rewrites /card/**, /share/**, /og/**, /sitemap-cards.xml to
 # this service. Bots get purpose-built HTML/images; humans get the SPA shell.
 
+def _card_is_public(doc) -> bool:
+    """A card may be rendered to the public (bot snapshot / OG image) only when
+    it is published or curated onto a public feed — mirrors the public-read
+    conditions in firestore.rules. Private/draft cards must never leak through
+    these routes even though the Admin SDK bypasses those rules."""
+    if not doc:
+        return False
+    return (
+        doc.get("publishStatus") == "published"
+        or doc.get("homeFeatured") is True
+        or doc.get("showOnHome") is True
+        or doc.get("showOnExplore") is True
+    )
+
+
 async def _card_route(card_id: str, request: Request) -> Response:
     # These responses branch on User-Agent (bot snapshot vs SPA shell). Firebase's
     # CDN caches by URL, NOT by UA, so a cached bot snapshot would be served to
@@ -225,6 +240,9 @@ async def _card_route(card_id: str, request: Request) -> Response:
     ua = request.headers.get("user-agent", "")
     if seo.is_bot(ua):
         doc = get_stored_card(card_id)
+        # Never leak private/draft content to scrapers — treat it as not-found.
+        if not _card_is_public(doc):
+            doc = None
         html = seo.build_snapshot_html(card_id, doc)
         return HTMLResponse(html, headers=no_store)
     shell = await seo.get_spa_shell()
@@ -245,6 +263,10 @@ async def share_page(card_id: str, request: Request) -> Response:
 async def og_card_image(ref: str) -> Response:
     card_id = ref[:-4] if ref.endswith(".png") else ref
     doc = get_stored_card(card_id)
+    # Only published / feed-curated cards get a real preview image; private or
+    # draft cards fall back to the generic OG image instead of leaking content.
+    if not _card_is_public(doc):
+        return RedirectResponse(seo.DEFAULT_OG_IMAGE, status_code=307)
     png = seo.compose_og_image(doc)
     if png is None:
         return RedirectResponse(seo.DEFAULT_OG_IMAGE, status_code=307)

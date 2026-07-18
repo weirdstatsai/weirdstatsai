@@ -5,6 +5,7 @@ import { KpiStyle } from '../cards/card-kpi/card-kpi.component';
 import { TableStyle } from '../cards/card-table/card-table.component';
 import { VersusStyle } from '../cards/card-versus/card-versus.component';
 import { MapStyle } from '../cards/card-map/card-map.component';
+import { FactStyle } from '../cards/card-fact/card-fact.component';
 
 const RANK_STYLES: RankStyle[] = ['bars', 'pill', 'percent', 'vertical', 'circular', 'sparkline', 'list'];
 const KPI_STYLES: KpiStyle[] = [
@@ -14,6 +15,7 @@ const KPI_STYLES: KpiStyle[] = [
 const TABLE_STYLES: TableStyle[] = ['pill', 'bars', 'rows'];
 const VERSUS_STYLES: VersusStyle[] = ['default', 'mirror', 'progress', 'winner'];
 const MAP_STYLES: MapStyle[] = ['choropleth', 'pins', 'bubbles'];
+const FACT_STYLE_KEYS: FactStyle[] = ['poster', 'editorial', 'split'];
 
 @Component({
   selector: 'app-weird-card',
@@ -23,7 +25,6 @@ const MAP_STYLES: MapStyle[] = ['choropleth', 'pins', 'bubbles'];
 export class WeirdCardComponent {
   @Input() card!: WeirdCard;
   @Input() size: 'feed' | 'full' | 'alt' = 'feed';
-  @Input() fontSize: 'small' | 'medium' | 'large' = 'medium';
 
   // Whichever alternative style the owner picked (stored in uiMeta.selectedStyle
   // when they browsed alternatives on the card-detail page) is what the feed
@@ -102,5 +103,10 @@ export class WeirdCardComponent {
   get mapStyle(): MapStyle {
     const s = this.selectedStyle;
     return (s && MAP_STYLES.includes(s as MapStyle)) ? (s as MapStyle) : 'choropleth';
+  }
+
+  get factStyle(): FactStyle {
+    const s = this.selectedStyle;
+    return (s && FACT_STYLE_KEYS.includes(s as FactStyle)) ? (s as FactStyle) : 'poster';
   }
 }

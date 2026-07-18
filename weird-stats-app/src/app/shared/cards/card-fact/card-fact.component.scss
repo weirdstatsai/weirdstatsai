@@ -1,16 +1,21 @@
 @use '../card-base' as *;
 
-// The card is the sizing container: cqw units below scale the type and the
-// illustration with the card's rendered width, so the design tracks the
-// viewport (and column count) instead of jumping at breakpoints.
+// The card is the sizing container: cqw units scale the base type with the
+// card width. On top of that, the component's fit() shrinks all text via the
+// `--ft` multiplier until the whole fact fits the frame — nothing is clipped.
 .wcard {
   container-type: inline-size;
 }
 
+// Fixed structure (detail / share): a truly fixed height so the frame never
+// reshapes — the text fits inside it (via fit()) instead of growing the card.
+.full.wcard {
+  height: 360px;
+}
+
+// ══ POSTER ═════════════════════════════════════════════════════════════════
 .fact-layout {
   display: flex;
-  // Center both axes — the fact fills the tile instead of hugging the top
-  // corner and leaving the bottom half empty.
   align-items: center;
   gap: clamp(12px, 4cqw, 24px);
   flex: 1;
@@ -20,22 +25,13 @@
 .fact-content {
   flex: 1;
   min-width: 0;
-
-  // Facts are all text — give the headline poster-level presence.
-  .wcard-title {
-    font-size: clamp(22px, 6.2cqw, 36px);
-    line-height: 1.2;
-  }
+  .wcard-title { font-size: calc(clamp(21px, 6cqw, 34px) * var(--ft, 1)); line-height: 1.18; }
 }
-
-.full .fact-content .wcard-title {
-  font-size: 32px;
-  line-height: 1.25;
-}
+.full .fact-content .wcard-title { font-size: calc(30px * var(--ft, 1)); line-height: 1.22; }
 
 .fact-illus {
   flex-shrink: 0;
-  width: clamp(88px, 27cqw, 150px);
+  width: clamp(84px, 26cqw, 148px);
   aspect-ratio: 1;
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   border-radius: 50%;
@@ -43,51 +39,114 @@
   align-items: center;
   justify-content: center;
 }
+.illus-emoji { font-size: clamp(46px, 14cqw, 82px); line-height: 1; }
 
-.illus-emoji {
-  font-size: clamp(48px, 15cqw, 84px);
-  line-height: 1;
-}
+.full .fact-illus { width: 140px; }
+.full .illus-emoji { font-size: 76px; }
 
 .alt .fact-illus { width: 44px; }
 .alt .illus-emoji { font-size: 22px; }
-.alt .fact-content .wcard-title { font-size: 14px; line-height: 1.35; }
+.alt .fact-content .wcard-title {
+  font-size: 14px; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
 
-.full .fact-illus { width: 140px; }
-.full .illus-emoji { font-size: 78px; }
-
+// ── Body (shared by all layouts) ───────────────────────────────────────────
 .fact-body {
-  font-size: clamp(15px, 3.6cqw, 20px);
+  font-size: calc(clamp(14px, 3.5cqw, 19px) * var(--ft, 1));
   font-weight: 600;
   color: #3d3d52;
-  line-height: 1.55;
-  margin: 12px 0 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  line-height: 1.5;
+  margin: 11px 0 0;
+}
+.full .fact-body { font-size: calc(18px * var(--ft, 1)); line-height: 1.55; margin-top: 14px; }
+.alt .fact-body {
+  font-size: 13px; font-weight: 400; line-height: 1.5; margin-top: 6px;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 
-.alt .fact-body { font-size: 13px; font-weight: 400; line-height: 1.5; margin-top: 6px; -webkit-line-clamp: 3; }
+// ══ EDITORIAL ══════════════════════════════════════════════════════════════
+.fact-editorial {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.fe-quote {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: calc(clamp(38px, 12cqw, 58px) * var(--ft, 1));
+  line-height: 0.5;
+  height: 0.5em;
+  color: color-mix(in srgb, var(--accent) 55%, #000);
+}
+.fe-statement.wcard-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  font-size: calc(clamp(19px, 5.6cqw, 28px) * var(--ft, 1));
+  letter-spacing: -0.2px;
+  line-height: 1.2;
+  margin: clamp(6px, 2cqw, 12px) 0 0;
+}
+.fe-body.fact-body { font-weight: 500; }
 
-.full .fact-body {
-  font-size: 20px;
-  color: #3d3d52;
-  line-height: 1.6;
-  display: block;
-  -webkit-line-clamp: unset;
-  overflow: visible;
+.full .fe-statement.wcard-title { font-size: calc(25px * var(--ft, 1)); }
+
+.alt .fe-quote { font-size: 26px; height: 0.4em; }
+.alt .fe-statement.wcard-title { font-size: 13px; line-height: 1.3; margin-top: 4px; }
+
+// ══ SPLIT ══════════════════════════════════════════════════════════════════
+// A full-bleed accent panel (with the emoji) beside the text. Runs edge-to-edge,
+// so the card padding is dropped and its own head is hidden (the category shows
+// as an eyebrow instead). The base .wcard already clips to the rounded frame.
+.style-split.wcard { padding: 0; }
+.style-split .wcard-head { display: none; }
+
+.fact-split {
+  flex: 1;
+  min-height: 0;
+  display: flex;
 }
 
-// Narrow phones — fewer body lines so the clamp ellipsis lands before the
-// tile edge can chop a line in half.
-@media (max-width: 480px) {
-  .fact-body { -webkit-line-clamp: 3; }
+.split-panel {
+  flex: none;
+  width: 40%;
+  background: linear-gradient(160deg, var(--accent), color-mix(in srgb, var(--accent) 66%, #000));
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+.split-emoji { font-size: clamp(34px, 12cqw, 60px); line-height: 1; }
 
-// ── Font size variants (full view only) ───────────────────────────────────
-.full.fs-small .fact-content .wcard-title { font-size: 22px; }
-.full.fs-small .fact-body                 { font-size: 16px; }
+.split-side {
+  flex: 1;
+  min-width: 0;
+  padding: clamp(16px, 5cqw, 26px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.split-eyebrow {
+  margin: 0 0 9px;
+  font-size: calc(clamp(10px, 2.6cqw, 12px) * var(--ft, 1));
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: color-mix(in srgb, var(--accent) 78%, #000);
+}
+.split-title.wcard-title { font-size: calc(clamp(16px, 4.6cqw, 26px) * var(--ft, 1)); line-height: 1.16; }
+.split-body.fact-body { margin-top: 9px; }
 
-.full.fs-large .fact-content .wcard-title { font-size: 34px; }
-.full.fs-large .fact-body                 { font-size: 22px; }
+.full .split-emoji { font-size: 60px; }
+.full .split-title.wcard-title { font-size: calc(24px * var(--ft, 1)); }
+.full .split-body.fact-body { font-size: calc(15px * var(--ft, 1)); }
+
+.alt .split-emoji { font-size: 20px; }
+.alt .split-eyebrow { font-size: 8px; letter-spacing: 0.4px; margin-bottom: 3px; }
+.alt .split-title.wcard-title {
+  font-size: 12px; line-height: 1.25;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.alt .split-body.fact-body {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}

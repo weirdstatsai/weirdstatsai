@@ -17,6 +17,7 @@ import { TableStyle } from '../shared/cards/card-table/card-table.component';
 import { KpiStyle, kpiAltStylesFor } from '../shared/cards/card-kpi/card-kpi.component';
 import { VersusStyle } from '../shared/cards/card-versus/card-versus.component';
 import { MapStyle, hasMappableRows } from '../shared/cards/card-map/card-map.component';
+import { FactStyle, FACT_STYLES } from '../shared/cards/card-fact/card-fact.component';
 import { MembershipService } from '../services/membership.service';
 import { AdminService } from '../services/admin.service';
 import { DraftService } from '../services/draft.service';
@@ -201,20 +202,12 @@ export class CardDetailPage implements OnInit {
   }
   selectedKpiStyle: KpiStyle = 'default';
 
-  factFontSize: 'small' | 'medium' | 'large' = 'medium';
-  readonly fontSizeOptions: Array<{ key: 'small' | 'medium' | 'large'; label: string }> = [
-    { key: 'small',  label: 'S' },
-    { key: 'medium', label: 'M' },
-    { key: 'large',  label: 'L' },
-  ];
-
-  setFactFontSize(size: 'small' | 'medium' | 'large'): void {
-    this.factFontSize = size;
-    if (this.card?.uiMeta) {
-      this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, factFontSize: size } };
-      this.persistCardEdits();
-    }
-  }
+  // Fact cards pick a fixed layout (poster / editorial / split) the same way
+  // other types pick a style — persisted to uiMeta.selectedStyle. The text
+  // auto-fits the fixed frame, so there is no manual font-size control.
+  readonly factAltStyles = FACT_STYLES;
+  selectedFactStyle: FactStyle = 'poster';
+  selectFactAlt(style: FactStyle): void { this.selectedFactStyle = style; this._persistStyle(style); }
 
   readonly accentOptions = ACCENT_COLORS;
   readonly badgeOptions = [
@@ -385,10 +378,8 @@ export class CardDetailPage implements OnInit {
       else if (ct === 'table') this.selectedTableStyle = saved as TableStyle;
       else if (ct === 'versus') this.selectedVersusStyle = saved as VersusStyle;
       else if (ct === 'map') this.selectedMapStyle = saved as MapStyle;
+      else if (ct === 'fact' && this.factAltStyles.some(s => s.key === saved)) this.selectedFactStyle = saved as FactStyle;
     }
-
-    // Restore a previously chosen fact-card font size
-    this.factFontSize = ui?.factFontSize ?? 'medium';
   }
 
   private _persistStyle(style: string): void {

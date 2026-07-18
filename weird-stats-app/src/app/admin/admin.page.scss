@@ -1,199 +1,91 @@
 $purple: #6C5CE7;
 $green:  #1D9E75;
 $red:    #D85A30;
+$ink:    #14161f;
+$muted:  #8a8a93;
+$line:   rgba(20, 22, 31, 0.08);
 
+// ── Header ──────────────────────────────────────────────────────────────────
 .admin-toolbar {
   --background: #fff;
   --border-width: 0;
+  --min-height: 52px;
 }
-
 .admin-title-wrap {
   display: flex; align-items: center; gap: 6px;
   position: absolute; left: 50%; transform: translateX(-50%);
 }
-.title-icon { font-size: 18px; color: $purple; }
-.admin-title { font-size: 17px; font-weight: 800; color: #1a1a2e; position: static; }
+.title-icon { font-size: 17px; color: $purple; }
+.admin-title { font-size: 16px; font-weight: 800; color: $ink; position: static; letter-spacing: -0.01em; }
+.back-btn { --color: #{$ink}; }
 
-.back-btn { --color: #1a1a2e; }
-
-.admin-content { --background: #F6F6F9; }
+.admin-content {
+  --background: #F5F6F9;
+  --padding-bottom: 28px;
+}
 
 .loading-state {
   display: flex; flex-direction: column; align-items: center;
   padding: 80px 20px; gap: 10px;
-  p { font-size: 13px; color: #aaa; margin: 0; }
+  ion-spinner { --color: #{$purple}; }
+  p { font-size: 13px; color: #a6a6b0; margin: 0; }
 }
 
-// ── Metrics ────────────────────────────────────────────────────────────────
+// ── Metric cards ─────────────────────────────────────────────────────────────
 .metrics {
   display: grid; grid-template-columns: 1fr 1fr;
-  gap: 10px; padding: 16px 16px 0;
+  gap: 12px; padding: 16px 16px 0;
 }
 
 .metric-card {
   position: relative;
-  background: #fff; border-radius: 16px; padding: 16px 14px;
-  border: 0.5px solid rgba(0,0,0,0.07);
-  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  background: #fff; border-radius: 18px; padding: 15px 15px 14px;
+  border: 0.5px solid $line;
+  box-shadow: 0 1px 2px rgba(20,22,31,0.03), 0 14px 30px -24px rgba(20,22,31,0.22);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 11px;
 
-  &.warn { background: #FFF8F5; border-color: rgba($red,0.2); }
-  &.ok   { background: #F0FDF6; border-color: rgba($green,0.2); }
+  &.warn { background: #FFF8F4; border-color: rgba($red, 0.20); }
+  &.ok   { background: #F3FBF7; border-color: rgba($green, 0.18); }
 
   // Clickable metric → its own admin page.
   &.link {
-    width: 100%;
-    text-align: left;
-    font: inherit;
-    cursor: pointer;
-    transition: transform 0.12s ease, box-shadow 0.15s ease;
-    &:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -14px rgba(60,50,120,0.4); }
+    width: 100%; text-align: left; font: inherit; cursor: pointer;
+    transition: transform 0.14s ease, box-shadow 0.18s ease;
+    &:hover { transform: translateY(-2px); box-shadow: 0 1px 2px rgba(20,22,31,0.04), 0 20px 36px -22px rgba(60,50,120,0.42); }
     &:active { transform: scale(0.99); }
   }
 }
 
-.metric-arrow {
-  position: absolute;
-  top: 14px; right: 12px;
-  font-size: 16px;
-  color: rgba(0,0,0,0.28);
-}
-
+// Icon is a soft tinted chip, matching the section leads.
 .metric-icon {
-  font-size: 20px; color: $purple; margin-bottom: 4px;
-  .warn & { color: $red; }
-  .ok &   { color: $green; }
+  width: 38px; height: 38px; border-radius: 12px; margin: 0;
+  display: inline-grid; place-items: center;
+  font-size: 19px; color: $purple; background: rgba($purple, 0.10);
+  .warn & { color: $red;   background: rgba($red, 0.10); }
+  .ok &   { color: $green; background: rgba($green, 0.12); }
 }
 
 .metric-num {
-  font-size: 26px; font-weight: 800; color: #1a1a2e;
-  letter-spacing: -1px; line-height: 1; margin: 0;
+  font-size: 25px; font-weight: 800; color: $ink;
+  letter-spacing: -0.02em; line-height: 1.05; margin: 0;
 }
-
 .metric-lbl {
-  font-size: 11px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.05em; color: #aaa; margin: 0;
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.07em; color: #9a9aa2; margin: 2px 0 0;
+}
+.metric-arrow {
+  position: absolute; top: 15px; right: 13px;
+  font-size: 15px; color: rgba(20,22,31,0.22);
 }
 
-// ── Section tabs ──────────────────────────────────────────────────────────
-.section-tabs {
-  display: flex; gap: 4px; padding: 16px 16px 0;
-  border-bottom: 0.5px solid rgba(0,0,0,0.08);
-}
-
-.stab {
-  flex: 1; height: 36px; border: none; background: transparent;
-  font-size: 13px; font-weight: 600; color: #aaa;
-  cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent;
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  transition: color 0.15s, border-color 0.15s;
-  &.active { color: $purple; border-bottom-color: $purple; }
-}
-
-.stab-badge {
-  background: $red; color: #fff; font-size: 9px; font-weight: 700;
-  padding: 1px 5px; border-radius: 10px; min-width: 16px; text-align: center;
-}
-
-// ── Tab body ──────────────────────────────────────────────────────────────
-.tab-body { padding: 14px 16px 32px; }
-
-// ── Search ────────────────────────────────────────────────────────────────
-.search-row {
-  display: flex; align-items: center; gap: 8px;
-  background: #fff; border-radius: 12px; padding: 10px 14px;
-  border: 0.5px solid rgba(0,0,0,0.08); margin-bottom: 12px;
-  ion-icon { font-size: 16px; color: #bbb; flex-shrink: 0; }
-}
-.search-in {
-  flex: 1; border: none; outline: none; font-size: 14px;
-  font-family: inherit; background: transparent;
-  &::placeholder { color: #ccc; }
-}
-.clear-icon { cursor: pointer; color: #ccc; }
-
-// ── User list ─────────────────────────────────────────────────────────────
-.user-list { display: flex; flex-direction: column; gap: 6px; }
-
-.user-item {
-  display: flex; align-items: center; gap: 12px;
-  background: #fff; border-radius: 14px; padding: 12px 14px;
-  border: 0.5px solid rgba(0,0,0,0.07); cursor: pointer;
-  transition: background 0.1s;
-  &:active { background: rgba(0,0,0,0.02); }
-}
-
-.u-avatar {
-  width: 38px; height: 38px; border-radius: 50%;
-  background: linear-gradient(135deg, $purple, #378ADD);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 15px; font-weight: 700; color: #fff; flex-shrink: 0;
-}
-
-.u-info { flex: 1; min-width: 0; }
-.u-name { font-size: 14px; font-weight: 600; color: #1a1a2e; margin: 0 0 3px; }
-.u-sub {
-  font-size: 12px; color: #aaa; margin: 0;
-  display: flex; align-items: center; gap: 6px;
-}
-.u-plan {
-  font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px;
-  &.premium { background: rgba($purple,0.1); color: $purple; }
-}
-.u-ban { font-size: 10px; font-weight: 700; color: $red; }
-.u-arrow { font-size: 15px; color: #ddd; }
-
-.empty-state { text-align: center; color: #ccc; font-size: 13px; padding: 32px 0; }
-
-// ── Flagged ───────────────────────────────────────────────────────────────
-.flagged-list { display: flex; flex-direction: column; gap: 8px; }
-
-.flagged-item {
-  display: flex; align-items: center; gap: 10px;
-  background: #fff; border-radius: 14px; padding: 12px 14px;
-  border: 0.5px solid rgba($red,0.15);
-}
-
-.f-info { flex: 1; min-width: 0; }
-.f-title {
-  font-size: 13px; font-weight: 600; color: #1a1a2e; margin: 0 0 3px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.f-meta { font-size: 11px; color: #aaa; margin: 0; }
-
-.f-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.f-btn {
-  width: 32px; height: 32px; border-radius: 10px; border: none;
-  display: flex; align-items: center; justify-content: center; cursor: pointer;
-  ion-icon { font-size: 16px; }
-  &.ok  { background: rgba($green,0.1); ion-icon { color: $green; } }
-  &.del { background: rgba($red,0.1);   ion-icon { color: $red;   } }
-}
-
-.flagged-empty {
-  display: flex; flex-direction: column; align-items: center;
-  padding: 48px 0; gap: 8px;
-  ion-icon { font-size: 40px; color: rgba($green,0.4); }
-  p { font-size: 13px; color: #bbb; margin: 0; }
-}
-
-// ── Home-feed curation ────────────────────────────────────────────────────
-.stab-badge.accent { background: $purple; color: #fff; }
-
+// ── Section blocks ───────────────────────────────────────────────────────────
 .home-block {
   background: #fff;
-  border: 0.5px solid rgba(0,0,0,0.07);
-  border-radius: 20px;
-  padding: 18px;
-  margin-bottom: 14px;
-  box-shadow: 0 1px 2px rgba(20,22,31,0.03), 0 8px 24px -18px rgba(20,22,31,0.14);
-}
-
-// Primary "push" card — softly tinted so it reads as the main action.
-.hero-block {
-  background:
-    radial-gradient(120% 100% at 0% 0%, rgba(108,92,231,0.08), rgba(108,92,231,0) 60%),
-    #fff;
-  border-color: rgba($purple,0.18);
+  border: 0.5px solid $line;
+  border-radius: 18px;
+  padding: 16px;
+  margin: 14px 16px 0;
+  box-shadow: 0 1px 2px rgba(20,22,31,0.03), 0 14px 30px -24px rgba(20,22,31,0.16);
 }
 
 // ── Icon-led section header ──
@@ -202,63 +94,34 @@ $red:    #D85A30;
   &.compact { margin-bottom: 0; }
 }
 .lead-icon {
-  flex-shrink: 0; width: 38px; height: 38px; border-radius: 12px;
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 11px;
   display: grid; place-items: center; color: #fff;
   background: linear-gradient(140deg, $purple, #8B7BF0);
-  box-shadow: 0 5px 14px -4px rgba($purple,0.55);
-  ion-icon { font-size: 19px; }
-  &.flame { background: linear-gradient(140deg, #F0642C, #F6A03C); box-shadow: 0 5px 14px -4px rgba(240,100,44,0.5); }
-  &.home  { background: linear-gradient(140deg, #1D9E75, #38C48C); box-shadow: 0 5px 14px -4px rgba(29,158,117,0.5); }
+  box-shadow: 0 5px 13px -5px rgba($purple, 0.55);
+  ion-icon { font-size: 18px; }
+  &.flame { background: linear-gradient(140deg, #F0642C, #F6A03C); box-shadow: 0 5px 13px -5px rgba(240,100,44,0.5); }
+  &.home  { background: linear-gradient(140deg, #1D9E75, #38C48C); box-shadow: 0 5px 13px -5px rgba(29,158,117,0.5); }
 }
 .lead-text { flex: 1; min-width: 0; padding-top: 1px; }
 
 .block-head {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  margin-bottom: 4px;
 }
 .block-title {
-  font-size: 15px; font-weight: 800; color: #14161f; margin: 0;
+  font-size: 15px; font-weight: 800; color: $ink; margin: 0;
   display: flex; align-items: center; gap: 8px; letter-spacing: -0.01em;
 }
 .block-sub {
-  font-size: 12.5px; color: #8a8a93; margin: 4px 0 0; line-height: 1.45;
+  font-size: 12.5px; color: $muted; margin: 4px 0 0; line-height: 1.45;
   &.tight { font-size: 11.5px; margin-top: 2px; }
 }
 .count-pill {
   font-size: 11px; font-weight: 700; color: $purple;
-  background: rgba(108,92,231,0.12); border-radius: 20px; padding: 1px 8px;
-}
-
-// ── Push input: full-width field, full-width primary button ──
-.topic-input { display: flex; flex-direction: column; gap: 10px; }
-.topic-in {
-  width: 100%; box-sizing: border-box; border: 1.5px solid rgba(20,22,31,0.10);
-  border-radius: 14px; background: #fbfbfd;
-  padding: 13px 15px; font-size: 14.5px; font-family: inherit; color: #14161f; outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
-  &::placeholder { color: #b6b6c0; }
-  &:focus { border-color: $purple; background: #fff; box-shadow: 0 0 0 4px rgba(108,92,231,0.12); }
-}
-.gen-btn {
-  width: 100%; height: 48px;
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  background: linear-gradient(135deg, $purple, #8B7BF0); color: #fff; border: none;
-  border-radius: 14px; font-size: 14.5px; font-weight: 700; font-family: inherit;
-  cursor: pointer; box-shadow: 0 8px 20px -8px rgba($purple,0.7);
-  transition: transform 0.1s, box-shadow 0.15s, opacity 0.15s;
-  ion-icon { font-size: 17px; }
-  &:active { transform: scale(0.985); }
-  &:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
-}
-.gen-status {
-  display: flex; align-items: center; gap: 8px; margin: 14px 0 0;
-  padding: 10px 12px; border-radius: 12px; background: rgba(108,92,231,0.08);
-  font-size: 12.5px; color: $purple; font-weight: 600; line-height: 1.4;
-  ion-spinner { width: 16px; height: 16px; flex-shrink: 0; }
+  background: rgba($purple, 0.12); border-radius: 20px; padding: 1px 8px;
 }
 
 .refresh-btn {
-  flex-shrink: 0; background: #f2f2f6; border: none; border-radius: 11px;
+  flex-shrink: 0; background: #f1f1f6; border: none; border-radius: 11px;
   width: 34px; height: 34px; display: grid; place-items: center; cursor: pointer; color: #6b6b76;
   transition: background 0.12s;
   ion-icon { font-size: 17px; }
@@ -266,51 +129,60 @@ $red:    #D85A30;
   &:active { opacity: 0.7; }
   &:disabled { opacity: 0.5; }
 }
-.trends-loading { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #8a8a93; padding: 14px 2px 4px; }
+
+// ── Trending ─────────────────────────────────────────────────────────────────
+.trends-loading {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: $muted; padding: 16px 2px 4px;
+  ion-spinner { --color: #{$purple}; width: 18px; height: 18px; }
+}
 
 .trend-group { margin-top: 16px; }
 .trend-src {
-  font-size: 11px; font-weight: 800; color: #9a9aa2; margin: 0 0 9px;
-  text-transform: uppercase; letter-spacing: 0.05em;
+  font-size: 10.5px; font-weight: 800; color: #9a9aa2; margin: 0 0 9px;
+  text-transform: uppercase; letter-spacing: 0.06em;
 }
 .trend-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .trend-chip {
   display: inline-flex; align-items: center; gap: 7px; max-width: 100%;
-  background: #f5f5fb; border: 1px solid rgba(20,22,31,0.06); border-radius: 12px;
-  padding: 8px 13px; font-size: 13px; font-weight: 600; color: #14161f;
+  background: #f5f5fb; border: 1px solid rgba(20,22,31,0.06); border-radius: 11px;
+  padding: 8px 12px; font-size: 13px; font-weight: 600; color: $ink;
   font-family: inherit; cursor: pointer; transition: background 0.12s, border-color 0.12s, transform 0.1s;
   .trend-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 240px; }
   ion-icon { font-size: 16px; color: $purple; flex-shrink: 0; }
   ion-spinner { width: 15px; height: 15px; color: $purple; flex-shrink: 0; }
-  &:hover { background: #eeecf9; border-color: rgba($purple,0.25); }
+  &:hover { background: #eeecf9; border-color: rgba($purple, 0.25); }
   &:active { transform: scale(0.97); }
-  &.busy { background: rgba(108,92,231,0.12); border-color: rgba($purple,0.3); }
+  &.busy { background: rgba($purple, 0.12); border-color: rgba($purple, 0.3); }
   &:disabled:not(.busy) { opacity: 0.5; cursor: default; }
 }
 
+.empty-state { text-align: center; color: #b6b6c0; font-size: 13px; padding: 22px 0 6px; }
+
+// ── Home feed ────────────────────────────────────────────────────────────────
 .home-cards { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .home-card-row {
   display: flex; align-items: center; gap: 10px;
   background: #fafafd; border: 1px solid rgba(20,22,31,0.05);
-  border-radius: 14px; padding: 12px 13px;
+  border-radius: 13px; padding: 11px 12px;
 }
 .hc-info { flex: 1; min-width: 0; }
 .hc-title {
-  font-size: 13.5px; font-weight: 700; color: #14161f; margin: 0 0 3px;
+  font-size: 13.5px; font-weight: 700; color: $ink; margin: 0 0 3px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .hc-meta { font-size: 11.5px; color: #9a9aa2; margin: 0; text-transform: capitalize; }
 .hc-remove {
   flex-shrink: 0; width: 34px; height: 34px; border-radius: 11px; border: none;
-  background: rgba(216,90,48,0.1); color: $red; display: grid; place-items: center; cursor: pointer;
+  background: rgba($red, 0.1); color: $red; display: grid; place-items: center; cursor: pointer;
   transition: background 0.12s;
   ion-icon { font-size: 16px; }
-  &:hover { background: rgba(216,90,48,0.16); }
+  &:hover { background: rgba($red, 0.16); }
   &:active { opacity: 0.7; }
 }
 .home-empty {
-  text-align: center; padding: 34px 20px; color: #b0b0b8; margin-top: 8px;
-  border: 1.5px dashed rgba(20,22,31,0.1); border-radius: 16px;
-  ion-icon { font-size: 32px; margin-bottom: 8px; color: #cfcfd8; }
-  p { font-size: 13px; margin: 0; }
+  text-align: center; padding: 32px 20px; color: #b0b0b8; margin-top: 4px;
+  border: 1.5px dashed rgba(20,22,31,0.1); border-radius: 14px;
+  ion-icon { font-size: 30px; margin-bottom: 8px; color: #cfcfd8; }
+  p { font-size: 12.5px; margin: 0; line-height: 1.4; }
 }

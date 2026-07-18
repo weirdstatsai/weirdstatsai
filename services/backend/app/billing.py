@@ -130,6 +130,23 @@ def _get_or_create_customer(uid: str, email: str) -> str:
     return customer.id
 
 
+def _has_active_subscription(uid: str) -> bool:
+    """True when the user already has a live Stripe subscription — used to stop a
+    second subscription checkout (double-charge). The stored subscriptionId is
+    verified against Stripe, so a churned user whose id wasn't cleared can still
+    re-subscribe; if Stripe can't be reached we err toward blocking rather than
+    risk charging twice."""
+    snap = _user_ref(uid).get()
+    sub_id = (snap.to_dict() or {}).get("subscriptionId") if snap.exists else None
+    if not sub_id:
+        return False
+    try:
+        status = stripe.Subscription.retrieve(sub_id).get("status")
+    except Exception:
+        return True
+    return status in ("active", "trialing", "past_due", "unpaid")
+
+
 def _return_base(origin: str | None) -> str:
     return origin if origin in _ALLOWED_RETURN_ORIGINS else FRONTEND_URL
 
@@ -155,6 +172,15 @@ async def create_checkout(req: CheckoutRequest, request: Request) -> dict:
     base = _return_base(req.origin)
 
     def _create() -> str:
+        # Don't let an already-subscribed user buy anything more: a second
+        # subscription double-charges on renewal, and a one-time pass would
+        # orphan the still-live subscription (it keeps charging while the app
+        # loses track of it). Send them to the portal to manage what they have.
+        if _has_active_subscription(uid):
+            raise HTTPException(
+                status_code=409,
+                detail="You already have an active subscription. Manage it from the billing portal.",
+            )
         customer = _get_or_create_customer(uid, email)
         params = dict(
             mode=cfg["mode"],
@@ -164,10 +190,14 @@ async def create_checkout(req: CheckoutRequest, request: Request) -> dict:
             metadata={"uid": uid, "plan": req.plan},
             success_url=f"{base}/billing/success?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{base}/billing/cancel",
-            automatic_tax={"enabled": True},
-            # Needed so Stripe Tax can compute against the customer's address.
-            customer_update={"address": "auto"},
         )
+        # Stripe Tax has to be activated in the dashboard before automatic_tax
+        # can be used, otherwise checkout errors. Off by default so checkout
+        # works out of the box; set STRIPE_AUTOMATIC_TAX=1 once Tax is set up to
+        # add "+ tax" at checkout.
+        if os.getenv("STRIPE_AUTOMATIC_TAX", "").lower() in ("1", "true", "yes"):
+            params["automatic_tax"] = {"enabled": True}
+            params["customer_update"] = {"address": "auto"}
         if cfg["mode"] == "subscription":
             params["subscription_data"] = {"metadata": {"uid": uid, "plan": req.plan}}
         else:
@@ -287,9 +317,13 @@ def _handle_event(event: dict) -> None:
                 return
             days = PLANS.get(plan, {}).get("days", 30)
             expiry = datetime.now(timezone.utc) + timedelta(days=days)
+            # NOTE: do NOT null subscriptionId here. A one-time pass is only ever
+            # for a non-subscriber (the checkout guard blocks it otherwise), so
+            # there is no subscription to clear — and blindly clearing it would
+            # orphan a still-live subscription that keeps charging.
             _set_plan(
                 uid, plan="premium", planType=plan or "monthly_once",
-                planExpiry=expiry.isoformat(), autoRenew=False, subscriptionId=None,
+                planExpiry=expiry.isoformat(), autoRenew=False,
                 lastPassSessionId=session_id,
                 planChosenAt=datetime.now(timezone.utc).isoformat(),
             )

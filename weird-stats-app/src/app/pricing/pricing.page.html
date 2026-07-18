@@ -48,11 +48,12 @@
           <li><ion-icon name="checkmark"></ion-icon> Watermark-free sharing</li>
           <li><ion-icon name="checkmark"></ion-icon> Keep cards private</li>
         </ul>
-        <button class="btn primary" [class.loading]="loading === p.id"
+        <button *ngIf="!isPremium" class="btn primary" [class.loading]="loading === p.id"
                 [disabled]="loading" (click)="choose(p.id)">
           <ion-spinner *ngIf="loading === p.id" name="dots"></ion-spinner>
           <span *ngIf="loading !== p.id">Choose {{ p.name }}</span>
         </button>
+        <button *ngIf="isPremium" class="btn ghost" (click)="manage()">Manage subscription</button>
       </div>
     </div>
 

@@ -1,17 +1,36 @@
-<div class="wcard" [class.full]="size==='full'" [class.alt]="size==='alt'" [class.fs-small]="effectiveFontSize==='small'" [class.fs-large]="effectiveFontSize==='large'" [style.--accent]="accent" [style.--grad-from]="gradFrom" [style.--grad-to]="gradTo">
-  <span class="wcard-bg-icon" *ngIf="bgSvg && size==='full'" [innerHTML]="bgSvg"></span>
+<div class="wcard" [class.full]="size==='full'" [class.alt]="size==='alt'" [class.style-editorial]="effStyle==='editorial'" [class.style-split]="effStyle==='split'" [style.--accent]="accent" [style.--grad-from]="gradFrom" [style.--grad-to]="gradTo">
   <div class="wcard-head">
     <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.category }}</span>
     <span class="weird-badge">Fact card</span>
   </div>
 
-  <div class="fact-layout">
+  <!-- Poster: headline + supporting line beside a circular emoji -->
+  <div class="fact-layout" *ngIf="effStyle==='poster'">
     <div class="fact-content">
       <p class="wcard-title">{{ card.title | stripEmoji }}</p>
       <p class="fact-body" *ngIf="card.insight">{{ card.insight }}</p>
     </div>
     <div class="fact-illus" *ngIf="card.uiMeta?.icon">
       <span class="illus-emoji">{{ card.uiMeta.icon }}</span>
+    </div>
+  </div>
+
+  <!-- Editorial: pull-quote treatment -->
+  <div class="fact-editorial" *ngIf="effStyle==='editorial'">
+    <span class="fe-quote" aria-hidden="true">&ldquo;</span>
+    <p class="wcard-title fe-statement">{{ card.title | stripEmoji }}</p>
+    <p class="fact-body fe-body" *ngIf="card.insight">{{ card.insight }}</p>
+  </div>
+
+  <!-- Split: full-bleed accent panel holds the emoji, text alongside -->
+  <div class="fact-split" *ngIf="effStyle==='split'">
+    <div class="split-panel">
+      <span class="split-emoji" *ngIf="card.uiMeta?.icon">{{ card.uiMeta.icon }}</span>
+    </div>
+    <div class="split-side">
+      <p class="split-eyebrow" *ngIf="card.uiMeta?.category">{{ card.uiMeta.category }}</p>
+      <p class="wcard-title split-title">{{ card.title | stripEmoji }}</p>
+      <p class="fact-body split-body" *ngIf="card.insight">{{ card.insight }}</p>
     </div>
   </div>
 </div>

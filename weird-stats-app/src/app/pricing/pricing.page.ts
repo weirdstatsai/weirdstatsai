@@ -57,12 +57,35 @@ export class PricingPage implements OnInit {
       await this.billing.startCheckout(id);
     } catch (e: any) {
       this.loading = null;
+      // Backend blocks a second subscription (409) — send them to the portal to
+      // manage the one they already have instead of double-charging.
+      if (e?.message === 'checkout-failed-409') {
+        this.isPremium = true;
+        await this.toast('You already have an active subscription — opening your billing portal.', 'medium');
+        return this.manage();
+      }
       const msg = e?.message === 'not-signed-in'
         ? 'Please sign in first to upgrade.'
         : 'Could not start checkout. Please try again.';
-      const t = await this.toastCtrl.create({ message: msg, duration: 2200, color: 'danger' });
-      await t.present();
+      await this.toast(msg, 'danger');
     }
+  }
+
+  /** Open the Stripe customer portal to manage / cancel an existing plan. */
+  async manage(): Promise<void> {
+    try {
+      await this.billing.openPortal();
+    } catch (e: any) {
+      const msg = e?.message === 'not-signed-in'
+        ? 'Please sign in first.'
+        : 'Could not open the billing portal. Please try again.';
+      await this.toast(msg, 'danger');
+    }
+  }
+
+  private async toast(message: string, color: string): Promise<void> {
+    const t = await this.toastCtrl.create({ message, duration: 2400, color });
+    await t.present();
   }
 
   back(): void {
