@@ -37,36 +37,98 @@
     </div>
   </div>
 
-  <!-- Suggestions — shown when no recent cards -->
-  <div class="suggestion-pills" *ngIf="recentCards.length === 0 && !isLoading">
-    <button
-      class="pill"
-      *ngFor="let s of suggestions; let i = index"
-      (click)="goGenerate(s)">
-      <ion-icon [name]="suggestionIcons[i]"></ion-icon>
-      {{ s }}
-    </button>
-  </div>
-
-  <!-- Curated home feed — vertical 2-column grid, view only -->
-  <ng-container *ngIf="recentCards.length > 0">
-    <div class="section-header">
-      <p class="section-title">Featured</p>
-      <a class="see-all" routerLink="/explore" routerDirection="root">Explore all</a>
+  <!-- ① How it works -->
+  <section class="hsec">
+    <div class="sec-head">
+      <h2 class="sec-title">What is WeirdStats?</h2>
     </div>
-    <div class="home-grid">
-      <div class="home-card" [class.span-full]="isFullWidth(card)" *ngFor="let card of recentCards" (click)="open(card)">
-        <app-weird-card [card]="card.data" size="feed"></app-weird-card>
+    <div class="hiw-card">
+      <div class="hiw-step">
+        <div class="hiw-ic"><ion-icon name="help-outline"></ion-icon></div>
+        <p class="hiw-t">Ask</p>
+        <p class="hiw-d">A weird or curious question</p>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-ic"><ion-icon name="search-outline"></ion-icon></div>
+        <p class="hiw-t">We research</p>
+        <p class="hiw-d">Our AI digs up the facts</p>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-ic"><ion-icon name="bar-chart-outline"></ion-icon></div>
+        <p class="hiw-t">You get charts</p>
+        <p class="hiw-d">Beautiful visuals to share</p>
       </div>
     </div>
-  </ng-container>
+  </section>
 
-  <!-- Skeleton while loading -->
-  <ng-container *ngIf="isLoading">
-    <div class="skeleton-row">
-      <div class="skeleton-card"></div>
-      <div class="skeleton-card"></div>
+  <!-- ② Today's Weird Pick -->
+  <section class="hsec" *ngIf="featuredCard">
+    <div class="sec-head">
+      <h2 class="sec-title">Today's Weird Pick</h2>
+      <a class="sec-link" routerLink="/explore" routerDirection="root">See more <ion-icon name="chevron-forward-outline"></ion-icon></a>
     </div>
-  </ng-container>
+    <div class="pick-card" (click)="open(featuredCard)">
+      <app-weird-card [card]="featuredCard.data" size="feed"></app-weird-card>
+    </div>
+  </section>
+
+  <!-- ③ Explore by topic -->
+  <section class="hsec">
+    <div class="sec-head">
+      <h2 class="sec-title">Explore by topic</h2>
+    </div>
+    <div class="topic-grid">
+      <button class="topic" *ngFor="let c of categories" (click)="goExplore(c.label)">
+        <span class="topic-ic"><ion-icon [name]="c.icon"></ion-icon></span>
+        <span class="topic-lbl">{{ c.label }}</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ④ What you can discover -->
+  <section class="hsec">
+    <div class="sec-head">
+      <h2 class="sec-title">What you can discover</h2>
+    </div>
+    <div class="discover-row">
+      <div class="disc">
+        <div class="disc-viz viz-rank"><i></i><i></i><i></i></div>
+        <span class="disc-lbl">Ranking</span>
+      </div>
+      <div class="disc">
+        <div class="disc-viz viz-kpi"><span>86%</span></div>
+        <span class="disc-lbl">KPI</span>
+      </div>
+      <div class="disc">
+        <div class="disc-viz viz-map"><ion-icon name="map-outline"></ion-icon></div>
+        <span class="disc-lbl">Map</span>
+      </div>
+      <div class="disc">
+        <div class="disc-viz viz-vs"><span>VS</span></div>
+        <span class="disc-lbl">Versus</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑤ Trending now -->
+  <section class="hsec" *ngIf="trendingCards.length">
+    <div class="sec-head">
+      <h2 class="sec-title">Trending now</h2>
+      <a class="sec-link" routerLink="/explore" routerDirection="root">View all <ion-icon name="chevron-forward-outline"></ion-icon></a>
+    </div>
+    <div class="trend-row">
+      <button class="trend" *ngFor="let card of trendingCards" (click)="open(card)">
+        <span class="trend-emoji">{{ card.data?.uiMeta?.icon || '📊' }}</span>
+        <span class="trend-txt">{{ card.data?.title }}</span>
+        <ion-icon class="trend-up" name="trending-up-outline"></ion-icon>
+      </button>
+    </div>
+  </section>
+
+  <!-- Loading skeleton for the curated sections -->
+  <div class="skeleton-row" *ngIf="isLoading">
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+  </div>
 
 </ion-content>

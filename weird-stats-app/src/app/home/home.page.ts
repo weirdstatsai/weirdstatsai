@@ -27,6 +27,27 @@ export class HomePage implements OnInit, OnDestroy {
   recentCards: StoredStatCard[] = [];
   suggestions = SUGGESTIONS;
   suggestionIcons = SUGGESTION_ICONS;
+
+  // "Explore by topic" tiles — tapping one jumps to Explore for that category.
+  readonly categories: Array<{ label: string; icon: string }> = [
+    { label: 'Animals',    icon: 'paw-outline' },
+    { label: 'Countries',  icon: 'globe-outline' },
+    { label: 'Food',       icon: 'fast-food-outline' },
+    { label: 'Money',      icon: 'cash-outline' },
+    { label: 'Internet',   icon: 'wifi-outline' },
+    { label: 'Human Body', icon: 'heart-outline' },
+    { label: 'Sports',     icon: 'football-outline' },
+    { label: 'History',    icon: 'library-outline' },
+  ];
+
+  /** The single spotlight card ("Today's Weird Pick") and a few for Trending —
+   *  both drawn from the curated Home feed, so no extra queries. */
+  get featuredCard(): StoredStatCard | null { return this.recentCards[0] ?? null; }
+  get trendingCards(): StoredStatCard[] { return this.recentCards.slice(1, 5); }
+
+  goExplore(topic?: string): void {
+    this.router.navigate(['/explore'], topic ? { state: { topic } } : {});
+  }
   query = '';
   userName = '';
   userEmoji = '';

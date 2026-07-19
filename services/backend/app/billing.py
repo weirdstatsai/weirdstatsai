@@ -20,6 +20,7 @@ Env vars (all required for billing to work; absent = billing endpoints 503):
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
 from datetime import datetime, timedelta, timezone
@@ -130,6 +131,13 @@ def _get_or_create_customer(uid: str, email: str) -> str:
     return customer.id
 
 
+def _as_dict(obj) -> dict:
+    """stripe-python >=15 returns StripeObjects whose .get() no longer behaves
+    like a dict (it raises AttributeError). Round-trip through JSON to a plain
+    nested dict so the handler code (all .get()/[]) keeps working."""
+    return json.loads(str(obj))
+
+
 def _has_active_subscription(uid: str) -> bool:
     """True when the user already has a live Stripe subscription — used to stop a
     second subscription checkout (double-charge). The stored subscriptionId is
@@ -141,7 +149,7 @@ def _has_active_subscription(uid: str) -> bool:
     if not sub_id:
         return False
     try:
-        status = stripe.Subscription.retrieve(sub_id).get("status")
+        status = _as_dict(stripe.Subscription.retrieve(sub_id)).get("status")
     except Exception:
         return True
     return status in ("active", "trialing", "past_due", "unpaid")
@@ -252,11 +260,14 @@ async def stripe_webhook(request: Request) -> dict:
     payload = await request.body()
     sig = request.headers.get("stripe-signature", "")
     try:
-        event = stripe.Webhook.construct_event(payload, sig, WEBHOOK_SECRET)
+        stripe.Webhook.construct_event(payload, sig, WEBHOOK_SECRET)
     except Exception as e:
         logger.warning(f"billing: bad webhook signature: {e}")
         raise HTTPException(status_code=400, detail="Invalid signature.")
 
+    # Signature verified above; hand the handler a plain dict of the same JSON.
+    # (stripe-python >=15 StripeObjects don't support .get() like a dict.)
+    event = json.loads(payload)
     await run_in_threadpool(_handle_event, event)
     return {"received": True}
 
@@ -307,7 +318,7 @@ def _handle_event(event: dict) -> None:
             logger.warning("billing: checkout.completed with no resolvable uid")
             return
         if obj.get("mode") == "subscription" and obj.get("subscription"):
-            sub = stripe.Subscription.retrieve(obj["subscription"])
+            sub = _as_dict(stripe.Subscription.retrieve(obj["subscription"]))
             _activate_subscription(uid, plan, sub)
         else:
             # One-time pass. Idempotent on the session id so a redelivered event
@@ -337,7 +348,7 @@ def _handle_event(event: dict) -> None:
                 f"billing: invoice.paid unresolved (uid={uid} sub={sub_id} "
                 f"cust={obj.get('customer')}) — renewal not applied")
             return
-        sub = stripe.Subscription.retrieve(sub_id)
+        sub = _as_dict(stripe.Subscription.retrieve(sub_id))
         _activate_subscription(uid, (sub.get("metadata") or {}).get("plan", ""), sub)
 
     elif etype == "customer.subscription.updated":
