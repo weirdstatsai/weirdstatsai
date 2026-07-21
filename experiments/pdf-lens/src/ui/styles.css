@@ -107,55 +107,55 @@ body { background: var(--paper); color: var(--ink); overflow: hidden; }
 .connectors line { stroke: color-mix(in srgb, var(--purple) 45%, transparent); stroke-width: 1.5; stroke-dasharray: 3 4; }
 
 /* ---------- cubes ---------- */
-/* Small at rest; hover or click enlarges the card to read it. Entrance animates
-   opacity only (never transform) so it doesn't fight the hover/active scale. */
+/* Small square tiles at rest; pointing at one (hover) or clicking it scales the
+   tile up so the mini-stat is readable. Entrance animates opacity only (never
+   transform) so it doesn't fight the hover/active scale. Full title = tooltip. */
 .cube {
-  position: absolute; z-index: 25; width: 116px;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 11px;
-  box-shadow: var(--shadow-sm); padding: 8px 9px; cursor: zoom-in;
+  position: absolute; z-index: 25; width: 88px; height: 88px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: var(--shadow-sm); padding: 8px; cursor: zoom-in; overflow: hidden;
+  display: flex; flex-direction: column; gap: 5px;
   animation: fade .22s ease both;
-  transition: transform .17s cubic-bezier(.2,.8,.3,1.2), box-shadow .17s ease;
+  transition: transform .18s cubic-bezier(.2,.8,.3,1.3), box-shadow .18s ease;
 }
-.cube:hover { transform: scale(1.55); z-index: 55; box-shadow: var(--shadow-lg); }
-.cube.active { transform: scale(1.95); z-index: 60; box-shadow: var(--shadow-lg); cursor: zoom-out; }
+.cube:hover { transform: scale(2.15); z-index: 55; box-shadow: var(--shadow-lg); }
+.cube.active { transform: scale(2.55); z-index: 60; box-shadow: var(--shadow-lg); cursor: zoom-out; }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .cube { animation: none; transition: none; } }
-.cube-head { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
-.cube-badge { width: 15px; height: 15px; border-radius: 4px; color: #fff; font-size: 9px; display: grid; place-items: center; }
-.cube-type { font-size: .56rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-.cube-title { font-size: .62rem; font-weight: 650; line-height: 1.22; margin-bottom: 7px; color: var(--ink);
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.cube-body { min-height: 34px; display: flex; align-items: flex-end; }
+.cube-head { display: flex; align-items: center; gap: 5px; }
+.cube-badge { width: 15px; height: 15px; border-radius: 4px; color: #fff; font-size: 9px; display: grid; place-items: center; flex: none; }
+.cube-type { font-size: .5rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.cube-body { flex: 1; min-height: 0; display: flex; align-items: flex-end; overflow: hidden; }
 
 .cube-kpi { display: flex; flex-direction: column; gap: 2px; }
 .cube-kpi-value { font-size: 1.15rem; font-weight: 780; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
 .cube-kpi-delta { font-size: .56rem; color: var(--muted); font-weight: 600; }
 
-.cube-bars { display: flex; align-items: flex-end; gap: 4px; height: 34px; width: 100%; }
-.cube-bar { flex: 1; border-radius: 2px 2px 0 0; min-height: 6px; }
+.cube-bars { display: flex; align-items: flex-end; gap: 3px; height: 40px; width: 100%; }
+.cube-bar { flex: 1; border-radius: 2px 2px 0 0; min-height: 5px; }
 
-.cube-rank { display: flex; flex-direction: column; gap: 5px; width: 100%; }
-.cube-rank-row { display: grid; grid-template-columns: 12px 1fr 34px; align-items: center; gap: 6px; font-size: .64rem; }
+.cube-rank { display: flex; flex-direction: column; gap: 3px; width: 100%; }
+.cube-rank-row { display: grid; grid-template-columns: 9px 1fr 18px; align-items: center; gap: 4px; font-size: .5rem; }
 .cube-rank-num { color: var(--faint); font-weight: 700; }
 .cube-rank-label { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cube-rank-track { height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; }
-.cube-rank-fill { display: block; height: 100%; border-radius: 3px; }
+.cube-rank-track { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.cube-rank-fill { display: block; height: 100%; border-radius: 2px; }
 
-.cube-versus { width: 100%; display: flex; flex-direction: column; gap: 5px; }
-.cube-versus-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--line); }
+.cube-versus { width: 100%; display: flex; flex-direction: column; gap: 4px; }
+.cube-versus-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--line); }
 .cube-versus-a { height: 100%; }
 .cube-versus-b { height: 100%; background: var(--faint); }
-.cube-versus-labels { display: flex; justify-content: space-between; font-size: .62rem; color: var(--muted); font-weight: 600; }
+.cube-versus-labels { display: flex; justify-content: space-between; font-size: .48rem; color: var(--muted); font-weight: 600; }
 .cube-versus-la, .cube-versus-lb { max-width: 46%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.cube-table { width: 100%; border-collapse: collapse; font-size: .62rem; }
-.cube-table th { text-align: left; color: var(--faint); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 2px 4px; border-bottom: 1px solid var(--line); }
-.cube-table td { padding: 3px 4px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.cube-table { width: 100%; border-collapse: collapse; font-size: .5rem; }
+.cube-table th { text-align: left; color: var(--faint); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 1px 3px; border-bottom: 1px solid var(--line); }
+.cube-table td { padding: 2px 3px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
 .cube-table td:last-child { text-align: right; font-weight: 650; }
 
-.cube-map { display: flex; flex-direction: column; gap: 5px; width: 100%; }
-.cube-map-row { display: flex; align-items: center; gap: 7px; font-size: .66rem; }
-.cube-map-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.cube-map { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.cube-map-row { display: flex; align-items: center; gap: 5px; font-size: .52rem; }
+.cube-map-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .cube-map-name { color: var(--ink); }
 
 /* ---------- empty / loading states ---------- */

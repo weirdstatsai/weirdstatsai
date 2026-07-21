@@ -60,7 +60,7 @@ function body(preview: StatPreview, accent: string): HTMLElement {
       const p = preview.payload as RankingPayload;
       const wrap = el('div', 'cube-rank');
       const max = Math.max(...p.rows.map((r) => r.value), 1);
-      p.rows.slice(0, 4).forEach((r, i) => {
+      p.rows.slice(0, 3).forEach((r, i) => {
         const row = el('div', 'cube-rank-row');
         row.appendChild(el('span', 'cube-rank-num', String(i + 1)));
         row.appendChild(el('span', 'cube-rank-label', r.label));
@@ -96,7 +96,7 @@ function body(preview: StatPreview, accent: string): HTMLElement {
       const thead = el('tr', '');
       p.columns.forEach((c) => thead.appendChild(el('th', '', c)));
       table.appendChild(thead);
-      p.rows.slice(0, 3).forEach((r) => {
+      p.rows.slice(0, 2).forEach((r) => {
         const tr = el('tr', '');
         r.forEach((c) => tr.appendChild(el('td', '', c)));
         table.appendChild(tr);
@@ -107,7 +107,7 @@ function body(preview: StatPreview, accent: string): HTMLElement {
       const p = preview.payload as MapPayload;
       const wrap = el('div', 'cube-map');
       const max = Math.max(...p.regions.map((r) => r.value), 1);
-      p.regions.slice(0, 4).forEach((r) => {
+      p.regions.slice(0, 3).forEach((r) => {
         const row = el('div', 'cube-map-row');
         const dot = el('span', 'cube-map-dot');
         dot.style.background = accent;
@@ -131,7 +131,7 @@ export function renderCube(preview: StatPreview): HTMLElement {
   head.append(badge, el('span', 'cube-type', meta.label));
   cube.appendChild(head);
 
-  cube.appendChild(el('div', 'cube-title', preview.title));
+  cube.title = preview.title; // full title as a tooltip; square tiles stay compact
   const bodyWrap = el('div', 'cube-body');
   bodyWrap.appendChild(body(preview, meta.accent));
   cube.appendChild(bodyWrap);
