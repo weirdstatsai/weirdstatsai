@@ -131,7 +131,8 @@ export function renderCube(preview: StatPreview): HTMLElement {
   head.append(badge, el('span', 'cube-type', meta.label));
   cube.appendChild(head);
 
-  cube.title = preview.title; // full title as a tooltip; square tiles stay compact
+  cube.title = preview.title; // tooltip in icon mode; shown as text in the panel
+  cube.appendChild(el('div', 'cube-title', preview.title));
   const bodyWrap = el('div', 'cube-body');
   bodyWrap.appendChild(body(preview, meta.accent));
   cube.appendChild(bodyWrap);

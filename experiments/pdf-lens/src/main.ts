@@ -2,8 +2,10 @@
  * PDF-Lens prototype — orchestrator.
  *
  * Flow: open a PDF → render pages + extract text → group into blocks → analyze
- * for stat "hotspots" → the magnetic lens snaps between hotspots → each landing
- * spawns orbiting stat cubes. All isolated from the WeirdStats app.
+ * for stat "hotspots". The square is a *tool*: click it to pick it up (the page
+ * blurs except the sharp square), move the cursor to roam (snapping to stat
+ * spots), click to drop it on the page → the stats zoom in as a panel on the
+ * right. Cancel closes the panel and releases the tool. Isolated from the app.
  */
 import './ui/styles.css';
 import { loadPdf, renderPage, fitScale, type RenderedPage } from './pdf/pdf-renderer';
@@ -13,15 +15,13 @@ import { Lens } from './lens/lens';
 import { renderCube } from './cubes/stat-cube';
 import type { Hotspot, TextBlock } from './core/types';
 
-const TILE_HALF = 23;  // half the resting icon size (46px)
-const TILE_GAP = 4;    // small gap between the window's left edge and the icons
-
 const PAGE_TARGET_WIDTH = 720; // css px the page is rendered to
 const PAGE_GAP = 24;
 const MAX_PAGES = 8;
 const analyzer = new HeuristicAnalyzer();
 
 interface PageLayer { canvas: HTMLCanvasElement; offsetY: number; }
+type Mode = 'idle' | 'roaming' | 'locked';
 
 const app = document.getElementById('app')!;
 app.innerHTML = `
@@ -38,23 +38,34 @@ app.innerHTML = `
   </div>
   <div class="stage" id="stage">
     <div class="content" id="content">
-      <svg class="connectors" id="connectors"></svg>
+      <div class="pages" id="pages"></div>
+      <div class="scrim" id="scrim"></div>
     </div>
-    <div class="hint" id="hint" hidden>Drag the <b>lens</b> — it snaps to spots that hold a stat</div>
+    <aside class="stat-panel" id="statPanel" hidden>
+      <div class="stat-panel-head">
+        <span class="stat-panel-title">Stats in this spot</span>
+        <button class="stat-cancel" id="statCancel">✕ Cancel</button>
+      </div>
+      <div class="stat-panel-body" id="statBody"></div>
+    </aside>
+    <div class="hint" id="hint" hidden></div>
     <div class="overlay" id="overlay"></div>
   </div>
 `;
 
 const content = document.getElementById('content') as HTMLDivElement;
-const connectors = document.getElementById('connectors') as unknown as SVGSVGElement;
+const pages = document.getElementById('pages') as HTMLDivElement;
 const overlay = document.getElementById('overlay') as HTMLDivElement;
 const hint = document.getElementById('hint') as HTMLDivElement;
 const countEl = document.getElementById('count') as HTMLDivElement;
 const fileInput = document.getElementById('file') as HTMLInputElement;
+const statPanel = document.getElementById('statPanel') as HTMLElement;
+const statBody = document.getElementById('statBody') as HTMLDivElement;
+document.getElementById('statCancel')!.addEventListener('click', cancel);
 
 let pageLayers: PageLayer[] = [];
 let lens: Lens | null = null;
-let cubeEls: HTMLElement[] = [];
+let mode: Mode = 'idle';
 
 const dropMarkup = (note: string) => `
   <div class="drop" id="drop">
@@ -66,7 +77,7 @@ const dropMarkup = (note: string) => `
       <button class="btn" id="sample2">Try the sample</button>
     </div>
   </div>`;
-const DEFAULT_NOTE = 'The lens will only land where real data lives — no empty spots, no invented numbers.';
+const DEFAULT_NOTE = 'The lens only lands where real data lives — no empty spots, no invented numbers.';
 
 // ---- open / sample wiring (top-bar buttons are stable) ----
 const pick = () => fileInput.click();
@@ -77,7 +88,6 @@ fileInput.addEventListener('change', () => {
   if (f) f.arrayBuffer().then(open);
 });
 
-// Overlay content is re-rendered on state change, so (re)bind its buttons each time.
 function renderDrop(note = DEFAULT_NOTE): void {
   overlay.hidden = false;
   overlay.innerHTML = dropMarkup(note);
@@ -130,20 +140,19 @@ async function runPipeline(data: ArrayBuffer): Promise<void> {
   const rendered: RenderedPage[] = [];
   for (let i = 0; i < total; i++) rendered.push(await renderPage(pdf, i, scale));
 
-  // Lay pages out vertically in content space and collect blocks (translated).
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   let offsetY = 0;
   let maxW = 0;
   const blocks: TextBlock[] = [];
   for (const page of rendered) {
     const canvas = page.canvas;
     canvas.className = 'page-canvas';
-    canvas.style.top = `${offsetY}px`;
-    canvas.style.width = `${page.width / (Math.min(window.devicePixelRatio || 1, 2))}px`;
-    content.appendChild(canvas);
-    pageLayers.push({ canvas, offsetY });
+    canvas.style.top = `${offsetY / dpr}px`;
+    canvas.style.width = `${page.width / dpr}px`;
+    pages.appendChild(canvas);
+    pageLayers.push({ canvas, offsetY: offsetY / dpr });
 
     for (const b of extractBlocks(page.items, page.pageIndex)) {
-      // translate into content space (add page offset)
       b.rect = { ...b.rect, top: b.rect.top + offsetY };
       b.center = { x: b.center.x, y: b.center.y + offsetY };
       blocks.push(b);
@@ -151,34 +160,22 @@ async function runPipeline(data: ArrayBuffer): Promise<void> {
     maxW = Math.max(maxW, page.width);
     offsetY += page.height + PAGE_GAP;
   }
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   content.style.width = `${maxW / dpr}px`;
   content.style.height = `${offsetY / dpr}px`;
-  // page canvases are in device px; scale content coords back to css px
-  scaleLayers(dpr);
 
   showLoading('Finding stats…');
   const hotspots = await analyzer.analyze(blocks.map((b) => scaleBlock(b, dpr)));
 
   overlay.hidden = true;
-  hint.hidden = false;
   countEl.innerHTML = `<b>${hotspots.length}</b> stat spot${hotspots.length === 1 ? '' : 's'} found`;
+  setHint('Click the <b>square</b> to pick up the lens');
 
-  lens = new Lens(content, {
-    size: 210,
-    onLock: (h) => spawnCubes(h),
-  });
-  lens.setHotspots(hotspots);
+  lens = new Lens(content, { size: 200, drawCutout });
+  lens.setHotspots(hotspots, lockAt); // clicking a hotspot marker locks straight onto it
+  lens.element.addEventListener('click', () => { if (mode === 'idle') startRoaming(); });
+  mode = 'idle';
 }
 
-/** Page canvases render in device px; display + coordinate space use css px. */
-function scaleLayers(dpr: number): void {
-  for (const layer of pageLayers) {
-    const cssTop = layer.offsetY / dpr;
-    layer.canvas.style.top = `${cssTop}px`;
-    layer.offsetY = cssTop;
-  }
-}
 function scaleBlock(b: TextBlock, dpr: number): TextBlock {
   const s = (n: number) => n / dpr;
   return {
@@ -188,47 +185,118 @@ function scaleBlock(b: TextBlock, dpr: number): TextBlock {
   };
 }
 
-// ---- stat tiles ----
-// Small square icon tiles in a column flush against the window's LEFT edge,
-// spaced evenly down its full height. Each expands leftward (away from the
-// window) into a readable card when pointed at / clicked.
-function spawnCubes(h: Hotspot): void {
-  cubeEls.forEach((c) => c.remove());
-  cubeEls = [];
-  connectors.replaceChildren();
+/** Paint a sharp 1:1 cutout of the page under the lens (so it stays crisp while
+ *  the rest of the page is blurred). */
+function drawCutout(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number): void {
+  ctx.clearRect(0, 0, size, size);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, size, size);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const layer = pageLayers.find((l) => cy >= l.offsetY && cy < l.offsetY + l.canvas.height / dpr) ?? pageLayers[0];
+  if (!layer) return;
+  const sx = (cx - size / 2) * dpr;
+  const sy = (cy - layer.offsetY - size / 2) * dpr;
+  try {
+    ctx.drawImage(layer.canvas, sx, sy, size * dpr, size * dpr, 0, 0, size, size);
+  } catch { /* out of bounds near edges — keep the white fill */ }
+}
+
+// ---- tool state machine ----
+function contentPoint(e: PointerEvent | MouseEvent): { x: number; y: number } {
+  const r = content.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+
+function onRoamMove(e: PointerEvent): void {
+  if (mode !== 'roaming' || !lens) return;
+  const p = contentPoint(e);
+  const near = lens.nearestTo(p.x, p.y);
+  if (near) {
+    const dx = near.block.center.x - p.x;
+    const dy = near.block.center.y - p.y;
+    const pull = Math.max(0, 1 - Math.hypot(dx, dy) / 240) ** 2; // magnetic near a spot
+    lens.place(p.x + dx * pull, p.y + dy * pull);
+    lens.markActive(near);
+  } else {
+    lens.place(p.x, p.y);
+  }
+}
+
+function onRoamClick(): void {
+  if (mode !== 'roaming' || !lens) return;
+  const near = lens.nearestTo(lens.position.x, lens.position.y);
+  if (near) lockAt(near);
+}
+
+function startRoaming(): void {
+  if (!lens || mode !== 'idle') return;
+  mode = 'roaming';
+  content.classList.add('tool-active');
+  lens.setTool(true);
+  setHint('Move over the document — click a highlighted spot to analyze');
+  window.addEventListener('pointermove', onRoamMove);
+  // Defer so the click that picked up the lens doesn't immediately drop it.
+  setTimeout(() => window.addEventListener('click', onRoamClick), 0);
+}
+
+function lockAt(h: Hotspot): void {
   if (!lens) return;
+  window.removeEventListener('pointermove', onRoamMove);
+  window.removeEventListener('click', onRoamClick);
+  mode = 'locked';
+  content.classList.add('tool-active', 'locked');
+  lens.setTool(true);
+  lens.place(h.block.center.x, h.block.center.y);
+  lens.markActive(h);
+  openPanel(h);
+  setHint('');
+}
 
-  const lp = lens.position;
-  const r = lens.radius;
-  const n = h.cards.length;
-  const rightEdge = lp.x - r - TILE_GAP;   // icons' right edge sits at the window's left edge
-  const top = lp.y - r + TILE_HALF;        // first icon flush with the window top
-  const usable = 2 * r - 2 * TILE_HALF;    // ...last icon flush with the bottom
+function cancel(): void {
+  window.removeEventListener('pointermove', onRoamMove);
+  window.removeEventListener('click', onRoamClick);
+  mode = 'idle';
+  content.classList.remove('tool-active', 'locked');
+  closePanel();
+  lens?.setTool(false);
+  lens?.markActive(null);
+  if (lens) setHint('Click the <b>square</b> to pick up the lens');
+}
 
+// ---- right-side stat panel ----
+function openPanel(h: Hotspot): void {
+  statBody.replaceChildren();
   h.cards.forEach((card, i) => {
-    const cube = renderCube(card);
-    const centerY = n === 1 ? lp.y : top + (i / (n - 1)) * usable;
-    cube.style.right = `${content.clientWidth - rightEdge}px`;
-    cube.style.top = `${centerY}px`;
-    cube.style.transform = 'translateY(-50%)';
-    cube.style.animationDelay = `${i * 40}ms`;
-    cube.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const wasActive = cube.classList.contains('active');
-      cubeEls.forEach((c) => c.classList.remove('active'));
-      if (!wasActive) cube.classList.add('active');
-    });
-    content.appendChild(cube);
-    cubeEls.push(cube);
+    const el = renderCube(card);
+    el.style.animationDelay = `${i * 60}ms`;
+    statBody.appendChild(el);
   });
+  statPanel.hidden = false;
+  requestAnimationFrame(() => statPanel.classList.add('open'));
+}
+
+function closePanel(): void {
+  statPanel.classList.remove('open');
+  window.setTimeout(() => { if (!statPanel.classList.contains('open')) statPanel.hidden = true; }, 260);
+}
+
+function setHint(html: string): void {
+  hint.innerHTML = html;
+  hint.hidden = !html;
 }
 
 function reset(): void {
+  window.removeEventListener('pointermove', onRoamMove);
+  window.removeEventListener('click', onRoamClick);
   pageLayers = [];
-  cubeEls = [];
   lens = null;
-  content.querySelectorAll('.page-canvas, .hotspot, .lens, .cube').forEach((n) => n.remove());
-  connectors.replaceChildren();
-  hint.hidden = true;
+  mode = 'idle';
+  pages.replaceChildren();
+  content.querySelectorAll('.hotspot, .lens').forEach((n) => n.remove());
+  content.classList.remove('tool-active', 'locked');
+  statPanel.hidden = true;
+  statPanel.classList.remove('open');
+  statBody.replaceChildren();
+  setHint('');
   countEl.textContent = '';
 }
