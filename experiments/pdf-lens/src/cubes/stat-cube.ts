@@ -29,6 +29,17 @@ function el(tag: string, cls: string, text?: string): HTMLElement {
   return n;
 }
 
+/** A tiny square icon for the rail on the left of the lens (type badge only). */
+export function renderStatIcon(preview: StatPreview): HTMLElement {
+  const meta = META[preview.type];
+  const icon = el('div', 'stat-icon');
+  const badge = el('span', 'stat-icon-badge', meta.icon);
+  badge.style.background = meta.accent;
+  icon.appendChild(badge);
+  icon.title = `${meta.label} — ${preview.title}`;
+  return icon;
+}
+
 function miniBars(values: number[], accent: string): HTMLElement {
   const wrap = el('div', 'cube-bars');
   const max = Math.max(...values, 1);

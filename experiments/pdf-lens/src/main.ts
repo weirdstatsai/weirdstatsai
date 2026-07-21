@@ -12,8 +12,11 @@ import { loadPdf, renderPage, fitScale, type RenderedPage } from './pdf/pdf-rend
 import { extractBlocks } from './pdf/text-blocks';
 import { HeuristicAnalyzer } from './hotspot/heuristic-analyzer';
 import { Lens } from './lens/lens';
-import { renderCube } from './cubes/stat-cube';
+import { renderCube, renderStatIcon } from './cubes/stat-cube';
 import type { Hotspot, TextBlock } from './core/types';
+
+const RAIL_HALF = 22;  // half the rail icon size (44px)
+const RAIL_GAP = 6;    // gap between the square's left edge and the icon rail
 
 const PAGE_TARGET_WIDTH = 720; // css px the page is rendered to
 const PAGE_GAP = 24;
@@ -66,6 +69,7 @@ document.getElementById('statCancel')!.addEventListener('click', cancel);
 let pageLayers: PageLayer[] = [];
 let lens: Lens | null = null;
 let mode: Mode = 'idle';
+let railEls: HTMLElement[] = [];
 
 const dropMarkup = (note: string) => `
   <div class="drop" id="drop">
@@ -249,7 +253,46 @@ function lockAt(h: Hotspot): void {
   lens.place(h.block.center.x, h.block.center.y);
   lens.markActive(h);
   openPanel(h);
+  spawnRail(h);
   setHint('');
+}
+
+/** Small square stat icons flush against the square's left edge; clicking one
+ *  highlights its card in the right-side panel. */
+function spawnRail(h: Hotspot): void {
+  clearRail();
+  if (!lens) return;
+  const lp = lens.position;
+  const r = lens.radius;
+  const n = h.cards.length;
+  const rightEdge = lp.x - r - RAIL_GAP;
+  const top = lp.y - r + RAIL_HALF;
+  const usable = 2 * r - 2 * RAIL_HALF;
+
+  h.cards.forEach((card, i) => {
+    const icon = renderStatIcon(card);
+    const centerY = n === 1 ? lp.y : top + (i / (n - 1)) * usable;
+    icon.style.right = `${content.clientWidth - rightEdge}px`;
+    icon.style.top = `${centerY}px`;
+    icon.style.animationDelay = `${i * 45}ms`;
+    icon.addEventListener('click', (e) => { e.stopPropagation(); highlightCard(i); });
+    content.appendChild(icon);
+    railEls.push(icon);
+  });
+}
+
+function clearRail(): void {
+  railEls.forEach((n) => n.remove());
+  railEls = [];
+}
+
+function highlightCard(i: number): void {
+  const card = statBody.children[i] as HTMLElement | undefined;
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  card.classList.remove('pulse');
+  void card.offsetWidth; // restart the animation
+  card.classList.add('pulse');
 }
 
 function cancel(): void {
@@ -258,6 +301,7 @@ function cancel(): void {
   mode = 'idle';
   content.classList.remove('tool-active', 'locked');
   closePanel();
+  clearRail();
   lens?.setTool(false);
   lens?.markActive(null);
   if (lens) setHint('Click the <b>square</b> to pick up the lens');
@@ -291,8 +335,9 @@ function reset(): void {
   pageLayers = [];
   lens = null;
   mode = 'idle';
+  clearRail();
   pages.replaceChildren();
-  content.querySelectorAll('.hotspot, .lens').forEach((n) => n.remove());
+  content.querySelectorAll('.hotspot, .lens, .stat-icon').forEach((n) => n.remove());
   content.classList.remove('tool-active', 'locked');
   statPanel.hidden = true;
   statPanel.classList.remove('open');
