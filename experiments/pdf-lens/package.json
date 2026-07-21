@@ -1,0 +1,19 @@
+{
+  "name": "pdf-lens-prototype",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Isolated prototype: magnetic lens that snaps to stat-able regions in a PDF and shows orbiting stat cards. Standalone from the WeirdStats app.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4321"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^4.10.38"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vite": "^6.0.11"
+  }
+}
