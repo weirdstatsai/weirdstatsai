@@ -1,10 +1,10 @@
 /**
- * The magnetic lens.
+ * The magnetic lens — a plain square "window" over the page (no magnification).
  *
- * The loupe can be dragged, but it only ever *lands* on a hotspot — a region
- * the analyzer proved can produce a stat. While dragging it follows the pointer
- * and highlights the nearest hotspot; on release it snaps onto that hotspot and
- * emits `onLock`, which the app uses to spawn the orbiting cubes.
+ * It can be dragged, but it only ever *lands* on a hotspot — a region the
+ * analyzer proved can produce a stat. While dragging it follows the pointer and
+ * highlights the nearest hotspot; on release it snaps onto that hotspot and
+ * emits `onLock`, which the app uses to spawn the orbiting stat cubes.
  *
  * Coordinates are in the content layer's space (the scrollable pages stack).
  */
@@ -12,16 +12,11 @@ import type { Hotspot } from '../core/types';
 
 export interface LensOptions {
   size: number;
-  zoom: number;
   onLock: (hotspot: Hotspot) => void;
-  /** Draw the magnified page under (cx, cy) into the loupe canvas. */
-  drawLoupe: (ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, zoom: number) => void;
 }
 
 export class Lens {
   private lensEl: HTMLDivElement;
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
   private markers = new Map<string, HTMLDivElement>();
   private hotspots: Hotspot[] = [];
   private active: Hotspot | null = null;
@@ -33,17 +28,9 @@ export class Lens {
     this.lensEl.className = 'lens';
     this.lensEl.style.width = this.lensEl.style.height = `${opts.size}px`;
 
-    this.canvas = document.createElement('canvas');
-    this.canvas.className = 'lens-canvas';
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    this.canvas.width = opts.size * dpr;
-    this.canvas.height = opts.size * dpr;
-    this.ctx = this.canvas.getContext('2d')!;
-    this.ctx.scale(dpr, dpr);
-
     const ring = document.createElement('div');
     ring.className = 'lens-ring';
-    this.lensEl.append(this.canvas, ring);
+    this.lensEl.append(ring);
     this.content.appendChild(this.lensEl);
 
     this.bindDrag();
@@ -101,7 +88,6 @@ export class Lens {
     this.pos = { x, y };
     this.lensEl.style.left = `${x}px`;
     this.lensEl.style.top = `${y}px`;
-    this.opts.drawLoupe(this.ctx, x, y, this.opts.size, this.opts.zoom);
   }
 
   private lockTo(h: Hotspot): void {

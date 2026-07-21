@@ -163,10 +163,8 @@ async function runPipeline(data: ArrayBuffer): Promise<void> {
   countEl.innerHTML = `<b>${hotspots.length}</b> stat spot${hotspots.length === 1 ? '' : 's'} found`;
 
   lens = new Lens(content, {
-    size: 150,
-    zoom: 1.9,
+    size: 210,
     onLock: (h) => spawnCubes(h),
-    drawLoupe,
   });
   lens.setHotspots(hotspots);
 }
@@ -186,22 +184,6 @@ function scaleBlock(b: TextBlock, dpr: number): TextBlock {
     rect: { left: s(b.rect.left), top: s(b.rect.top), width: s(b.rect.width), height: s(b.rect.height) },
     center: { x: s(b.center.x), y: s(b.center.y) },
   };
-}
-
-/** Magnifier: sample the page canvas under (cx,cy) into the loupe. */
-function drawLoupe(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, zoom: number): void {
-  ctx.clearRect(0, 0, size, size);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, size, size);
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const layer = pageLayers.find((l) => cy >= l.offsetY && cy < l.offsetY + l.canvas.height / dpr) ?? pageLayers[0];
-  if (!layer) return;
-  const srcSize = size / zoom;
-  const sx = (cx - srcSize / 2) * dpr;
-  const sy = (cy - layer.offsetY - srcSize / 2) * dpr;
-  try {
-    ctx.drawImage(layer.canvas, sx, sy, srcSize * dpr, srcSize * dpr, 0, 0, size, size);
-  } catch { /* out of bounds near edges — keep the white fill */ }
 }
 
 // ---- cubes ----
@@ -237,6 +219,18 @@ function spawnCubes(h: Hotspot): void {
     cube.style.top = `${p.y}px`;
     cube.style.visibility = 'visible';
     cube.style.animationDelay = `${i * 45}ms`;
+
+    // Grow away from the lens on hover/click so the enlarged card stays clear.
+    const cubeCx = p.x + boxes[i].width / 2;
+    const cubeCy = p.y + boxes[i].height / 2;
+    cube.style.transformOrigin =
+      `${cubeCx <= lp.x ? 'right' : 'left'} ${cubeCy <= lp.y ? 'bottom' : 'top'}`;
+    cube.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wasActive = cube.classList.contains('active');
+      cubeEls.forEach((c) => c.classList.remove('active'));
+      if (!wasActive) cube.classList.add('active');
+    });
 
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     line.setAttribute('x1', String(lp.x));
