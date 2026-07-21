@@ -82,14 +82,14 @@ body { background: var(--paper); color: var(--ink); overflow: hidden; }
 /* ---------- lens ---------- */
 .lens {
   position: absolute; z-index: 30; transform: translate(-50%, -50%);
-  border-radius: 50%; cursor: grab; touch-action: none;
+  border-radius: 14px; cursor: grab; touch-action: none;
   box-shadow: var(--shadow-lg), 0 0 0 3px rgba(255,255,255,.9);
   overflow: hidden;
 }
 .lens.dragging { cursor: grabbing; }
 .lens-canvas { display: block; width: 100%; height: 100%; }
 .lens-ring {
-  position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  position: absolute; inset: 0; border-radius: 14px; pointer-events: none;
   border: 3px solid var(--purple);
   box-shadow: inset 0 0 24px rgba(83,74,183,.25);
 }
