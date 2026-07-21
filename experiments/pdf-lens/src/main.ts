@@ -11,8 +11,9 @@ import { extractBlocks } from './pdf/text-blocks';
 import { HeuristicAnalyzer } from './hotspot/heuristic-analyzer';
 import { Lens } from './lens/lens';
 import { renderCube } from './cubes/stat-cube';
-import { layoutOrbit, type CubeBox } from './cubes/orbit-layout';
 import type { Hotspot, TextBlock } from './core/types';
+
+const TILE_STEP = 56;  // vertical spacing between stat icon tiles on the left rail
 
 const PAGE_TARGET_WIDTH = 720; // css px the page is rendered to
 const PAGE_GAP = 24;
@@ -186,57 +187,47 @@ function scaleBlock(b: TextBlock, dpr: number): TextBlock {
   };
 }
 
-// ---- cubes ----
+// ---- stat tiles ----
+// Small square icon tiles stacked down the LEFT side of the lens window. Each
+// tile grows (leftward, staying clear of the window) when pointed at / clicked.
 function spawnCubes(h: Hotspot): void {
   cubeEls.forEach((c) => c.remove());
   cubeEls = [];
   connectors.replaceChildren();
   if (!lens) return;
 
-  // Build + measure cubes offscreen first.
-  const boxes: CubeBox[] = [];
-  for (const card of h.cards) {
-    const cube = renderCube(card);
-    cube.style.visibility = 'hidden';
-    content.appendChild(cube);
-    cubeEls.push(cube);
-    boxes.push({ width: cube.offsetWidth, height: cube.offsetHeight });
-  }
-
   const lp = lens.position;
-  const placements = layoutOrbit({
-    lens: { x: lp.x, y: lp.y, radius: lens.radius },
-    stage: { width: content.clientWidth, height: content.clientHeight },
-    cubes: boxes,
-  });
+  const r = lens.radius;
+  const gap = 14;
+  const rightEdge = lp.x - r - gap;                    // tiles' right edge sits just left of the window
+  const span = Math.max(r * 2, h.cards.length * TILE_STEP);
+  const startY = lp.y - span / 2 + TILE_STEP / 2;      // column centered on the window, running its full height
 
   connectors.setAttribute('width', String(content.clientWidth));
   connectors.setAttribute('height', String(content.clientHeight));
 
-  placements.forEach((p, i) => {
-    const cube = cubeEls[i];
-    cube.style.left = `${p.x}px`;
-    cube.style.top = `${p.y}px`;
-    cube.style.visibility = 'visible';
-    cube.style.animationDelay = `${i * 45}ms`;
-
-    // Grow away from the lens on hover/click so the enlarged card stays clear.
-    const cubeCx = p.x + boxes[i].width / 2;
-    const cubeCy = p.y + boxes[i].height / 2;
-    cube.style.transformOrigin =
-      `${cubeCx <= lp.x ? 'right' : 'left'} ${cubeCy <= lp.y ? 'bottom' : 'top'}`;
+  h.cards.forEach((card, i) => {
+    const cube = renderCube(card);
+    const centerY = startY + i * TILE_STEP;
+    // Right-anchor so the tile expands leftward (away from the window) on hover.
+    cube.style.right = `${content.clientWidth - rightEdge}px`;
+    cube.style.top = `${centerY}px`;
+    cube.style.animationDelay = `${i * 40}ms`;
     cube.addEventListener('click', (e) => {
       e.stopPropagation();
       const wasActive = cube.classList.contains('active');
       cubeEls.forEach((c) => c.classList.remove('active'));
       if (!wasActive) cube.classList.add('active');
     });
+    content.appendChild(cube);
+    cubeEls.push(cube);
 
+    // Subtle connector from the window's left edge to each tile.
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', String(lp.x));
+    line.setAttribute('x1', String(lp.x - r));
     line.setAttribute('y1', String(lp.y));
-    line.setAttribute('x2', String(p.anchorX));
-    line.setAttribute('y2', String(p.anchorY));
+    line.setAttribute('x2', String(rightEdge));
+    line.setAttribute('y2', String(centerY));
     connectors.appendChild(line);
   });
 }
