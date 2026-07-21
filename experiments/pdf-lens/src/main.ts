@@ -13,7 +13,8 @@ import { Lens } from './lens/lens';
 import { renderCube } from './cubes/stat-cube';
 import type { Hotspot, TextBlock } from './core/types';
 
-const TILE_STEP = 56;  // vertical spacing between stat icon tiles on the left rail
+const TILE_HALF = 23;  // half the resting icon size (46px)
+const TILE_GAP = 12;   // gap between the window edge and the icon
 
 const PAGE_TARGET_WIDTH = 720; // css px the page is rendered to
 const PAGE_GAP = 24;
@@ -188,8 +189,35 @@ function scaleBlock(b: TextBlock, dpr: number): TextBlock {
 }
 
 // ---- stat tiles ----
-// Small square icon tiles stacked down the LEFT side of the lens window. Each
-// tile grows (leftward, staying clear of the window) when pointed at / clicked.
+// Small square icon tiles distributed around the PERIMETER of the lens window.
+// Each hugs its edge and expands OUTWARD (away from the window) on hover/click.
+type Side = 'top' | 'right' | 'bottom' | 'left';
+
+function placeTile(cube: HTMLElement, side: Side, cx: number, cy: number): void {
+  const cw = content.clientWidth;
+  const ch = content.clientHeight;
+  cube.style.left = cube.style.right = cube.style.top = cube.style.bottom = 'auto';
+  // Anchor the edge nearest the window so growth pushes outward; center the
+  // tile on the other axis so it stays lined up with its icon.
+  if (side === 'top') {
+    cube.style.left = `${cx}px`;
+    cube.style.bottom = `${ch - (cy + TILE_HALF)}px`;
+    cube.style.transform = 'translateX(-50%)';
+  } else if (side === 'bottom') {
+    cube.style.left = `${cx}px`;
+    cube.style.top = `${cy - TILE_HALF}px`;
+    cube.style.transform = 'translateX(-50%)';
+  } else if (side === 'left') {
+    cube.style.top = `${cy}px`;
+    cube.style.right = `${cw - (cx + TILE_HALF)}px`;
+    cube.style.transform = 'translateY(-50%)';
+  } else {
+    cube.style.top = `${cy}px`;
+    cube.style.left = `${cx - TILE_HALF}px`;
+    cube.style.transform = 'translateY(-50%)';
+  }
+}
+
 function spawnCubes(h: Hotspot): void {
   cubeEls.forEach((c) => c.remove());
   cubeEls = [];
@@ -198,20 +226,34 @@ function spawnCubes(h: Hotspot): void {
 
   const lp = lens.position;
   const r = lens.radius;
-  const gap = 14;
-  const rightEdge = lp.x - r - gap;                    // tiles' right edge sits just left of the window
-  const span = Math.max(r * 2, h.cards.length * TILE_STEP);
-  const startY = lp.y - span / 2 + TILE_STEP / 2;      // column centered on the window, running its full height
-
-  connectors.setAttribute('width', String(content.clientWidth));
-  connectors.setAttribute('height', String(content.clientHeight));
+  const n = h.cards.length;
+  const out = r + TILE_GAP + TILE_HALF; // distance from center to an icon's center
 
   h.cards.forEach((card, i) => {
     const cube = renderCube(card);
-    const centerY = startY + i * TILE_STEP;
-    // Right-anchor so the tile expands leftward (away from the window) on hover.
-    cube.style.right = `${content.clientWidth - rightEdge}px`;
-    cube.style.top = `${centerY}px`;
+    // Spread evenly around the window, projecting each angle onto the square.
+    const ang = (-90 + (i * 360) / n) * (Math.PI / 180);
+    const dx = Math.cos(ang);
+    const dy = Math.sin(ang);
+    const t = r / Math.max(Math.abs(dx), Math.abs(dy)); // hit point on the square border
+    const bx = lp.x + dx * t;
+    const by = lp.y + dy * t;
+
+    let side: Side;
+    let cx: number;
+    let cy: number;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      side = dx > 0 ? 'right' : 'left';
+      cx = dx > 0 ? lp.x + out : lp.x - out;
+      cy = by;
+    } else {
+      side = dy > 0 ? 'bottom' : 'top';
+      cy = dy > 0 ? lp.y + out : lp.y - out;
+      cx = bx;
+    }
+
+    cube.classList.add(`side-${side}`);
+    placeTile(cube, side, cx, cy);
     cube.style.animationDelay = `${i * 40}ms`;
     cube.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -221,14 +263,6 @@ function spawnCubes(h: Hotspot): void {
     });
     content.appendChild(cube);
     cubeEls.push(cube);
-
-    // Subtle connector from the window's left edge to each tile.
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', String(lp.x - r));
-    line.setAttribute('y1', String(lp.y));
-    line.setAttribute('x2', String(rightEdge));
-    line.setAttribute('y2', String(centerY));
-    connectors.appendChild(line);
   });
 }
 
