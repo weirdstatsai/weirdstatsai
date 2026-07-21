@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
@@ -23,27 +23,30 @@ const SUGGESTION_ICONS = ['cafe-outline', 'bug-outline', 'bed-outline', 'footbal
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss'],
 })
-export class HomePage implements OnInit, OnDestroy {
+export class HomePage implements OnInit, OnDestroy, AfterViewInit {
   recentCards: StoredStatCard[] = [];
   suggestions = SUGGESTIONS;
   suggestionIcons = SUGGESTION_ICONS;
 
   // "Explore by topic" tiles — tapping one jumps to Explore for that category.
   readonly categories: Array<{ label: string; icon: string }> = [
-    { label: 'Animals',    icon: 'paw-outline' },
-    { label: 'Countries',  icon: 'globe-outline' },
-    { label: 'Food',       icon: 'fast-food-outline' },
-    { label: 'Money',      icon: 'cash-outline' },
-    { label: 'Internet',   icon: 'wifi-outline' },
-    { label: 'Human Body', icon: 'heart-outline' },
-    { label: 'Sports',     icon: 'football-outline' },
-    { label: 'History',    icon: 'library-outline' },
+    { label: 'Animals',    icon: 'paw' },
+    { label: 'Countries',  icon: 'globe' },
+    { label: 'Food',       icon: 'fast-food' },
+    { label: 'Money',      icon: 'cash' },
+    { label: 'Internet',   icon: 'wifi' },
+    { label: 'Human Body', icon: 'fitness' },
+    { label: 'Sports',     icon: 'football' },
+    { label: 'History',    icon: 'library' },
   ];
 
   /** The single spotlight card ("Today's Weird Pick") and a few for Trending —
    *  both drawn from the curated Home feed, so no extra queries. */
   get featuredCard(): StoredStatCard | null { return this.recentCards[0] ?? null; }
   get trendingCards(): StoredStatCard[] { return this.recentCards.slice(1, 5); }
+  // Placeholder share counts for the "Most shared today" row — real share
+  // tracking isn't wired up yet, so these are illustrative for now.
+  readonly mockShares = ['12K', '9.8K', '7.6K', '6.1K'];
 
   goExplore(topic?: string): void {
     this.router.navigate(['/explore'], topic ? { state: { topic } } : {});
@@ -62,6 +65,10 @@ export class HomePage implements OnInit, OnDestroy {
   private emojiSub?: Subscription;
   private usageTimer?: ReturnType<typeof setInterval>;
 
+  // "Today's weird stories" coverflow carousel (Swiper web component).
+  @ViewChild('storiesSwiper') storiesSwiper?: ElementRef<any>;
+  private swiperReady = false;
+
   constructor(
     private router: Router,
     private afs: AngularFirestore,
@@ -78,6 +85,57 @@ export class HomePage implements OnInit, OnDestroy {
     }
     // Picks up usage after a generation made on a previous visit to this tab.
     this.refreshUsage();
+  }
+
+  // Configure Swiper via element PROPERTIES (object params don't bind reliably as
+  // attributes), then initialize — the coverflow effect centers the active card
+  // and tucks the neighbours behind it, scaled down, exactly like the reference.
+  ngAfterViewInit(): void {
+    // The <swiper-container> web component may not be upgraded the instant this
+    // hook fires, so defer a tick before configuring + initializing it.
+    setTimeout(() => this.initStoriesSwiper(), 0);
+  }
+
+  private initStoriesSwiper(): void {
+    const el: any = this.storiesSwiper?.nativeElement ?? document.querySelector('.stories-swiper');
+    if (!el || this.swiperReady || typeof el.initialize !== 'function') return;
+    Object.assign(el, {
+      slidesPerView: 1,       // all cards occupy one centred slot; the effect stacks them
+      initialSlide: 1,        // open on the featured (mosquito) card, in front
+      grabCursor: true,
+      watchSlidesProgress: true,
+      observer: true,         // recompute the stack when the swiper becomes visible/sized
+      observeParents: true,
+      // Stacked "deck": the active card sits in FRONT; the card before it tucks
+      // behind to the back-left, and the card after it further back on the right.
+      // Scrolling animates cards smoothly between these stacked positions.
+      effect: 'creative',
+      creativeEffect: {
+        limitProgress: 2,
+        perspective: true,
+        // Both back cards peek clearly — one to the left, one to the right —
+        // brought forward (small negative Z) so a good slice of each shows.
+        prev: { translate: ['-23%', 0, -60], rotate: [0, 0, -5], scale: 0.88, opacity: 0.82 },
+        next: { translate: ['23%', 0, -80], rotate: [0, 0, 5], scale: 0.86, opacity: 0.74 },
+      },
+      pagination: { clickable: true },
+      // Let the pagination dots sit BELOW the cards (Swiper's shadow-DOM .swiper
+      // clips overflow by default, which would hide dots placed under the cards).
+      injectStyles: ['.swiper { overflow: visible; }'],
+    });
+    el.initialize();
+    // The creative/stack transforms only compute on an update() — the initial
+    // initialize() leaves the slides flat. Nudge updates as layout settles
+    // (twice, to catch Ionic's page-transition timing).
+    setTimeout(() => el.swiper?.update(), 60);
+    setTimeout(() => el.swiper?.update(), 350);
+    this.swiperReady = true;
+  }
+
+  // Re-apply the stack transforms whenever the Home view (re)enters — the swiper
+  // may have been laid out while off-screen, leaving the effect uncomputed.
+  ionViewDidEnter(): void {
+    setTimeout(() => this.storiesSwiper?.nativeElement?.swiper?.update(), 50);
   }
 
   ngOnInit(): void {

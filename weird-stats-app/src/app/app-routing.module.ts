@@ -42,6 +42,10 @@ const routes: Routes = [
     loadChildren: () => import('./admin-users/admin-users.module').then(m => m.AdminUsersPageModule),
   },
   {
+    path: 'admin-cards',
+    loadChildren: () => import('./admin-cards/admin-cards.module').then(m => m.AdminCardsPageModule),
+  },
+  {
     path: 'admin-flagged',
     loadChildren: () => import('./admin-flagged/admin-flagged.module').then(m => m.AdminFlaggedPageModule),
   },

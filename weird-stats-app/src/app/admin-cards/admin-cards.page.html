@@ -1,0 +1,75 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="admin-toolbar">
+    <ion-buttons slot="start">
+      <ion-button (click)="back()" class="back-btn">
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <div class="admin-title-wrap">
+      <ion-icon name="albums-outline" class="title-icon"></ion-icon>
+      <ion-title class="admin-title">All cards</ion-title>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="admin-content">
+  <div class="loading-state" *ngIf="isLoading">
+    <ion-spinner name="dots"></ion-spinner>
+    <p>Loading cards…</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading">
+
+    <!-- Search -->
+    <div class="search-row">
+      <ion-icon name="search-outline"></ion-icon>
+      <input [(ngModel)]="query" placeholder="Search title, prompt, topic or creator" />
+      <button *ngIf="query" class="clear-btn" (click)="query = ''" aria-label="Clear">
+        <ion-icon name="close-circle"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Filter chips -->
+    <div class="filter-row">
+      <button class="fchip" [class.on]="filter === 'all'" (click)="setFilter('all')">All</button>
+      <button class="fchip" [class.on]="filter === 'explore'" (click)="setFilter('explore')">On Explore</button>
+      <button class="fchip" [class.on]="filter === 'home'" (click)="setFilter('home')">On Home</button>
+      <button class="fchip" [class.on]="filter === 'public'" (click)="setFilter('public')">Public</button>
+      <button class="fchip" [class.on]="filter === 'private'" (click)="setFilter('private')">Private</button>
+    </div>
+
+    <!-- Cards -->
+    <div class="cards-list">
+      <div class="card-row" *ngFor="let c of visibleCards()" (click)="openCard(c)">
+        <div class="card-row-info">
+          <p class="card-row-title">{{ c.data?.title || '(untitled)' }}</p>
+          <p class="card-row-meta">
+            <span class="status-dot" [class.published]="c.publishStatus === 'published'"></span>
+            {{ c.publishStatus || 'draft' }} · {{ c.data?.cardType }} · {{ c.createdByName || 'Anonymous' }}
+          </p>
+        </div>
+        <div class="row-actions">
+          <button class="feed-toggle explore" [class.on]="c.showOnExplore"
+                  (click)="toggleExplore(c, $event)"
+                  [title]="c.showOnExplore ? 'Remove from Explore' : 'Send to Explore'">
+            <ion-icon [name]="c.showOnExplore ? 'checkmark-circle' : 'compass-outline'"></ion-icon>
+            <span>{{ c.showOnExplore ? 'On Explore' : 'Explore' }}</span>
+          </button>
+          <button class="feed-toggle home" [class.on]="c.showOnHome"
+                  (click)="toggleHome(c, $event)"
+                  [title]="c.showOnHome ? 'Remove from Home' : 'Send to Home'">
+            <ion-icon name="home-outline"></ion-icon>
+          </button>
+        </div>
+      </div>
+      <p class="empty-msg" *ngIf="visibleCards().length === 0">No cards match.</p>
+    </div>
+
+    <!-- Load more -->
+    <button class="load-more" *ngIf="hasMore" (click)="loadMore()" [disabled]="loadingMore">
+      <ion-spinner *ngIf="loadingMore" name="dots"></ion-spinner>
+      <span *ngIf="!loadingMore">Load more</span>
+    </button>
+
+  </ng-container>
+</ion-content>

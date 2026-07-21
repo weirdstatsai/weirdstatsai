@@ -40,35 +40,106 @@
   <!-- ① How it works -->
   <section class="hsec">
     <div class="sec-head">
-      <h2 class="sec-title">What is WeirdStats?</h2>
+      <span class="hiw-badge"><ion-icon name="sparkles"></ion-icon></span>
+      <h2 class="sec-title">How WeirdStats works</h2>
     </div>
     <div class="hiw-card">
       <div class="hiw-step">
-        <div class="hiw-ic"><ion-icon name="help-outline"></ion-icon></div>
-        <p class="hiw-t">Ask</p>
-        <p class="hiw-d">A weird or curious question</p>
+        <div class="hiw-ic hiw-ic--ask">
+          <ion-icon name="chatbubble-ellipses"></ion-icon>
+          <span class="hiw-num">1</span>
+        </div>
+        <p class="hiw-t">Ask a weird</p>
+        <p class="hiw-d">or curious question.</p>
       </div>
+      <div class="hiw-arrow" aria-hidden="true"><i></i><ion-icon name="chevron-forward"></ion-icon></div>
       <div class="hiw-step">
-        <div class="hiw-ic"><ion-icon name="search-outline"></ion-icon></div>
+        <div class="hiw-ic hiw-ic--research">
+          <ion-icon name="bar-chart"></ion-icon>
+          <span class="hiw-num">2</span>
+        </div>
         <p class="hiw-t">We research</p>
-        <p class="hiw-d">Our AI digs up the facts</p>
+        <p class="hiw-d">deep and find the facts.</p>
       </div>
+      <div class="hiw-arrow" aria-hidden="true"><i></i><ion-icon name="chevron-forward"></ion-icon></div>
       <div class="hiw-step">
-        <div class="hiw-ic"><ion-icon name="bar-chart-outline"></ion-icon></div>
-        <p class="hiw-t">You get charts</p>
-        <p class="hiw-d">Beautiful visuals to share</p>
+        <div class="hiw-ic hiw-ic--chart">
+          <ion-icon name="share-social"></ion-icon>
+          <span class="hiw-num">3</span>
+        </div>
+        <p class="hiw-t">You get a chart</p>
+        <p class="hiw-d">made to share.</p>
       </div>
     </div>
   </section>
 
-  <!-- ② Today's Weird Pick -->
-  <section class="hsec" *ngIf="featuredCard">
+  <!-- ② Today's weird stories — DESIGN PROTOTYPE: three treatments to pick from.
+       Content is hardcoded; gradient "photo" areas stand in for real hero images. -->
+  <section class="hsec stories-sec">
     <div class="sec-head">
-      <h2 class="sec-title">Today's Weird Pick</h2>
-      <a class="sec-link" routerLink="/explore" routerDirection="root">See more <ion-icon name="chevron-forward-outline"></ion-icon></a>
+      <h2 class="sec-title">Today's weird stories</h2>
+      <a class="sec-link" routerLink="/explore" routerDirection="root">See all <ion-icon name="chevron-forward-outline"></ion-icon></a>
     </div>
-    <div class="pick-card" (click)="open(featuredCard)">
-      <app-weird-card [card]="featuredCard.data" size="feed"></app-weird-card>
+
+    <div class="stories-viewport">
+    <swiper-container class="stories-swiper" #storiesSwiper init="false">
+
+      <!-- ══ Treatment B — Full-bleed cover (one big stat) ══ -->
+      <swiper-slide>
+      <article class="story-card sc-b">
+        <div class="sc-photo"><span class="sc-emoji">🌍</span></div>
+        <div class="sc-scrim sc-scrim-b"></div>
+        <div class="sc-body sc-body-b">
+          <span class="sc-pill"><ion-icon name="sparkles"></ion-icon>Today's highlight</span>
+          <h3 class="sc-title">Only 11% of everyone who ever lived died of old age</h3>
+          <p class="sc-quip">You're part of a very lucky 1 in 12.</p>
+          <div class="sc-stat"><b>1 in 12</b><small>lived to grow old</small></div>
+          <button class="sc-cta">See the full story <ion-icon name="arrow-forward"></ion-icon></button>
+        </div>
+        <span class="sc-tag">B · Cover</span>
+      </article>
+      </swiper-slide>
+
+      <!-- ══ Treatment A — Editorial (image-right, stat bars) — FEATURED, centre ══ -->
+      <swiper-slide>
+      <article class="story-card sc-a">
+        <div class="sc-photo"><span class="sc-emoji">🦟</span></div>
+        <div class="sc-scrim"></div>
+        <div class="sc-body">
+          <span class="sc-pill"><ion-icon name="sparkles"></ion-icon>Today's highlight</span>
+          <h3 class="sc-title">Mosquitoes kill more humans than sharks every year</h3>
+          <p class="sc-quip">Yep. Tiny, annoying, deadly.</p>
+          <div class="sc-bars">
+            <div class="sc-bar"><span class="sc-lbl">Mosquito</span><span class="sc-track"><i style="--w: 100%"></i></span><span class="sc-val">725K+</span></div>
+            <div class="sc-bar"><span class="sc-lbl">Human</span><span class="sc-track"><i style="--w: 66%"></i></span><span class="sc-val">475K+</span></div>
+            <div class="sc-bar"><span class="sc-lbl">Snake</span><span class="sc-track"><i style="--w: 12%"></i></span><span class="sc-val">50K+</span></div>
+            <div class="sc-bar"><span class="sc-lbl">Shark</span><span class="sc-track"><i style="--w: 4%"></i></span><span class="sc-val">10K+</span></div>
+          </div>
+          <p class="sc-cap">Deaths per year (estimated)</p>
+          <button class="sc-cta">See the full story <ion-icon name="arrow-forward"></ion-icon></button>
+        </div>
+        <span class="sc-tag">A · Editorial</span>
+      </article>
+      </swiper-slide>
+
+      <!-- ══ Treatment C — Split panel (data-forward) ══ -->
+      <swiper-slide>
+      <article class="story-card sc-c">
+        <div class="sc-body sc-body-c">
+          <span class="sc-pill sc-pill-c"><ion-icon name="sparkles"></ion-icon>Today's highlight</span>
+          <h3 class="sc-title sc-title-c">Only about 2% of Earth's water is drinkable</h3>
+          <p class="sc-quip sc-quip-c">Most of the blue planet, off the menu.</p>
+          <button class="sc-cta sc-cta-c">See the full story <ion-icon name="arrow-forward"></ion-icon></button>
+        </div>
+        <div class="sc-panel">
+          <div class="sc-donut" style="--deg: 30deg"><span class="sc-donut-num">2%</span></div>
+          <span class="sc-panel-lbl">freshwater<br>accessible</span>
+        </div>
+        <span class="sc-tag sc-tag-c">C · Split</span>
+      </article>
+      </swiper-slide>
+
+    </swiper-container>
     </div>
   </section>
 
@@ -91,36 +162,64 @@
       <h2 class="sec-title">What you can discover</h2>
     </div>
     <div class="discover-row">
+      <!-- Ranking: numbered bars, longest first -->
       <div class="disc">
-        <div class="disc-viz viz-rank"><i></i><i></i><i></i></div>
+        <div class="disc-viz viz-rank">
+          <span class="rank-row"><b>1</b><span class="rank-track"><i style="--w: 100%"></i></span></span>
+          <span class="rank-row"><b>2</b><span class="rank-track"><i style="--w: 68%"></i></span></span>
+          <span class="rank-row"><b>3</b><span class="rank-track"><i style="--w: 42%"></i></span></span>
+        </div>
         <span class="disc-lbl">Ranking</span>
       </div>
+      <!-- KPI: big number + rising sparkline -->
       <div class="disc">
-        <div class="disc-viz viz-kpi"><span>86%</span></div>
+        <div class="disc-viz viz-kpi">
+          <span class="kpi-num">86%</span>
+          <svg class="kpi-spark" viewBox="0 0 100 30" aria-hidden="true">
+            <polyline points="3,25 22,19 40,22 58,12 76,15 97,4"></polyline>
+            <circle cx="3" cy="25" r="2.6"></circle>
+            <circle cx="22" cy="19" r="2.6"></circle>
+            <circle cx="40" cy="22" r="2.6"></circle>
+            <circle cx="58" cy="12" r="2.6"></circle>
+            <circle cx="76" cy="15" r="2.6"></circle>
+            <circle cx="97" cy="4" r="2.6"></circle>
+          </svg>
+        </div>
         <span class="disc-lbl">KPI</span>
       </div>
+      <!-- Map: world silhouette with data points -->
       <div class="disc">
-        <div class="disc-viz viz-map"><ion-icon name="map-outline"></ion-icon></div>
+        <div class="disc-viz viz-map"><img src="assets/discover-map.svg" alt="" /></div>
         <span class="disc-lbl">Map</span>
       </div>
+      <!-- Versus: two contenders -->
       <div class="disc">
-        <div class="disc-viz viz-vs"><span>VS</span></div>
+        <div class="disc-viz viz-vs">
+          <span class="vs-av"><ion-icon name="person"></ion-icon></span>
+          <span class="vs-word">vs</span>
+          <span class="vs-av"><ion-icon name="person"></ion-icon></span>
+        </div>
         <span class="disc-lbl">Versus</span>
       </div>
     </div>
   </section>
 
-  <!-- ⑤ Trending now -->
+  <!-- ⑤ Most shared today -->
   <section class="hsec" *ngIf="trendingCards.length">
     <div class="sec-head">
-      <h2 class="sec-title">Trending now</h2>
-      <a class="sec-link" routerLink="/explore" routerDirection="root">View all <ion-icon name="chevron-forward-outline"></ion-icon></a>
+      <h2 class="sec-title">Most shared today</h2>
+      <a class="sec-link" routerLink="/explore" routerDirection="root">See all <ion-icon name="chevron-forward-outline"></ion-icon></a>
     </div>
-    <div class="trend-row">
-      <button class="trend" *ngFor="let card of trendingCards" (click)="open(card)">
-        <span class="trend-emoji">{{ card.data?.uiMeta?.icon || '📊' }}</span>
-        <span class="trend-txt">{{ card.data?.title }}</span>
-        <ion-icon class="trend-up" name="trending-up-outline"></ion-icon>
+    <div class="share-row">
+      <button class="share-card" *ngFor="let card of trendingCards; let i = index" (click)="open(card)">
+        <span class="share-thumb">{{ card.data?.uiMeta?.icon || '📊' }}</span>
+        <span class="share-info">
+          <span class="share-title">{{ card.data?.title }}</span>
+          <span class="share-foot">
+            <span class="share-count">{{ mockShares[i] }}</span>
+            <ion-icon class="share-arrow" name="arrow-redo-outline"></ion-icon>
+          </span>
+        </span>
       </button>
     </div>
   </section>

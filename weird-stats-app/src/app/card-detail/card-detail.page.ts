@@ -24,8 +24,6 @@ import { DraftService } from '../services/draft.service';
 import { SeoService } from '../services/seo.service';
 import { AnalyticsService } from '../services/analytics.service';
 import { EmojiService } from '../services/emoji.service';
-import { PublishModalComponent } from '../shared/publish-modal/publish-modal.component';
-import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 import firebase from 'firebase/compat/app';
 
 @Component({
@@ -809,9 +807,13 @@ export class CardDetailPage implements OnInit {
   }
 
   async presentAdminActions(): Promise<void> {
+    // Include the Send-to-Explore / Send-to-Home toggles so an admin browsing a
+    // card (from All cards / a user's cards) can curate it without leaving.
+    const feedButtons = await this._feedToggleButtons();
     const sheet = await this.actionSheetCtrl.create({
       header: 'Admin actions',
       buttons: [
+        ...feedButtons,
         {
           text: 'Approve — remove flag',
           icon: 'checkmark-circle-outline',
@@ -852,33 +854,22 @@ export class CardDetailPage implements OnInit {
     // menu is reachable the card is always stored, so key off publishStatus.
 
     if (hasStoredId) {
+      // A draft (e.g. opened from the Drafts tab) can be saved into the Saved tab.
       if (this.isDraftCard()) {
-        buttons.push({ text: 'Publish…', icon: 'earth-outline', handler: () => this.publishFlow() });
-      } else if (this.storedCard?.publishStatus === 'private') {
-        buttons.push(
-          { text: 'Make public', icon: 'earth-outline', handler: () => this.makePublic() },
-          { text: 'Duplicate card', icon: 'copy-outline', handler: () => this.duplicateCard() },
-        );
-      } else if (this.storedCard?.publishStatus === 'published') {
-        buttons.push(
-          { text: 'Make private', icon: 'lock-closed-outline', handler: () => this.makePrivate() },
-          { text: 'Duplicate card', icon: 'copy-outline', handler: () => this.duplicateCard() },
-        );
+        buttons.push({ text: 'Save to profile', icon: 'bookmark-outline', handler: () => this._promoteDraft('private', 'Saved to your profile!') });
       }
+      // Share is always available on an owned card — it makes a link anyone can
+      // open. Sharing NEVER adds a card to Explore (that's admin-only). A shared
+      // card can be switched back to private to turn its link off.
+      buttons.push({ text: 'Share card', icon: 'share-social-outline', handler: () => this.goShare() });
+      if (this.storedCard?.publishStatus === 'published') {
+        buttons.push({ text: 'Make private', icon: 'lock-closed-outline', handler: () => this.makePrivate() });
+      }
+      buttons.push({ text: 'Duplicate card', icon: 'copy-outline', handler: () => this.duplicateCard() });
     }
 
-    // Admin-only feed curation (Publish to / Remove from Explore & Home).
+    // Admin-only feed curation (Send to / Remove from Explore & Home).
     buttons.push(...await this._feedToggleButtons());
-
-    // Sharing is only offered once the card is public — a draft/private card
-    // has no shareable link yet. The publish flow above is the path to unlock it.
-    if (this.storedCard?.publishStatus === 'published') {
-      buttons.push({
-        text: 'Share card',
-        icon: 'share-social-outline',
-        handler: () => this.goShare(),
-      });
-    }
 
     if (user && hasStoredId) {
       buttons.push({
@@ -895,45 +886,13 @@ export class CardDetailPage implements OnInit {
     await sheet.present();
   }
 
-  /** Draft → choose public or private. */
   /** Guard: a hollow card (empty chart, row-less list, value-less kpi) must not
-   *  be shared or published as a "No data available" shell. Backend generation
-   *  now repairs these, but pre-existing stored cards may still be hollow. */
+   *  be shared as a "No data available" shell. Backend generation now repairs
+   *  these, but pre-existing stored cards may still be hollow. */
   private ensureShareable(): boolean {
     if (cardHasData(this.card)) return true;
     this.toast("This card doesn't have enough data to share yet — try regenerating it.");
     return false;
-  }
-
-  private async publishFlow(): Promise<void> {
-    if (!this.ensureShareable()) return;
-    const modal = await this.modalCtrl.create({
-      component: PublishModalComponent,
-      breakpoints: [0, 1], initialBreakpoint: 1, handle: false,
-    });
-    await modal.present();
-    const { data } = await modal.onWillDismiss();
-    if (!data?.choice) return;
-    if (data.choice === 'public') {
-      await this._promoteDraft('published', 'Saved publicly — anyone with the link can view it.');
-    } else {
-      await this._savePrivateFlow();
-    }
-  }
-
-  private async _savePrivateFlow(): Promise<void> {
-    const uid = await this.uid();
-    const allowed = (uid && await this.adminService.isAdmin(uid)) || await this.membership.isPremium();
-    if (allowed) { await this._promoteDraft('private', 'Saved privately'); return; }
-
-    const modal = await this.modalCtrl.create({
-      component: PlanModalComponent,
-      componentProps: { mode: 'limit' },
-      breakpoints: [0, 1], initialBreakpoint: 1, handle: false,
-    });
-    await modal.present();
-    const { data } = await modal.onWillDismiss();
-    if (data?.plan === 'premium') await this._promoteDraft('private', 'Saved privately');
   }
 
   /** Publish/save a draft — the draft is already this user's stats doc, so this
@@ -970,23 +929,9 @@ export class CardDetailPage implements OnInit {
     }
   }
 
-  private async makePublic(): Promise<void> {
-    await this._updateStatus('published', 'Now public — anyone with the link can view it.');
-  }
-
   private async makePrivate(): Promise<void> {
-    const uid = await this.uid();
-    const allowed = (uid && await this.adminService.isAdmin(uid)) || await this.membership.isPremium();
-    if (allowed) { await this._updateStatus('private', 'Set to private'); return; }
-
-    const modal = await this.modalCtrl.create({
-      component: PlanModalComponent,
-      componentProps: { mode: 'limit' },
-      breakpoints: [0, 1], initialBreakpoint: 1, handle: false,
-    });
-    await modal.present();
-    const { data } = await modal.onWillDismiss();
-    if (data?.plan === 'premium') await this._updateStatus('private', 'Set to private');
+    // Private = kept in your Saved tab, link off. Free for everyone.
+    await this._updateStatus('private', 'Set to private — the share link is now off.');
   }
 
   /** Update a saved card's visibility status in place. */
@@ -1103,10 +1048,15 @@ export class CardDetailPage implements OnInit {
       promptHash: this.storedCard?.promptHash ?? '',
       data: this.card,
     };
+    // Ensure the doc exists + is owned (a signed-in generation already auto-claimed
+    // it; a just-signed-in guest may not have it yet), THEN promote it draft →
+    // private so it lands in the Saved tab. Saving is FREE for everyone — Saved
+    // just means "kept, private to you". Nothing is lost either way (the draft
+    // was already persisted at generation time).
     await this.drafts.add(user.uid, doc);
     this.storedCard = doc;
+    await this._promoteDraft('private', 'Saved to your profile!');
     this.isSaved = true;
-    this.toast('Saved to Drafts!');
   }
 
   /** Discard a freshly generated, not-yet-saved card. Signed-in: same confirm +
@@ -1216,14 +1166,16 @@ export class CardDetailPage implements OnInit {
     this.persistCardEdits();
   }
 
-  goShare(): void {
+  async goShare(): Promise<void> {
     if (!this.card || !this.ensureShareable()) return;
-    // A card must be published before it can be shared — until then there's no
-    // public link. Owners publish via the options menu (Publish… / Make public).
+    // Sharing makes the card viewable by anyone with the LINK. It is NEVER added
+    // to the Explore feed (that's admin-only). Publish it in place on demand if
+    // it isn't already public, so the link resolves for recipients.
     if (this.storedCard?.publishStatus !== 'published') {
-      this.toast('Publish this card first to share it.');
-      return;
+      await this._updateStatus('published', 'Ready to share — anyone with the link can view it.');
     }
+    // Only navigate if it actually became public (cast escapes control-flow narrowing).
+    if ((this.storedCard?.publishStatus as string | undefined) !== 'published') return; // publish failed
     this.router.navigate(['/share-card'], {
       state: { card: this.card, cardId: this.storedCard?.id ?? null },
     });
@@ -1232,10 +1184,10 @@ export class CardDetailPage implements OnInit {
   back(): void {
     // Admin flow targets a specific page.
     if (this.returnUrl) { this.router.navigateByUrl(this.returnUrl); return; }
-    // A freshly generated card was auto-saved as a draft — send the user to the
-    // Drafts tab so they can find it.
+    // A freshly generated card lands in Drafts automatically; if the user hit
+    // Save it's now in Saved. Route to whichever tab holds it.
     if (this.fromGenerate) {
-      this.router.navigate(['/profile'], { state: { tab: 'draft' } });
+      this.router.navigate(['/profile'], { state: { tab: this.isSaved ? 'saved' : 'draft' } });
       return;
     }
     // Owner opening their own shared link (a fresh tab, no in-app history) —

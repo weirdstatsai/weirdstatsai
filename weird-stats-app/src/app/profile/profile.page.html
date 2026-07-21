@@ -136,7 +136,8 @@
         <!-- Actions -->
         <div class="draft-panel-actions">
           <button class="draft-action-btn publish" (click)="togglePublish(selectedDraft!)">
-            <ion-icon name="earth-outline"></ion-icon> Publish
+            <ion-icon [name]="isDraft(selectedDraft!) ? 'bookmark-outline' : 'document-text-outline'"></ion-icon>
+            {{ isDraft(selectedDraft!) ? 'Save' : 'Move to drafts' }}
           </button>
           <button class="draft-action-btn share" (click)="openCard(selectedDraft!)">
             <ion-icon name="eye-outline"></ion-icon> Open
@@ -170,7 +171,7 @@
           <ion-icon [name]="activeTab === 'saved' ? 'bookmark-outline' : 'document-text-outline'"></ion-icon>
         </div>
         <p class="empty-title">{{ activeTab === 'saved' ? 'Nothing saved yet' : 'No drafts yet' }}</p>
-        <p class="empty-sub" *ngIf="activeTab === 'saved'">Save a draft publicly or privately to keep it here</p>
+        <p class="empty-sub" *ngIf="activeTab === 'saved'">Tap Save on a card to keep it here</p>
         <p class="empty-sub" *ngIf="activeTab === 'draft'">Generate stats — they'll appear here as drafts on this device</p>
         <button class="explore-btn" (click)="goExplore()" *ngIf="activeTab === 'draft'">
           <ion-icon name="compass-outline"></ion-icon> Explore Stats

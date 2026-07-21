@@ -7,6 +7,7 @@ import { SeoData, SeoService } from './services/seo.service';
 import { ConsentService } from './services/consent.service';
 import { AnalyticsService } from './services/analytics.service';
 import { EmojiService } from './services/emoji.service';
+import { DraftService } from './services/draft.service';
 
 interface MenuItem {
   label: string;
@@ -54,6 +55,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private consent: ConsentService,
     private analytics: AnalyticsService,
     private emojiService: EmojiService,
+    private drafts: DraftService,
   ) {}
 
   ngOnInit(): void {
@@ -68,6 +70,10 @@ export class AppComponent implements OnInit, OnDestroy {
     this.authSub = this.authService.user$.pipe(
       switchMap(user => {
         this.isLoggedIn = !!user;
+        // A guest who generated a card (held in localStorage) then signs in from
+        // ANYWHERE gets it claimed into their cloud Drafts — not only when a
+        // card-detail page is open. Fire-and-forget; safe no-op when nothing pending.
+        if (user) this.drafts.claimPending(user.uid).catch(() => {});
         return user ? this.emojiService.emoji$(user.uid) : of('');
       }),
     ).subscribe(emoji => { this.userEmoji = emoji; });

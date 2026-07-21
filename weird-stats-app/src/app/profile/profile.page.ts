@@ -15,7 +15,6 @@ import { MembershipService } from '../services/membership.service';
 import { AdminService } from '../services/admin.service';
 import { DraftService } from '../services/draft.service';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
-import { PublishModalComponent } from '../shared/publish-modal/publish-modal.component';
 import { RankStyle, rankAltStylesFor } from '../shared/cards/card-ranking/card-ranking.component';
 import { KpiStyle, kpiAltStylesFor } from '../shared/cards/card-kpi/card-kpi.component';
 import { TableStyle } from '../shared/cards/card-table/card-table.component';
@@ -279,33 +278,23 @@ export class ProfilePage implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  private isDraft(card: StoredStatCard): boolean {
+  isDraft(card: StoredStatCard): boolean {
     return (card.publishStatus ?? 'draft') === 'draft';
   }
 
   async togglePublish(card: StoredStatCard): Promise<void> {
     if (!card.id) return;
 
-    // Saved card → move back to Drafts (delete Firestore, restore local draft)
+    // Saved card → move back to Drafts (a status flip on the same doc).
     if (!this.isDraft(card)) {
       await this._moveToDrafts(card);
       return;
     }
 
-    // Draft → choose how to save
-    const modal = await this.modalCtrl.create({
-      component: PublishModalComponent,
-      breakpoints: [0, 1], initialBreakpoint: 1,
-      handle: false,
-    });
-    await modal.present();
-    const { data } = await modal.onWillDismiss();
-    if (!data?.choice) return;
-    if (data.choice === 'public') {
-      await this._saveCard(card, 'published');
-    } else {
-      await this._savePrivate(card);
-    }
+    // Draft → Save it. Saving is FREE for everyone and keeps the card privately
+    // in the Saved tab (Explore is admin-only; users never publish there). To
+    // share by link, the user opens the card and uses Share.
+    await this._saveCard(card, 'private');
   }
 
   private async _savePrivate(card: StoredStatCard): Promise<void> {

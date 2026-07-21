@@ -16,7 +16,30 @@ import { StoredStatCard } from '../models/weird-card.model';
  */
 @Injectable({ providedIn: 'root' })
 export class DraftService {
+  /** localStorage key a guest's just-generated card is held under until they sign in. */
+  static readonly PENDING_KEY = 'weirdstats_pending_card';
+
   constructor(private afs: AngularFirestore) {}
+
+  /**
+   * Claim a guest's held card into their cloud drafts on sign-in. Wired into a
+   * GLOBAL auth hook (AppComponent) so it fires on ANY sign-in, not only when a
+   * card-detail page happens to be open. Idempotent + safe: no-ops when there's
+   * nothing pending, validates the shape, and clears the hold once claimed.
+   * Returns true if a card was claimed.
+   */
+  async claimPending(uid: string): Promise<boolean> {
+    if (!uid) return false;
+    let pending: StoredStatCard | undefined;
+    try {
+      const raw = localStorage.getItem(DraftService.PENDING_KEY);
+      pending = raw ? (JSON.parse(raw) as StoredStatCard) : undefined;
+    } catch { pending = undefined; }
+    if (!pending?.id || !pending?.data) return false;
+    await this.add(uid, { ...pending, createdBy: uid, publishStatus: 'draft' });
+    try { localStorage.removeItem(DraftService.PENDING_KEY); } catch { /* ignore */ }
+    return true;
+  }
 
   /**
    * Take ownership of a generated card as this user's draft, and persist any

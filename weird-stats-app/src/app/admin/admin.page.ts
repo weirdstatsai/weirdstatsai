@@ -192,6 +192,7 @@ export class AdminPage implements OnInit {
 
   goUsers(): void { this.router.navigate(['/admin-users']); }
   goFlagged(): void { this.router.navigate(['/admin-flagged']); }
+  goCards(): void { this.router.navigate(['/admin-cards']); }
 
   private async toast(msg: string): Promise<void> {
     const t = await this.toastCtrl.create({ message: msg, duration: 1800, position: 'bottom' });

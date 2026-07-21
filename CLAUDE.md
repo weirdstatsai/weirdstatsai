@@ -7,7 +7,9 @@ single change doesn't require re-reading the whole codebase.
 ## Stack
 - **Frontend**: Ionic 7 + Angular 16, NgModule-based (not standalone). AngularFire
   compat SDK (Firestore/Auth/Storage). Charts via Chart.js (`app-chart`). Card→PNG
-  via `dom-to-image-more`. Native share via `navigator.share({files})`.
+  via `dom-to-image-more`. Native share via `navigator.share({files})`. Home
+  "Today's weird stories" carousel via **Swiper** (`swiper/element/bundle`, registered
+  in `main.ts`; home uses the `creative` stacked-deck effect — see Home section).
 - **Backend**: Python FastAPI on Google Cloud Run (`weirdstats-api`, us-central1).
   OpenAI **Responses API**. Pillow for server-side OG image fallback.
 - **Firebase project**: `weirdstats-ai` (⚠️ NOT the old `weirdstatsai-aaaf7`).
@@ -53,23 +55,35 @@ Every card is a doc in the `stats` Firestore collection. `publishStatus` is the 
 lifecycle field: **`draft | private | published`**. (`StoredStatCard.status` and
 `WeirdCard.status` exist but are NOT lifecycle — don't use them for gating.)
 - Generate → backend writes `stats/{id}` with `createdBy:'Anonymous'` (cache). Frontend
-  **claims** it: `DraftService.add` sets `createdBy=uid, publishStatus:'draft'` →
-  cloud-synced draft. Guests: card held in localStorage `weirdstats_pending_card`,
-  auto-claimed on login (`claimGuestCardIfAny`).
-- Publish/unpublish = **status flip in place** (no copy). `_promoteDraft` (card-detail),
-  `_saveCard`/`_moveToDrafts` (profile).
+  **claims** it EAGERLY at generation time: `DraftService.add` sets `createdBy=uid,
+  publishStatus:'draft'` → cloud-synced draft, so "back without saving" already lands in
+  Drafts (nothing lost). Guests: card held in localStorage `weirdstats_pending_card`,
+  auto-claimed on ANY sign-in via a GLOBAL hook (`AppComponent` → `DraftService.claimPending`),
+  not only when a card-detail page is open.
+- **Save = FREE, promotes draft→`private` (Saved tab).** Card-detail header shows
+  **Save + discard** on a fresh card (`isUnsavedDraft` getter); `saveDraft()` calls
+  `_promoteDraft('private', …)` → `publishStatus:'private'` → **Saved** tab. Saving is
+  free for EVERYONE (the old premium-gated private-save is GONE; `makePrivate` is free too).
+  Back after Save → Saved tab; back without Save → Drafts. **Profile** splits one
+  `stats where createdBy==uid` query: `draft`→Drafts, `private|published`→Saved.
+- **Users can NO LONGER "Publish".** The old Publish…/Make-public menu items are removed.
+  **Share** (`goShare`, profile) publishes the card ON DEMAND as a LINK-ONLY public card
+  (`publishStatus:'published'` + OG image) — anyone with the link can view, but it NEVER
+  appears on Explore. `makePrivate` (free) turns the link off + clears feed flags.
+- **Explore & Home are 100% admin-only.** They read `where showOnExplore==true` /
+  `where showOnHome==true`; those flags are set ONLY by admins (`AdminService.setFeedFlag`
+  / card-detail `_setFeedFlag`, gated by `AdminService.isAdmin` in UI **and** Firestore
+  rules — `publishStatus:'published'` alone never adds a card to Explore). Admins curate
+  via the new **`/admin-cards`** screen (`admin-cards/`; `AdminService.getAllCards` is
+  cursor-paginated + client search/filter) which browses EVERY user's cards and sends any
+  to Explore/Home; also reachable from the admin hub "All cards" row and the card-detail
+  admin menu (`presentAdminActions` now carries the feed toggles). Enabling a flag also
+  flips `publishStatus:'published'` + renders OG. Legacy `homeFeatured` superseded by
+  `showOnHome` (read-allowed for back-compat).
 - Delete = delete doc **+** `og/{id}.png` (`deleteOgImage`) — no orphans.
-- `updatedAt` bumps on create/claim/publish/unpublish/edit; Explore/Drafts/Saved sort
-  by `(updatedAt ?? createdAt)` desc = latest first.
-- **Profile** derives Drafts & Saved from one `stats where createdBy==uid` query, split
-  by publishStatus. **Explore** = `where showOnExplore==true`. **Home** =
-  `where showOnHome==true`. Both feeds are **admin-curated via two boolean flags**
-  (`showOnExplore` / `showOnHome`), toggled from a saved card's options menu (admin-only,
-  gated by `AdminService.isAdmin` in the UI and Firestore rules). Enabling a flag also
-  flips `publishStatus:'published'` (public + shareable) and renders the OG image. The
-  card-detail header shows an explicit **Save + discard** on a freshly generated card and
-  only reveals the options menu (`isUnsavedDraft` getter) once saved. Legacy `homeFeatured`
-  is superseded by `showOnHome` (still read-allowed in rules for back-compat).
+- `updatedAt` bumps on create/claim/save/share/edit; Explore/Drafts/Saved sort by
+  `(updatedAt ?? createdAt)` desc = latest first.
+- **`shared/publish-modal`** is now UNUSED (dead) after removing user-publish — safe to delete.
 - OG (link-preview) image: offscreen `.og-frame` 1200×630, `fitOgTile()` scales the card
   to fit (no clipped title/story). Regenerated on edit of a published card.
 
@@ -77,6 +91,24 @@ lifecycle field: **`draft | private | published`**. (`StoredStatCard.status` and
 `generate/`, `graph-detail/`, `my-graphs/`, `services/graph.service.ts` are an orphaned
 parallel lifecycle. `GraphService` is still referenced by `project-generate`/`share`, so
 it can't be deleted cleanly yet — leave it alone.
+
+## Home page (redesign) & story carousel
+`home/` was redesigned: "How WeirdStats works", "Explore by topic", "What you can
+discover" (mini-viz tiles — one is `assets/discover-map.svg`, a world map generated
+offline from `world-110m.json`), "Most shared today" (renamed from "Trending now";
+share counts are **placeholders** — `mockShares`, no real share-tracking field yet), and a
+**"Today's weird stories"** carousel.
+- Carousel = **Swiper `creative` effect** rendered as a stacked deck (front card + two
+  behind, back-left/back-right), configured in `home.page.ts::initStoriesSwiper()` via the
+  `init="false"` + `Object.assign(el, params)` + `el.initialize()` pattern.
+- ⚠️ GOTCHA: the creative transforms **don't compute on `initialize()`** — they need a
+  `swiper.update()` AFTER Ionic lays out the page, or the cards render flat/mis-stacked.
+  Handled via `observer:true` + delayed `update()`s + an `ionViewDidEnter` update.
+- `.stories-viewport` has an **edge-fade mask (mobile only)** so back cards dissolve at the
+  edge instead of hard-cutting; front-card width shrinks on mobile (`.stories-swiper` width%
+  + `max-width` cap) to keep the peek inside the content column.
+- The 3 story cards (`sc-a` editorial / `sc-b` cover / `sc-c` split) are **HARDCODED
+  prototype** content with gradient+emoji hero stand-ins — the real curated feature is unbuilt.
 
 ## Deploy
 - **Frontend**: `firebase deploy --only hosting --project weirdstats-ai`
@@ -127,28 +159,34 @@ it can't be deleted cleanly yet — leave it alone.
 - Both are wired into `.claude/launch.json` as `weird-stats-app` and `weirdstats-api`
   for the in-app browser preview.
 
-## Current state & open items (as of 2026-07)
-Latest work is on branch **`claude/youthful-lehmann-8278f3`** (pushed); `main` is
-stale. Everything below is **deployed to production** (weirdstats.ai):
-- Backend data-adequacy gate (no hollow cards); share/OG image fits content.
-- Unified cloud-drafts lifecycle (one `stats` doc + `publishStatus`); publish/
-  delete/edit unified; delete cleans up OG image; owner deep-link manageable;
-  guest sign-in-to-save.
-- Firestore rules **hardened & live** (drafts/private owner-only). Composite index
-  `(publishStatus, createdAt)` = `CICAgOjXh4EK`, READY.
-- Explore/Drafts/Saved sort **latest-first** via `updatedAt`.
+## Current state & open items (as of 2026-07-20)
+Working branch **`claude/premium-billing-and-app-polish`** (worktree `youthful-lehmann-8278f3`).
+Earlier work (data-adequacy gate, unified cloud-drafts, hardened+live Firestore rules with
+composite index `(publishStatus, createdAt)`=`CICAgOjXh4EK` READY, latest-first sort) is
+**deployed to prod**. **This session's work is COMMITTED HERE but NOT yet deployed** — a
+frontend deploy ships it; no rules/backend change needed.
+
+This session:
+- **Home redesign + story carousel** (see Home page section above). New `swiper` dep.
+- **Lifecycle refactor** (see Card lifecycle): Save = free → Saved; user "Publish" removed
+  (Share = link-only); Explore/Home 100% admin-only via the new **`/admin-cards`** screen.
+  Verified end-to-end (generate→Save lands in Saved; admin screen reads all 7 users' cards).
+- **Premium story-cards** = researched, NOT built: pre-baked curated cards in a dedicated
+  `storyCards` collection, admin-authored, hero images from stock (Pexels/Wikimedia free)
+  or AI-gen (FLUX/gpt-image ~$0.04/img); Cloud Run Job + Cloud Scheduler for agent-drafts;
+  reuse the existing OG-image Storage-upload plumbing. Cost: generation ~$0.02–0.04/card
+  (the OpenAI `web_search` tool @ $0.01/call dominates); **premium *look* = $0** (it's CSS),
+  real photos ~4¢/card → keep curated. ≈330 premium-look cards per $10.
 
 Open / not done:
-- **`auth/invalid-login-credentials`** console errors on prod (a failed login attempt;
-  Auth, not rules/data) — un-diagnosed, flagged separately.
-- **YouTube → stat cards** feature: feasibility assessed (reuse doc-import pipeline;
-  the hard part is reliable transcript fetch — use a transcript API, not scraping from
-  Cloud Run). Not built.
-- **Legacy `Graph` flow** removal still deferred (GraphService used by project-generate/share).
-- **Research accuracy**: some KPIs come back off (e.g. avg sleep 9.03h) — data-quality
-  track separate from the structural fixes.
-- A test draft "Five Countries…moon" (kpi) was left in prod Firestore as a private draft
-  under the owner's account — harmless, can be deleted.
+- **Deploy the FRONTEND** to ship this session's work (rules already support admin all-cards).
+- `shared/publish-modal` is now **dead code** (user-publish removed) — safe to delete.
+- Test card **"Jupiter Has 115 Confirmed Moons"** (kpi) left as a private Saved card under
+  the owner's account during verification — harmless, can be deleted.
+- (Carried over) `auth/invalid-login-credentials` prod console errors (Auth, un-diagnosed);
+  **YouTube → stat cards** not built (transcript fetch is the hard part); **Legacy `Graph`
+  flow** removal deferred (GraphService used by project-generate/share); **research
+  accuracy** (some KPIs off) — separate data-quality track.
 
 ## Git
 - **Commit author MUST be** `Nehemya Maddela <weirdstats.ai@gmail.com>` — never deviate.
