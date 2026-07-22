@@ -15,8 +15,9 @@ import { Lens } from './lens/lens';
 import { renderCube, renderStatIcon } from './cubes/stat-cube';
 import type { Hotspot, TextBlock } from './core/types';
 
-const RAIL_HALF = 22;  // half the rail icon size (44px)
-const RAIL_GAP = 6;    // gap between the square's left edge and the icon rail
+const RAIL_GAP = 8;    // gap between the highlight's left edge and the icon rail
+const RAIL_STEP = 52;  // vertical spacing between rail icons
+const SNAP_DIST = 150; // cursor distance at which the square morphs onto a paragraph
 
 const PAGE_TARGET_WIDTH = 720; // css px the page is rendered to
 const PAGE_GAP = 24;
@@ -174,7 +175,7 @@ async function runPipeline(data: ArrayBuffer): Promise<void> {
   countEl.innerHTML = `<b>${hotspots.length}</b> stat spot${hotspots.length === 1 ? '' : 's'} found`;
   setHint('Click the <b>square</b> to pick up the lens');
 
-  lens = new Lens(content, { size: 200, drawCutout });
+  lens = new Lens(content, { size: 200, drawRegion });
   lens.setHotspots(hotspots, lockAt); // clicking a hotspot marker locks straight onto it
   lens.element.addEventListener('click', () => { if (mode === 'idle') startRoaming(); });
   mode = 'idle';
@@ -189,19 +190,20 @@ function scaleBlock(b: TextBlock, dpr: number): TextBlock {
   };
 }
 
-/** Paint a sharp 1:1 cutout of the page under the lens (so it stays crisp while
- *  the rest of the page is blurred). */
-function drawCutout(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number): void {
-  ctx.clearRect(0, 0, size, size);
+/** Paint a sharp 1:1 cutout of the page region [left,top,w,h] (content px), so
+ *  the focus stays crisp while the rest of the page is blurred. */
+function drawRegion(ctx: CanvasRenderingContext2D, left: number, top: number, width: number, height: number): void {
+  ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, size, size);
+  ctx.fillRect(0, 0, width, height);
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const layer = pageLayers.find((l) => cy >= l.offsetY && cy < l.offsetY + l.canvas.height / dpr) ?? pageLayers[0];
+  const midY = top + height / 2;
+  const layer = pageLayers.find((l) => midY >= l.offsetY && midY < l.offsetY + l.canvas.height / dpr) ?? pageLayers[0];
   if (!layer) return;
-  const sx = (cx - size / 2) * dpr;
-  const sy = (cy - layer.offsetY - size / 2) * dpr;
+  const sx = left * dpr;
+  const sy = (top - layer.offsetY) * dpr;
   try {
-    ctx.drawImage(layer.canvas, sx, sy, size * dpr, size * dpr, 0, 0, size, size);
+    ctx.drawImage(layer.canvas, sx, sy, width * dpr, height * dpr, 0, 0, width, height);
   } catch { /* out of bounds near edges — keep the white fill */ }
 }
 
@@ -215,14 +217,14 @@ function onRoamMove(e: PointerEvent): void {
   if (mode !== 'roaming' || !lens) return;
   const p = contentPoint(e);
   const near = lens.nearestTo(p.x, p.y);
-  if (near) {
-    const dx = near.block.center.x - p.x;
-    const dy = near.block.center.y - p.y;
-    const pull = Math.max(0, 1 - Math.hypot(dx, dy) / 240) ** 2; // magnetic near a spot
-    lens.place(p.x + dx * pull, p.y + dy * pull);
+  // Near a stat spot, the square morphs onto the paragraph and highlights it;
+  // otherwise it's a free square following the cursor.
+  if (near && Math.hypot(near.block.center.x - p.x, near.block.center.y - p.y) < SNAP_DIST) {
+    lens.shapeTo(near.block.rect);
     lens.markActive(near);
   } else {
-    lens.place(p.x, p.y);
+    lens.placeSquare(p.x, p.y);
+    lens.markActive(null);
   }
 }
 
@@ -250,7 +252,7 @@ function lockAt(h: Hotspot): void {
   mode = 'locked';
   content.classList.add('tool-active', 'locked');
   lens.setTool(true);
-  lens.place(h.block.center.x, h.block.center.y);
+  lens.shapeTo(h.block.rect); // highlight the exact paragraph, shaped after the content
   lens.markActive(h);
   openPanel(h);
   spawnRail(h);
@@ -261,19 +263,16 @@ function lockAt(h: Hotspot): void {
  *  highlights its card in the right-side panel. */
 function spawnRail(h: Hotspot): void {
   clearRail();
-  if (!lens) return;
-  const lp = lens.position;
-  const r = lens.radius;
+  const rect = h.block.rect;
   const n = h.cards.length;
-  const rightEdge = lp.x - r - RAIL_GAP;
-  const top = lp.y - r + RAIL_HALF;
-  const usable = 2 * r - 2 * RAIL_HALF;
+  const rightEdge = rect.left - 7 - RAIL_GAP;        // just left of the shaped highlight
+  const center = rect.top + rect.height / 2;
+  const startY = center - ((n - 1) * RAIL_STEP) / 2; // column centered on the paragraph
 
   h.cards.forEach((card, i) => {
     const icon = renderStatIcon(card);
-    const centerY = n === 1 ? lp.y : top + (i / (n - 1)) * usable;
     icon.style.right = `${content.clientWidth - rightEdge}px`;
-    icon.style.top = `${centerY}px`;
+    icon.style.top = `${startY + i * RAIL_STEP}px`;
     icon.style.animationDelay = `${i * 45}ms`;
     icon.addEventListener('click', (e) => { e.stopPropagation(); highlightCard(i); });
     content.appendChild(icon);

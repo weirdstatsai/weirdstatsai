@@ -1,51 +1,48 @@
 /**
- * The lens tool — a square "focus window" over the page.
+ * The lens tool.
  *
- * It renders a sharp 1:1 cutout of the page beneath it (so when the rest of the
- * page is blurred, the square stays crisp). The interaction state machine
- * (idle → roaming → locked) lives in main.ts; this class is the view: it draws
- * the cutout, positions itself, and manages the hotspot markers.
+ * While scanning it's a square that follows the cursor. When it snaps to a
+ * stat spot it MORPHS to that paragraph's actual rectangle and highlights the
+ * text ("shaped after the content"). Either way it paints a sharp 1:1 cutout of
+ * the page beneath, so the focus stays crisp while the rest of the page blurs.
+ * The interaction state machine lives in main.ts; this class is the view.
  */
-import type { Hotspot } from '../core/types';
+import type { Hotspot, Rect } from '../core/types';
 
 export interface LensOptions {
-  size: number;
-  /** Paint the sharp page region under (cx, cy) into the lens canvas. */
-  drawCutout: (ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) => void;
+  size: number; // square size while scanning
+  /** Paint the page region [left,top,width,height] (content px) into the ctx. */
+  drawRegion: (ctx: CanvasRenderingContext2D, left: number, top: number, width: number, height: number) => void;
 }
 
 export class Lens {
   private lensEl: HTMLDivElement;
-  private ctx: CanvasRenderingContext2D;
+  private canvas: HTMLCanvasElement;
   private markers = new Map<string, HTMLDivElement>();
   private hotspots: Hotspot[] = [];
   private pos = { x: 0, y: 0 };
+  private box: Rect = { left: 0, top: 0, width: 0, height: 0 };
 
   constructor(private content: HTMLElement, private opts: LensOptions) {
     this.lensEl = document.createElement('div');
     this.lensEl.className = 'lens';
-    this.lensEl.style.width = this.lensEl.style.height = `${opts.size}px`;
 
-    const canvas = document.createElement('canvas');
-    canvas.className = 'lens-canvas';
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = opts.size * dpr;
-    canvas.height = opts.size * dpr;
-    this.ctx = canvas.getContext('2d')!;
-    this.ctx.scale(dpr, dpr);
+    this.canvas = document.createElement('canvas');
+    this.canvas.className = 'lens-canvas';
 
     const ring = document.createElement('div');
     ring.className = 'lens-ring';
-    this.lensEl.append(canvas, ring);
+    const hl = document.createElement('div');
+    hl.className = 'lens-hl';
+    this.lensEl.append(this.canvas, hl, ring);
     this.content.appendChild(this.lensEl);
   }
 
   get element(): HTMLDivElement { return this.lensEl; }
   get position() { return this.pos; }
-  get radius() { return this.opts.size / 2; }
+  get bounds(): Rect { return this.box; }
   get hotspotList() { return this.hotspots; }
 
-  /** Draw markers for every hotspot; clicking one calls `onPick`. */
   setHotspots(hotspots: Hotspot[], onPick: (h: Hotspot) => void): void {
     for (const m of this.markers.values()) m.remove();
     this.markers.clear();
@@ -65,14 +62,43 @@ export class Lens {
       this.content.appendChild(marker);
       this.markers.set(h.id, marker);
     }
-    if (hotspots.length) this.place(hotspots[0].block.center.x, hotspots[0].block.center.y);
+    if (hotspots.length) {
+      const c = hotspots[0].block.center;
+      this.placeSquare(c.x, c.y);
+    }
   }
 
-  place(x: number, y: number): void {
-    this.pos = { x, y };
-    this.lensEl.style.left = `${x}px`;
-    this.lensEl.style.top = `${y}px`;
-    this.opts.drawCutout(this.ctx, x, y, this.opts.size);
+  /** Position + paint a sharp cutout for an arbitrary rectangle. */
+  private renderRect(box: Rect): void {
+    this.box = box;
+    this.pos = { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+    Object.assign(this.lensEl.style, {
+      left: `${box.left}px`, top: `${box.top}px`,
+      width: `${box.width}px`, height: `${box.height}px`, transform: 'none',
+    });
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.canvas.width = Math.max(1, Math.round(box.width * dpr));
+    this.canvas.height = Math.max(1, Math.round(box.height * dpr));
+    const ctx = this.canvas.getContext('2d')!;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.opts.drawRegion(ctx, box.left, box.top, box.width, box.height);
+  }
+
+  /** Free square, centered on (cx, cy) — the scanning shape. */
+  placeSquare(cx: number, cy: number): void {
+    const s = this.opts.size;
+    this.lensEl.classList.remove('shaped');
+    this.renderRect({ left: cx - s / 2, top: cy - s / 2, width: s, height: s });
+  }
+
+  /** Morph to a paragraph's rectangle and highlight it — shaped after content. */
+  shapeTo(rect: Rect): void {
+    const pad = 7;
+    this.lensEl.classList.add('shaped');
+    this.renderRect({
+      left: rect.left - pad, top: rect.top - pad,
+      width: rect.width + pad * 2, height: rect.height + pad * 2,
+    });
   }
 
   nearestTo(x: number, y: number): Hotspot | null {
