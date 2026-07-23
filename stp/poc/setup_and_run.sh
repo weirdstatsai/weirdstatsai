@@ -24,15 +24,18 @@ pip install --quiet faster-whisper sounddevice numpy
 
 echo "==> Writing live_captions.py..."
 cat > live_captions.py <<'PY'
-import sys, queue
+import sys, queue, warnings
 import numpy as np
 import sounddevice as sd
 from faster_whisper import WhisperModel
+
+warnings.filterwarnings("ignore")   # hide harmless matmul warnings on quiet audio
 
 SAMPLE_RATE = 16000
 WINDOW_SECONDS = 5
 MODEL_SIZE = "base.en"     # tiny.en | base.en | small.en
 INPUT_DEVICE = None        # None = default mic; a number = mixer/interface
+SILENCE_RMS = 0.005        # skip windows quieter than this (kills silence hallucinations)
 
 audio_q = queue.Queue()
 
@@ -55,9 +58,10 @@ with sd.InputStream(samplerate=SAMPLE_RATE, channels=1, dtype="float32",
         while True:
             buffer = np.concatenate([buffer, audio_q.get()])
             if len(buffer) >= window:
-                segments, _ = model.transcribe(buffer, language="en")
-                text = " ".join(s.text.strip() for s in segments).strip()
-                if text: print(text)
+                if float(np.sqrt(np.mean(buffer ** 2))) >= SILENCE_RMS:
+                    segments, _ = model.transcribe(buffer, language="en", vad_filter=True)
+                    text = " ".join(s.text.strip() for s in segments).strip()
+                    if text: print(text)
                 buffer = np.empty(0, dtype=np.float32)
     except KeyboardInterrupt:
         print("\nStopped.")

@@ -2,74 +2,65 @@
 """
 STP walking-skeleton POC #1 — live microphone -> plain text captions, fully local.
 
-Run this ON YOUR MAC (not in the cloud session). Talk into the mic and the
-transcribed text prints to the terminal. This proves the core pipeline:
+Run this ON YOUR MAC. Talk into the mic; transcribed text prints to the terminal.
 
-        audio in  ->  local speech model  ->  plain text out
+        audio in  ->  (skip silence)  ->  local Whisper model  ->  plain text out
 
-Model: faster-whisper (OpenAI Whisper, running locally on your machine).
-The FIRST run downloads the model once (needs internet); after that it works
-100% offline — which is exactly the church requirement.
-
-This version is deliberately crude: it transcribes in fixed ~5-second windows,
-so you talk, pause, and see the text. Low latency / true streaming comes in a
-later iteration. Right now we only want to prove the pipe works on your hardware.
+v2 adds a tiny "Module 2" (audio pre-processing): it skips near-silent windows and
+enables Whisper's built-in voice-activity filter. That kills the silence-driven
+"hallucinated" words and the divide-by-zero warnings from v1.
 """
 
 import sys
 import queue
+import warnings
 import numpy as np
 import sounddevice as sd
 from faster_whisper import WhisperModel
 
-# ---- knobs you can play with -------------------------------------------------
-SAMPLE_RATE = 16000        # Whisper expects 16 kHz mono audio
-WINDOW_SECONDS = 5         # transcribe every N seconds of speech (crude, on purpose)
-MODEL_SIZE = "base.en"     # "tiny.en" = fastest | "base.en" = balanced | "small.en" = most accurate
-INPUT_DEVICE = None        # None = system default input. Set to a device index to use the mixer.
+warnings.filterwarnings("ignore")   # hide the harmless matmul warnings on quiet audio
+
+# ---- knobs -------------------------------------------------------------------
+SAMPLE_RATE = 16000        # Whisper expects 16 kHz mono
+WINDOW_SECONDS = 5         # transcribe every N seconds (crude; true streaming is later)
+MODEL_SIZE = "base.en"     # "tiny.en" | "base.en" | "small.en" (small.en = more accurate)
+INPUT_DEVICE = None        # None = default mic; a device number = mixer/interface
+SILENCE_RMS = 0.005        # windows quieter than this are treated as silence and skipped
 # -----------------------------------------------------------------------------
 
 audio_q: "queue.Queue[np.ndarray]" = queue.Queue()
 
 
 def on_audio(indata, frames, time_info, status):
-    """Called by sounddevice for every block of captured audio."""
     if status:
         print(status, file=sys.stderr)
-    # Keep mono float32 samples in [-1, 1]
     audio_q.put(indata[:, 0].copy())
 
 
-def list_devices_and_exit():
+if "--list-devices" in sys.argv:
     print(sd.query_devices())
     sys.exit(0)
 
+print(f"Loading Whisper '{MODEL_SIZE}' (first run downloads it, then offline)...")
+model = WhisperModel(MODEL_SIZE, device="cpu", compute_type="int8")
+print("Ready. Start talking. Press Ctrl+C to stop.\n")
 
-def main():
-    if "--list-devices" in sys.argv:
-        list_devices_and_exit()
+buffer = np.empty(0, dtype=np.float32)
+window_samples = WINDOW_SECONDS * SAMPLE_RATE
 
-    print(f"Loading Whisper model '{MODEL_SIZE}' (first run downloads it, then it's offline)...")
-    model = WhisperModel(MODEL_SIZE, device="cpu", compute_type="int8")
-    print("Ready. Start talking. Press Ctrl+C to stop.\n")
-
-    buffer = np.empty(0, dtype=np.float32)
-    window_samples = WINDOW_SECONDS * SAMPLE_RATE
-
-    with sd.InputStream(samplerate=SAMPLE_RATE, channels=1, dtype="float32",
-                        device=INPUT_DEVICE, callback=on_audio):
-        try:
-            while True:
-                buffer = np.concatenate([buffer, audio_q.get()])
-                if len(buffer) >= window_samples:
-                    segments, _ = model.transcribe(buffer, language="en")
+with sd.InputStream(samplerate=SAMPLE_RATE, channels=1, dtype="float32",
+                    device=INPUT_DEVICE, callback=on_audio):
+    try:
+        while True:
+            buffer = np.concatenate([buffer, audio_q.get()])
+            if len(buffer) >= window_samples:
+                # --- tiny Module 2: only transcribe if the window actually has sound ---
+                loudness = float(np.sqrt(np.mean(buffer ** 2)))
+                if loudness >= SILENCE_RMS:
+                    segments, _ = model.transcribe(buffer, language="en", vad_filter=True)
                     text = " ".join(s.text.strip() for s in segments).strip()
                     if text:
                         print(text)
-                    buffer = np.empty(0, dtype=np.float32)
-        except KeyboardInterrupt:
-            print("\nStopped.")
-
-
-if __name__ == "__main__":
-    main()
+                buffer = np.empty(0, dtype=np.float32)
+    except KeyboardInterrupt:
+        print("\nStopped.")
