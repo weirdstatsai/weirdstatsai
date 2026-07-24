@@ -44,6 +44,73 @@ export class HomePage implements OnInit, OnDestroy, AfterViewInit {
    *  both drawn from the curated Home feed, so no extra queries. */
   get featuredCard(): StoredStatCard | null { return this.recentCards[0] ?? null; }
   get trendingCards(): StoredStatCard[] { return this.recentCards.slice(1, 5); }
+
+  /** "Today's weird stories" deck — the leading curated cards, rendered as the
+   *  REAL premium share card (app-story-card), so what's in the carousel is
+   *  exactly what opens and gets shared. Capped at 5 so the stack stays legible.
+   *
+   *  Held as a FIELD (not a getter over the live list): Swiper owns the
+   *  <swiper-slide> elements once initialized, so letting *ngFor reorder or
+   *  remove them in place throws inside ViewContainerRef.move. syncDeck()
+   *  instead tears the whole container down and rebuilds it. */
+  storyCards: StoredStatCard[] = [];
+  private deckKey = '';
+
+  /** Point the deck at a new card set, rebuilding the Swiper container when the
+   *  set actually changed (identity by id list — a same-set re-emit is a no-op,
+   *  so the deck never flickers on unrelated Firestore updates). */
+  private syncDeck(cards: StoredStatCard[]): void {
+    // Newest-curated first (homeAddedAt is stamped when an admin flags a card
+    // for Home). The surrounding feed is shuffled per time-window, which kept
+    // pushing freshly-curated stories out of the 5-card deck — the deck should
+    // always lead with what was just added.
+    const when = (c: StoredStatCard) =>
+      Date.parse((c as any).homeAddedAt || c.updatedAt || c.createdAt || '') || 0;
+    const next = cards.slice().sort((a, b) => when(b) - when(a)).slice(0, 5);
+    const key = next.map(c => c.id).join('|');
+    if (key === this.deckKey) return;
+    this.deckKey = key;
+    // Unmount (Swiper's disconnectedCallback destroys the instance), then mount
+    // a fresh container next tick and initialize it.
+    this.storyCards = [];
+    setTimeout(() => {
+      this.storyCards = next;
+      setTimeout(() => this.initStoriesSwiper(), 0);
+    }, 0);
+  }
+
+  trackById(_: number, c: StoredStatCard): string { return c.id ?? ''; }
+
+  /** The three hand-designed story cards, in deck order, matched to the real
+   *  curated cards behind them — so tapping one opens the actual shareable
+   *  card (share link, PNG, OG image) instead of being a dead prototype. */
+  private readonly storyMatch = [/mosquito/i, /old age|age-related/i, /freshwater|drinkable/i];
+
+  /**
+   * A tap anywhere on the deck. A peeking BACK card slides to the front; only
+   * the FRONT card (or its "See the full story" button, whose click bubbles
+   * here) opens the detail page.
+   *
+   * NOTE: do NOT guard on `swiper.animating` — with the `creative` effect that
+   * flag stays true after the transition ends, which silently blocked every
+   * open. Swiper's own `preventClicks` already swallows the click that ends a
+   * drag, so a swipe never navigates.
+   */
+  onStoryTap(slide: number, story: number): void {
+    const swiper = this.storiesSwiper?.nativeElement?.swiper;
+    if (!swiper) { this.openStory(story); return; }
+    if (swiper.activeIndex === slide) this.openStory(story);
+    else swiper.slideTo(slide);
+  }
+
+  openStory(i: number): void {
+    const re = this.storyMatch[i];
+    const card = this.recentCards.find(c => re.test(c.data?.title || ''))
+      ?? this.recentCards.find(c => re.test(c.data?.insight || ''));
+    if (card) this.open(card);
+    else this.goExplore();
+  }
+
   // Placeholder share counts for the "Most shared today" row — real share
   // tracking isn't wired up yet, so these are illustrative for now.
   readonly mockShares = ['12K', '9.8K', '7.6K', '6.1K'];
@@ -67,7 +134,6 @@ export class HomePage implements OnInit, OnDestroy, AfterViewInit {
 
   // "Today's weird stories" coverflow carousel (Swiper web component).
   @ViewChild('storiesSwiper') storiesSwiper?: ElementRef<any>;
-  private swiperReady = false;
 
   constructor(
     private router: Router,
@@ -98,11 +164,20 @@ export class HomePage implements OnInit, OnDestroy, AfterViewInit {
 
   private initStoriesSwiper(): void {
     const el: any = this.storiesSwiper?.nativeElement ?? document.querySelector('.stories-swiper');
-    if (!el || this.swiperReady || typeof el.initialize !== 'function') return;
+    // Guard PER ELEMENT, not per component: the deck lives under an *ngIf, so
+    // if the curated list ever empties and refills, Angular destroys and
+    // recreates <swiper-container init="false">. A component-level latch would
+    // skip initialize() on the new element, leaving an empty shadow root — the
+    // section renders as a blank gap until a full reload.
+    if (!el || el.swiper?.initialized || typeof el.initialize !== 'function') return;
     Object.assign(el, {
       slidesPerView: 1,       // all cards occupy one centred slot; the effect stacks them
-      initialSlide: 1,        // open on the featured (mosquito) card, in front
+      initialSlide: 0,        // open on the FEATURED card (storyCards[0]), in front
       grabCursor: true,
+      // NOTE: promoting a clicked back card is handled in onStoryTap(), NOT via
+      // Swiper's slideToClickedSlide — that option updates activeIndex before
+      // Angular's click handler runs, so the handler can't tell "promote this
+      // back card" from "open the front card" and would navigate on both.
       watchSlidesProgress: true,
       observer: true,         // recompute the stack when the swiper becomes visible/sized
       observeParents: true,
@@ -114,9 +189,10 @@ export class HomePage implements OnInit, OnDestroy, AfterViewInit {
         limitProgress: 2,
         perspective: true,
         // Both back cards peek clearly — one to the left, one to the right —
-        // brought forward (small negative Z) so a good slice of each shows.
-        prev: { translate: ['-23%', 0, -60], rotate: [0, 0, -5], scale: 0.88, opacity: 0.82 },
-        next: { translate: ['23%', 0, -80], rotate: [0, 0, 5], scale: 0.86, opacity: 0.74 },
+        // brought forward (small negative Z) so a good slice of each shows. No
+        // Z-rotation: the back cards stay flat/horizontal, not tilted.
+        prev: { translate: ['-23%', 0, -60], rotate: [0, 0, 0], scale: 0.88, opacity: 0.82 },
+        next: { translate: ['23%', 0, -80], rotate: [0, 0, 0], scale: 0.86, opacity: 0.74 },
       },
       pagination: { clickable: true },
       // Let the pagination dots sit BELOW the cards (Swiper's shadow-DOM .swiper
@@ -129,7 +205,6 @@ export class HomePage implements OnInit, OnDestroy, AfterViewInit {
     // (twice, to catch Ionic's page-transition timing).
     setTimeout(() => el.swiper?.update(), 60);
     setTimeout(() => el.swiper?.update(), 350);
-    this.swiperReady = true;
   }
 
   // Re-apply the stack transforms whenever the Home view (re)enters — the swiper
@@ -175,6 +250,10 @@ export class HomePage implements OnInit, OnDestroy, AfterViewInit {
           const valid = docs.filter(d => d.data?.title && d.data?.cardType);
           this.recentCards = this.shuffleForWindow(valid);
           this.isLoading = false;
+          // The stories deck is *ngIf'd on this data, so its <swiper-container>
+          // only exists AFTER the cards land — syncDeck mounts and initializes
+          // it (and rebuilds it if the curated set later changes).
+          this.syncDeck(this.recentCards);
         },
         error: () => { this.isLoading = false; },
       });

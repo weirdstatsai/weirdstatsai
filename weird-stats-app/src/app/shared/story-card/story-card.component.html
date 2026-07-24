@@ -1,0 +1,110 @@
+<div class="pcard" *ngIf="view"
+     [class.full]="size==='full'" [class.feed]="size!=='full'" [class.compact]="compact"
+     [attr.data-treat]="view.treatment"
+     [style.--accent]="accent" [style.--pg-from]="pgFrom" [style.--pg-mid]="pgMid" [style.--pg-to]="pgTo" [style.--pg-glow]="pgGlow">
+
+  <!-- Owner-uploaded background photo — full-bleed under the scrim. Takes the
+       emoji's place when present (no crossorigin: display must not depend on
+       CORS; captures inline it via dom-to-image's own fetch). -->
+  <img class="pc-photo" *ngIf="card.uiMeta?.heroImage"
+       [src]="card.uiMeta.heroImage" alt="" aria-hidden="true">
+  <!-- Hero subject emoji (background), for the emoji-led treatments -->
+  <span class="pc-emoji"
+        *ngIf="view.emoji && !card.uiMeta?.heroImage && view.treatment!=='chart' && view.treatment!=='duel'">{{ view.emoji }}</span>
+  <div class="pc-scrim" [class.pc-scrim-photo]="!!card.uiMeta?.heroImage"></div>
+
+  <div class="pc-body">
+    <span class="pc-pill" *ngIf="view.eyebrow">
+      <ion-icon name="sparkles"></ion-icon>{{ view.eyebrow }}
+    </span>
+
+    <p class="pc-title">{{ view.title }}</p>
+    <p class="pc-quip" *ngIf="view.quip && size==='full'">{{ view.quip }}</p>
+
+    <ng-container [ngSwitch]="view.treatment">
+
+      <!-- COVER — kpi hero number (or donut for a %) -->
+      <ng-container *ngSwitchCase="'cover'">
+        <div class="pc-donut" *ngIf="view.donut; else heroStat">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="pc-ring-bg" cx="60" cy="60" r="52" fill="none" stroke-width="11"/>
+            <circle class="pc-ring" cx="60" cy="60" r="52" fill="none" stroke-width="11"
+                    pathLength="100" stroke-linecap="round" transform="rotate(-90 60 60)"
+                    [attr.stroke-dasharray]="ringDash" [style.--pct]="view.donut.pct"/>
+          </svg>
+          <div class="pc-donut-c">
+            <b>{{ view.donut.pct | number:'1.0-1' }}%</b>
+            <small *ngIf="view.donut.label">{{ view.donut.label }}</small>
+          </div>
+        </div>
+        <ng-template #heroStat>
+          <div class="pc-stat" *ngIf="view.hero">
+            <b class="pc-num">{{ view.hero.value }}</b>
+            <span class="pc-unit" *ngIf="view.hero.unit">{{ view.hero.unit }}</span>
+            <span class="pc-delta" *ngIf="view.hero.delta" [class.up]="view.hero.deltaUp">
+              <ion-icon [name]="view.hero.deltaUp ? 'arrow-up' : 'arrow-down'"></ion-icon>{{ view.hero.delta }}
+            </span>
+          </div>
+          <small class="pc-stat-lbl" *ngIf="view.hero?.label">{{ view.hero?.label }}</small>
+        </ng-template>
+      </ng-container>
+
+      <!-- EDITORIAL / LEADERBOARD / ATLAS — a few labelled bars (or a list) -->
+      <ng-container *ngSwitchCase="'editorial'"><ng-container *ngTemplateOutlet="barsTpl"></ng-container></ng-container>
+      <ng-container *ngSwitchCase="'leaderboard'"><ng-container *ngTemplateOutlet="barsTpl"></ng-container></ng-container>
+      <ng-container *ngSwitchCase="'atlas'"><ng-container *ngTemplateOutlet="barsTpl"></ng-container></ng-container>
+
+      <!-- DUEL — versus, two sides + split bar -->
+      <ng-container *ngSwitchCase="'duel'">
+        <div class="pc-duel" *ngIf="view.duel">
+          <div class="pc-side" [class.win]="view.duel.winnerIdx===0">
+            <span class="pc-side-em" *ngIf="view.duel.a.emoji">{{ view.duel.a.emoji }}</span>
+            <b>{{ view.duel.a.value }}</b>
+            <span class="pc-side-lbl">{{ view.duel.a.label }}</span>
+          </div>
+          <span class="pc-vs">VS</span>
+          <div class="pc-side pc-side-b" [class.win]="view.duel.winnerIdx===1">
+            <span class="pc-side-em" *ngIf="view.duel.b.emoji">{{ view.duel.b.emoji }}</span>
+            <b>{{ view.duel.b.value }}</b>
+            <span class="pc-side-lbl">{{ view.duel.b.label }}</span>
+          </div>
+        </div>
+        <div class="pc-splitbar" *ngIf="view.duel"><i [style.--w.%]="view.duel.pctA"></i></div>
+      </ng-container>
+
+      <!-- CHART — premium frame around app-chart (light-on-dark) -->
+      <ng-container *ngSwitchCase="'chart'">
+        <div class="pc-chart" *ngIf="chartConfig; else chartEmpty">
+          <app-chart [config]="$any(chartConfig)" [height]="chartHeight"></app-chart>
+        </div>
+        <ng-template #chartEmpty><p class="pc-empty">No data available.</p></ng-template>
+      </ng-container>
+
+      <!-- STATEMENT — fact: the title IS the card (styled big via [data-treat]) -->
+      <ng-container *ngSwitchCase="'statement'"></ng-container>
+    </ng-container>
+
+    <!-- Only offered when the card actually HAS a story (insight) to land on —
+         an insight-less card would make this a dead button. -->
+    <button class="pc-cta" *ngIf="size==='full' && view.treatment!=='statement' && card.insight" (click)="storyCta.emit()">
+      See the full story <ion-icon name="arrow-forward"></ion-icon>
+    </button>
+  </div>
+
+  <!-- Shared bars/list block for editorial / leaderboard / atlas -->
+  <ng-template #barsTpl>
+    <ol class="pc-list" *ngIf="view.isList; else barsBlock">
+      <li *ngFor="let b of view.bars; let i = index"><span class="pc-rank">{{ i + 1 }}</span>{{ b.label }}</li>
+    </ol>
+    <ng-template #barsBlock>
+      <div class="pc-bars">
+        <div class="pc-bar" *ngFor="let b of view.bars; let i = index" [style.--i]="i">
+          <span class="pc-lbl">{{ b.label }}</span>
+          <span class="pc-track"><i [style.--w.%]="b.pct"></i></span>
+          <span class="pc-val">{{ b.value }}<small *ngIf="b.unit"> {{ b.unit }}</small></span>
+        </div>
+      </div>
+    </ng-template>
+  </ng-template>
+
+</div>

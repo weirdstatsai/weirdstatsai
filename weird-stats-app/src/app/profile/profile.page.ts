@@ -15,9 +15,8 @@ import { MembershipService } from '../services/membership.service';
 import { AdminService } from '../services/admin.service';
 import { DraftService } from '../services/draft.service';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
-import { RankStyle, rankAltStylesFor } from '../shared/cards/card-ranking/card-ranking.component';
-import { KpiStyle, kpiAltStylesFor } from '../shared/cards/card-kpi/card-kpi.component';
 import { TableStyle } from '../shared/cards/card-table/card-table.component';
+import { StoryVariant, storyAltsFor, asStoryVariant } from '../shared/story-card/story-view';
 import { EmojiService } from '../services/emoji.service';
 
 @Component({
@@ -46,19 +45,11 @@ export class ProfilePage implements OnInit, OnDestroy {
 
   // Inline draft alternatives panel
   selectedDraft?: StoredStatCard;
-  selectedRankStyle: RankStyle = 'bars';
-  selectedKpiStyle: KpiStyle = 'default';
+  // Premium story-card variant preview (kpi/ranking) — local to the panel.
+  selectedStoryVariant?: StoryVariant;
   selectedTableStyle: TableStyle = 'pill';
   selectedChartType: 'bar' | 'line' | 'doughnut' = 'bar';
 
-  readonly rankStyleLabels: Record<string, string> = {
-    pill: 'Value pill', percent: 'Percentage', vertical: 'Vertical', circular: 'Circular',
-  };
-  // Data-gated: a KPI style is only offered when the draft's data can honestly
-  // support it. Single source of truth lives next to the component.
-  get kpiAltStyles(): Array<{ key: KpiStyle; label: string }> {
-    return kpiAltStylesFor(this.selectedDraft?.data);
-  }
   readonly tableAltStyles: Array<{ key: TableStyle; label: string }> = [
     { key: 'pill', label: 'Value pill' },
     { key: 'bars', label: 'Bars' },
@@ -66,10 +57,9 @@ export class ProfilePage implements OnInit, OnDestroy {
   ];
   readonly chartAltTypes: Array<'bar' | 'line' | 'doughnut'> = ['bar', 'line', 'doughnut'];
 
-  // Data-gated (same rule as card-detail): a value-less "top X" list only
-  // offers "List"; a real metric offers the numeric styles.
-  get rankAltStyles(): Array<{ key: RankStyle; label: string }> {
-    return rankAltStylesFor(this.selectedDraft?.data);
+  // Data-gated premium alternatives (same source of truth as card-detail).
+  get storyAltStyles(): Array<{ key: StoryVariant; label: string }> {
+    return storyAltsFor(this.selectedDraft?.data);
   }
 
   constructor(
@@ -271,8 +261,9 @@ export class ProfilePage implements OnInit, OnDestroy {
       return;
     }
     this.selectedDraft = card;
-    this.selectedRankStyle = 'bars';
-    this.selectedKpiStyle = 'default';
+    // Premium variant: honor the owner's persisted pick, else the auto default.
+    this.selectedStoryVariant = asStoryVariant(card.data?.uiMeta?.selectedStyle)
+      ?? storyAltsFor(card.data)[0]?.key;
     this.selectedTableStyle = 'pill';
     this.selectedChartType = (card.data?.chartType as any) ?? 'bar';
     this.cdr.detectChanges();

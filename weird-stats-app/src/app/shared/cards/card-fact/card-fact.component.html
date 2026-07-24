@@ -1,4 +1,11 @@
 <div class="wcard" [class.full]="size==='full'" [class.alt]="size==='alt'" [class.style-editorial]="effStyle==='editorial'" [class.style-split]="effStyle==='split'" [style.--accent]="accent" [style.--grad-from]="gradFrom" [style.--grad-to]="gradTo">
+  <!-- Owner-uploaded backdrop: a soft image layer BETWEEN the card surface and
+       the content (poster/editorial) — structure unchanged. The split style
+       shows the photo full-strength in its accent panel instead (below).
+       No crossorigin attribute: display must never depend on CORS — capture
+       inlining uses dom-to-image's own fetch (bucket CORS handles that). -->
+  <img class="wcard-bgimg" *ngIf="card.uiMeta?.heroImage && effStyle !== 'split'"
+       [src]="card.uiMeta.heroImage" alt="" aria-hidden="true">
   <div class="wcard-head">
     <span class="cat-badge" *ngIf="card.uiMeta?.category">{{ card.uiMeta.category }}</span>
     <span class="weird-badge">Fact card</span>
@@ -25,7 +32,9 @@
   <!-- Split: full-bleed accent panel holds the emoji, text alongside -->
   <div class="fact-split" *ngIf="effStyle==='split'">
     <div class="split-panel">
-      <span class="split-emoji" *ngIf="card.uiMeta?.icon">{{ card.uiMeta.icon }}</span>
+      <img class="split-img" *ngIf="card.uiMeta?.heroImage"
+           [src]="card.uiMeta.heroImage" alt="" aria-hidden="true">
+      <span class="split-emoji" *ngIf="card.uiMeta?.icon && !card.uiMeta?.heroImage">{{ card.uiMeta.icon }}</span>
     </div>
     <div class="split-side">
       <p class="split-eyebrow" *ngIf="card.uiMeta?.category">{{ card.uiMeta.category }}</p>

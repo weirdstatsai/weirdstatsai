@@ -73,8 +73,6 @@
     </div>
   </section>
 
-  <!-- ② Today's weird stories — DESIGN PROTOTYPE: three treatments to pick from.
-       Content is hardcoded; gradient "photo" areas stand in for real hero images. -->
   <section class="hsec stories-sec">
     <div class="sec-head">
       <h2 class="sec-title">Today's weird stories</h2>
@@ -86,7 +84,7 @@
 
       <!-- ══ Treatment B — Full-bleed cover (one big stat) ══ -->
       <swiper-slide>
-      <article class="story-card sc-b">
+      <article class="story-card sc-b" (click)="onStoryTap(0, 1)">
         <div class="sc-photo"><span class="sc-emoji">🌍</span></div>
         <div class="sc-scrim sc-scrim-b"></div>
         <div class="sc-body sc-body-b">
@@ -96,13 +94,12 @@
           <div class="sc-stat"><b>1 in 12</b><small>lived to grow old</small></div>
           <button class="sc-cta">See the full story <ion-icon name="arrow-forward"></ion-icon></button>
         </div>
-        <span class="sc-tag">B · Cover</span>
       </article>
       </swiper-slide>
 
       <!-- ══ Treatment A — Editorial (image-right, stat bars) — FEATURED, centre ══ -->
       <swiper-slide>
-      <article class="story-card sc-a">
+      <article class="story-card sc-a" (click)="onStoryTap(1, 0)">
         <div class="sc-photo"><span class="sc-emoji">🦟</span></div>
         <div class="sc-scrim"></div>
         <div class="sc-body">
@@ -118,13 +115,12 @@
           <p class="sc-cap">Deaths per year (estimated)</p>
           <button class="sc-cta">See the full story <ion-icon name="arrow-forward"></ion-icon></button>
         </div>
-        <span class="sc-tag">A · Editorial</span>
       </article>
       </swiper-slide>
 
       <!-- ══ Treatment C — Split panel (data-forward) ══ -->
       <swiper-slide>
-      <article class="story-card sc-c">
+      <article class="story-card sc-c" (click)="onStoryTap(2, 2)">
         <div class="sc-body sc-body-c">
           <span class="sc-pill sc-pill-c"><ion-icon name="sparkles"></ion-icon>Today's highlight</span>
           <h3 class="sc-title sc-title-c">Only about 2% of Earth's water is drinkable</h3>
@@ -135,7 +131,6 @@
           <div class="sc-donut" style="--deg: 30deg"><span class="sc-donut-num">2%</span></div>
           <span class="sc-panel-lbl">freshwater<br>accessible</span>
         </div>
-        <span class="sc-tag sc-tag-c">C · Split</span>
       </article>
       </swiper-slide>
 

@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer } from '@angular/platform-browser';
-import { WeirdCard, CardRow, ACCENT_COLORS } from '../../../models/weird-card.model';
+import { WeirdCard, CardRow, ACCENT_COLORS, gradientForAccent } from '../../../models/weird-card.model';
 import { WorldTopoService } from '../../../services/world-topo.service';
 import type { CountryFeature } from '../../../services/world-topo.service';
 
@@ -296,8 +296,9 @@ export class CardMapComponent implements OnChanges {
   ngOnChanges(): void {
     const h = (this.card?.uiMeta?.accentColor ?? '').trim();
     this.accent   = (ACCENT_COLORS as readonly string[]).includes(h) ? h : ACCENT_COLORS[0];
-    this.gradFrom = this.card?.uiMeta?.gradientFrom || '#f5f3ff';
-    this.gradTo   = this.card?.uiMeta?.gradientTo   || '#ffffff';
+    const grad = gradientForAccent(this.accent);
+    this.gradFrom = grad.from;
+    this.gradTo   = grad.to;
     this.buildTop();
     this.buildValueMap();
     this.buildMarkers();

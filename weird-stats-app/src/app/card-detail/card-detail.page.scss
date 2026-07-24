@@ -164,22 +164,63 @@
 // ── Act 2: dashed wireframes per card type ──────────────────────────────────
 .frame-wire { margin-top: 20px; }
 
-.wf-plot {
-  position: relative; height: 170px;
-  display: flex; align-items: flex-end; gap: 12px; padding: 0 4px;
-  i {
-    flex: 1; height: 0;
-    border: 2px dashed rgba(0, 0, 0, 0.20);
-    border-radius: 6px 6px 3px 3px;
-    animation: wf-rise 0.7s cubic-bezier(0.3, 0.7, 0.3, 1) both;
-  }
-  i:nth-child(2) { --wh: 42%; animation-delay: 0.05s; }
-  i:nth-child(3) { --wh: 66%; animation-delay: 0.15s; }
-  i:nth-child(4) { --wh: 52%; animation-delay: 0.25s; }
-  i:nth-child(5) { --wh: 88%; animation-delay: 0.35s; }
-  i:nth-child(6) { --wh: 70%; animation-delay: 0.45s; }
+// ── Chart skeleton — "line loading": a glowing area graph draws itself in ────
+.wf-line-load {
+  position: relative;
+  height: 168px;
+  padding: 6px 2px 0;
+  overflow: hidden;
 }
-@keyframes wf-rise { to { height: var(--wh, 50%); } }
+.wf-line-load .wf-grid {
+  position: absolute; left: 0; right: 0; top: 10px; bottom: 12px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  z-index: 0;
+  span { height: 0; border-top: 1.5px dashed rgba(0, 0, 0, 0.07); }
+}
+.wf-svg {
+  position: relative; z-index: 1;
+  display: block; width: 100%; height: 100%;
+}
+.wf-area {
+  opacity: 0;
+  animation: wf-area-in 2.4s ease-in-out infinite;
+}
+.wf-stroke {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  filter: drop-shadow(0 3px 7px rgba(108, 92, 231, 0.4));
+  animation: wf-draw 2.4s ease-in-out infinite;
+}
+// Glowing dot that traces the curve as it draws (CSS motion path). Degrades to
+// a pulsing dot at the start on engines without offset-path — harmless.
+.wf-head {
+  offset-path: path('M0,112 C38,72 66,120 104,86 S170,32 214,64 S280,40 300,52');
+  offset-rotate: 0deg;
+  filter: drop-shadow(0 0 5px rgba(108, 92, 231, 0.85));
+  opacity: 0;
+  animation: wf-head 2.4s ease-in-out infinite;
+}
+@keyframes wf-head {
+  0%   { offset-distance: 0%;   opacity: 0; }
+  8%   { opacity: 1; }
+  55%  { offset-distance: 100%; opacity: 1; }
+  66%  { offset-distance: 100%; opacity: 0; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+@keyframes wf-draw {
+  0%   { stroke-dashoffset: 100; opacity: 0; }
+  8%   { opacity: 1; }
+  55%  { stroke-dashoffset: 0;   opacity: 1; }
+  86%  { stroke-dashoffset: 0;   opacity: 1; }
+  96%  { stroke-dashoffset: 0;   opacity: 0; }
+  100% { stroke-dashoffset: 100; opacity: 0; }
+}
+@keyframes wf-area-in {
+  0%, 14% { opacity: 0; }
+  60%     { opacity: 1; }
+  86%     { opacity: 1; }
+  100%    { opacity: 0; }
+}
 
 .wf-axis {
   position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px;
@@ -293,6 +334,10 @@
   }
   .frame-title::after { animation: none !important; }
   .frame-movement .gear { animation: none !important; }
+  // The line-loading skeleton must rest fully-drawn, not on its hidden keyframe.
+  .wf-stroke { animation: none !important; stroke-dashoffset: 0; opacity: 1; }
+  .wf-area   { animation: none !important; opacity: 1; }
+  .wf-head   { animation: none !important; opacity: 0; }
 }
 
 app-weird-card {
@@ -442,7 +487,8 @@ $alt-tile-w: min(45vw, 190px);
   app-card-chart,
   app-card-map,
   app-card-versus,
-  app-card-fact {
+  app-card-fact,
+  app-story-card {
     display: block;
     flex: 1;
     min-height: 0;
@@ -560,6 +606,84 @@ $alt-tile-w: min(45vw, 190px);
   }
 }
 
+// Hero-emoji editor — a single-emoji input + explainer.
+.emoji-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.emoji-input {
+  width: 56px;
+  height: 48px;
+  padding: 0;
+  text-align: center;
+  font-size: 26px;
+  font-family: inherit;
+  background: #fff;
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  outline: none;
+  &:focus { border-color: var(--ion-color-primary); }
+}
+.emoji-hint {
+  flex: 1;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #8a8798;
+}
+
+// Background-photo editor — thumb + upload/replace + remove.
+.img-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.img-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 0.5px solid rgba(0, 0, 0, 0.1);
+}
+.img-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: #444;
+  cursor: pointer;
+  ion-spinner { width: 18px; height: 18px; }
+  &:disabled { opacity: 0.6; }
+}
+.img-remove-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(0, 0, 0, 0.05);
+  color: #c0392b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  ion-icon { font-size: 18px; }
+}
+.img-edit-hint {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #8a8798;
+}
+
 .edit-input {
   width: 100%;
   background: #fff;
@@ -609,6 +733,17 @@ $alt-tile-w: min(45vw, 190px);
     padding: 20px;
     overflow: hidden;
     pointer-events: none;
+
+    // Same clean-card rule as the visible hero (.main-card-wrap): the story
+    // lives below the card on screen, so the captured image hides the in-card
+    // insight too — what you share is exactly the card you see.
+    ::ng-deep .wcard-insight,
+    ::ng-deep .map-insight { display: none !important; }
+
+    // The story-card's desktop max-height (viewport-keyed media query) must
+    // not clip this offscreen 360px frame — let the card take its natural
+    // height, exactly like the mobile hero it mirrors.
+    ::ng-deep .pcard.full { max-height: none; }
   }
 
   .card-wrap {
@@ -617,7 +752,11 @@ $alt-tile-w: min(45vw, 190px);
     // No overflow:hidden or radius here — that clipped the card's own rounded
     // border + drop-shadow (the disappearing bottom line). The card already
     // clips its own content; let its full border and shadow render.
-    app-weird-card { display: block; margin: 0; }
+    app-weird-card,
+    app-story-card,
+    app-card-table,
+    app-card-versus,
+    app-card-map { display: block; margin: 0; }
   }
 
   // Normal flow, tight under the card — never detaches, even for a short card.
@@ -820,15 +959,26 @@ $alt-tile-w: min(45vw, 190px);
   width: 100%;
   filter: drop-shadow(0 16px 38px rgba(20, 22, 43, 0.18));
 }
-.og-card-full app-card-ranking,
-.og-card-full app-card-kpi,
+.og-card-full app-story-card,
 .og-card-full app-card-table,
 .og-card-full app-card-versus,
 .og-card-full app-card-map,
 .og-card-full app-weird-card {
   display: block;
   width: 100%;
+  // The page-wide `app-weird-card { margin-bottom: 20px }` rule reached in
+  // here and gave ONLY chart/fact OG images an extra gap above the brand line.
+  margin: 0;
 }
+// Capture = the visible hero: the in-card insight stays hidden (the story is
+// carried by the link preview's own description text below the image).
+.og-card-full ::ng-deep .wcard-insight,
+.og-card-full ::ng-deep .map-insight { display: none !important; }
+// The story-card's desktop clamp (max-height: 400px, tuned for the ≤640px
+// reading column) is viewport-keyed, so it would also clip the 760px OG tile
+// when captured from a desktop window. Unclamp — fitOgTile() already scales
+// the tile to fit the 1200×630 canvas, so free height is always safe here.
+.og-card-full ::ng-deep .pcard.full { max-height: none; }
 .og-brand {
   text-align: center;
   margin-top: 14px;
@@ -845,13 +995,24 @@ $alt-tile-w: min(45vw, 190px);
 .og-accent { color: #6C5CE7; }
 
 // ── Desktop: keep the single-card reading view a centered column ───────────
-// Without this the card, story, and share buttons stretch across the whole
-// desktop shell (buttons ~380px wide). Cap to a comfortable width, centered.
+// Without a max-width the card, story, and share buttons stretch across the
+// whole desktop shell (content column is capped at 1280px) — the hero card
+// ends up an ~1200px-wide banner. Cap every block in the reading column to one
+// comfortable measure and center it, so the card reads as a compact card and
+// the badges / story / share / alternatives all line up under it.
 @media (min-width: 850px) {
+  $read-col: 640px;
+
+  .main-badges,
   .main-card-wrap,
   .card-info,
+  .created-by,
   .share-inline,
+  .alts-section,
+  .edit-panel,
+  .fact-edit-panel,
   .create-cta {
+    max-width: $read-col;
     margin-left: auto;
     margin-right: auto;
   }

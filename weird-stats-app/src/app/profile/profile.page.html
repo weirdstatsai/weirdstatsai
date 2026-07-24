@@ -72,63 +72,18 @@
         <!-- Full card -->
         <app-card-badges [card]="selectedDraft.data" class="draft-badges"></app-card-badges>
         <div class="draft-full-card">
-          <ng-container [ngSwitch]="selectedDraft.data?.cardType">
-            <app-card-ranking *ngSwitchCase="'ranking'" [card]="selectedDraft.data!" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>
-            <app-card-kpi     *ngSwitchCase="'kpi'"     [card]="selectedDraft.data!" size="full" [kpiStyle]="selectedKpiStyle"></app-card-kpi>
-            <app-card-table   *ngSwitchCase="'table'"   [card]="selectedDraft.data!" size="full" [tableStyle]="selectedTableStyle"></app-card-table>
-            <app-card-chart   *ngSwitchCase="'chart'"   [card]="selectedDraft.data!" size="full" [forceType]="selectedChartType"></app-card-chart>
-            <app-weird-card   *ngSwitchDefault           [card]="selectedDraft.data!" size="full"></app-weird-card>
-          </ng-container>
+          <app-story-card [card]="selectedDraft.data!" size="full" [variant]="selectedStoryVariant"></app-story-card>
         </div>
 
-        <!-- Alternatives: ranking -->
-        <div class="alts-section" *ngIf="selectedDraft.data?.cardType === 'ranking'">
+        <!-- Alternatives: premium story-card variants (all card types) -->
+        <div class="alts-section" *ngIf="storyAltStyles.length > 1">
           <p class="alts-label">Alternatives</p>
           <div class="alts-hscroll">
-            <div class="alt-wrap" *ngFor="let s of rankAltStyles"
-                 [class.selected]="selectedRankStyle === s.key"
-                 (click)="selectedRankStyle = s.key">
+            <div class="alt-wrap" *ngFor="let s of storyAltStyles"
+                 [class.selected]="selectedStoryVariant === s.key"
+                 (click)="selectedStoryVariant = s.key">
               <p class="alt-type-label">{{ s.label }}</p>
-              <app-card-ranking [card]="selectedDraft.data!" size="alt" [rankStyle]="s.key"></app-card-ranking>
-            </div>
-          </div>
-        </div>
-
-        <!-- Alternatives: kpi -->
-        <div class="alts-section" *ngIf="selectedDraft.data?.cardType === 'kpi'">
-          <p class="alts-label">Alternatives</p>
-          <div class="alts-hscroll">
-            <div class="alt-wrap" *ngFor="let s of kpiAltStyles"
-                 [class.selected]="selectedKpiStyle === s.key"
-                 (click)="selectedKpiStyle = s.key">
-              <p class="alt-type-label">{{ s.label }}</p>
-              <app-card-kpi [card]="selectedDraft.data!" size="alt" [kpiStyle]="s.key"></app-card-kpi>
-            </div>
-          </div>
-        </div>
-
-        <!-- Alternatives: table -->
-        <div class="alts-section" *ngIf="selectedDraft.data?.cardType === 'table'">
-          <p class="alts-label">Alternatives</p>
-          <div class="alts-hscroll">
-            <div class="alt-wrap" *ngFor="let s of tableAltStyles"
-                 [class.selected]="selectedTableStyle === s.key"
-                 (click)="selectedTableStyle = s.key">
-              <p class="alt-type-label">{{ s.label }}</p>
-              <app-card-table [card]="selectedDraft.data!" size="alt" [tableStyle]="s.key"></app-card-table>
-            </div>
-          </div>
-        </div>
-
-        <!-- Alternatives: chart -->
-        <div class="alts-section" *ngIf="selectedDraft.data?.cardType === 'chart'">
-          <p class="alts-label">Alternatives</p>
-          <div class="alts-hscroll">
-            <div class="alt-wrap" *ngFor="let t of chartAltTypes"
-                 [class.selected]="selectedChartType === t"
-                 (click)="selectedChartType = t">
-              <p class="alt-type-label">{{ t }}</p>
-              <app-card-chart [card]="selectedDraft.data!" size="alt" [forceType]="t"></app-card-chart>
+              <app-story-card [card]="selectedDraft.data!" size="alt" [variant]="s.key"></app-story-card>
             </div>
           </div>
         </div>

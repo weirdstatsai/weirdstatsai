@@ -10,7 +10,9 @@
     <p class="wcard-title">{{ card.title | stripEmoji }}</p>
   </ng-container>
 
-  <div class="chart-wrap" *ngIf="chartConfig">
+  <div class="chart-wrap" *ngIf="chartConfig"
+       [class.line-reveal]="chartIsLine && animate && size !== 'alt'"
+       [style.--reveal-dur]="revealMs + 'ms'">
     <app-chart [config]="$any(chartConfig)" [height]="chartHeight"></app-chart>
   </div>
 

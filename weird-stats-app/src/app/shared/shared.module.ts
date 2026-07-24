@@ -17,6 +17,8 @@ import { CardFactComponent } from './cards/card-fact/card-fact.component';
 import { CardChartComponent } from './cards/card-chart/card-chart.component';
 import { CardTableComponent } from './cards/card-table/card-table.component';
 import { CardMapComponent } from './cards/card-map/card-map.component';
+import { StoryCardComponent } from './story-card/story-card.component';
+import { StoryPosterComponent } from './story-poster/story-poster.component';
 import { PlanModalComponent } from './plan-modal/plan-modal.component';
 import { PublishModalComponent } from './publish-modal/publish-modal.component';
 import { CardMenuPopoverComponent } from './card-menu-popover/card-menu-popover.component';
@@ -32,6 +34,8 @@ const CARD_COMPONENTS = [
   CardChartComponent,
   CardTableComponent,
   CardMapComponent,
+  StoryCardComponent,
+  StoryPosterComponent,
 ];
 
 @NgModule({

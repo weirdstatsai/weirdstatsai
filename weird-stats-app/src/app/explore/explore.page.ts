@@ -10,8 +10,9 @@ interface ExploreCategory {
   emoji: string;
 }
 
-// Fact/map/ranking/table cards span two columns — all others are 3:4 tiles
-const FULL_WIDTH_TYPES: CardType[] = ['fact', 'map', 'ranking', 'table'];
+// Fact/map/table span two columns; the premium kpi/ranking cards go full-width
+// too so they read as landscape hero cards (like the home story cards).
+const FULL_WIDTH_TYPES: CardType[] = ['fact', 'map', 'ranking', 'table', 'kpi'];
 
 @Component({
   selector: 'app-explore',
@@ -78,6 +79,12 @@ export class ExplorePage implements OnInit, OnDestroy {
 
   isFullWidth(card: StoredStatCard): boolean {
     return FULL_WIDTH_TYPES.includes(card.data?.cardType);
+  }
+
+  /** Stable identity so `filteredCards` (a new array each change-detection)
+   *  never re-creates the tiles — which would restart their entrance animations. */
+  trackByCard(_i: number, card: StoredStatCard): string {
+    return card.id;
   }
 
 

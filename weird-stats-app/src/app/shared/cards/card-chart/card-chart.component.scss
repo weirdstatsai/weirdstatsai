@@ -8,11 +8,30 @@
 
 .chart-wrap {
   pointer-events: none;
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
-  background: rgba(0,0,0,0.02);
+  // Whisper-faint tint so the gradient area has something to sit on without a
+  // hard gray box; the accent fill + glow carry the visual weight.
+  background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0));
   padding: 6px 6px 2px;
   margin-bottom: 4px;
+}
+
+// ── Line "draw-on" reveal ───────────────────────────────────────────────────
+// The chart is drawn ONCE (glow + labels + points baked in); the left-to-right
+// reveal is a compositor-friendly CSS clip on the finished canvas, so there is
+// NO per-frame canvas redraw — it can't stutter the way the old JS per-point
+// draw did. Only the live feed/full views opt in; capture frames + reduced
+// motion show the finished chart immediately.
+.chart-wrap.line-reveal ::ng-deep canvas {
+  animation: chart-reveal var(--reveal-dur, 900ms) cubic-bezier(0.22, 0.7, 0.24, 1) both;
+}
+@keyframes chart-reveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chart-wrap.line-reveal ::ng-deep canvas { animation: none; clip-path: none; }
 }
 
 .full .chart-wrap {

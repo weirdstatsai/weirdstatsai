@@ -20,7 +20,7 @@
           <span class="label">{{ row.label }}</span>
           <span class="value">{{ fmt(row.value) }}<span class="unit" *ngIf="row.unit"> {{ row.unit }}</span></span>
         </div>
-        <div class="track"><div class="bar" [style.width.%]="barWidth(row)"></div></div>
+        <div class="track"><div class="bar" [style.--bar-w]="barWidth(row) + '%'"></div></div>
       </div>
     </div>
   </ng-container>
@@ -34,7 +34,7 @@
           <span class="label">{{ row.label }}</span>
         </div>
         <div class="pill-wrap">
-          <div class="pill-fill" [style.width.%]="barWidth(row)"></div>
+          <div class="pill-fill" [style.--bar-w]="barWidth(row) + '%'"></div>
           <span class="pill-text">{{ fmt(row.value) }}<span *ngIf="row.unit"> {{ row.unit }}</span></span>
         </div>
       </div>
@@ -51,7 +51,7 @@
           <span class="value">{{ fmt(row.value) }}<span class="unit" *ngIf="row.unit"> {{ row.unit }}</span></span>
         </div>
         <div class="pct-row">
-          <div class="track pct-track"><div class="bar" [style.width.%]="barWidth(row)"></div></div>
+          <div class="track pct-track"><div class="bar" [style.--bar-w]="barWidth(row) + '%'"></div></div>
           <span class="pct-label">{{ pct(row) }}%</span>
         </div>
         <span class="vs-max">vs max</span>
@@ -115,7 +115,7 @@
           <svg class="sparkline" viewBox="0 0 48 24" preserveAspectRatio="none">
             <path [attr.d]="sparkPath(i)" fill="none" [attr.stroke]="accent" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
           </svg>
-          <div class="spark-track"><div class="bar" [style.width.%]="barWidth(row)"></div></div>
+          <div class="spark-track"><div class="bar" [style.--bar-w]="barWidth(row) + '%'"></div></div>
         </div>
       </div>
     </div>

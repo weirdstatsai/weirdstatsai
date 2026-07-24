@@ -393,6 +393,9 @@ uiMeta rules:
 * backgroundPattern: leaf, dots, waves, grid, stars, map-lines, circles, diagonal-lines,
   lightning, bubbles, or none.
 * icon: a single emoji that best represents the topic (e.g. 🐙, 🍺, 🌍, ⚡).
+  It must LITERALLY match the named subject when a matching emoji exists — use the
+  exact species/object emoji (🪳 cockroach, 🪰 fly, 🪲 beetle, 🐜 ant, 🦂 scorpion,
+  🪱 worm, 🦫 beaver, 🦭 seal), never a lookalike substitute (an ant is NOT a cockroach).
 * insightBadge: Trending, Unexpected, Weird Gap, Top 5, Global, Historic, Fast Rising,
   Big Difference, Tiny Winner, or AI Pick.
 * shareTitle: the factual headline phrased for social — still a real fact, not a weird pun,

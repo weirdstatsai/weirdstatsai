@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { getAnimalSvg } from '../../animal-icons';
-import { WeirdCard, ACCENT_COLORS } from '../../../models/weird-card.model';
+import { WeirdCard, ACCENT_COLORS, gradientForAccent } from '../../../models/weird-card.model';
 
 export type KpiStyle =
   | 'default' | 'circular' | 'comparison' | 'hero'          // classic: present the number
@@ -70,8 +70,9 @@ export class CardKpiComponent implements OnChanges {
   ngOnChanges(): void {
     const h = (this.card?.uiMeta?.accentColor ?? '').trim();
     this.accent   = (ACCENT_COLORS as readonly string[]).includes(h) ? h : ACCENT_COLORS[0];
-    this.gradFrom = this.card?.uiMeta?.gradientFrom || '#f5f3ff';
-    this.gradTo   = this.card?.uiMeta?.gradientTo   || '#ffffff';
+    const grad = gradientForAccent(this.accent);
+    this.gradFrom = grad.from;
+    this.gradTo   = grad.to;
   }
 
   /** Coerce to a FINITE number or null. Cards come from an LLM + Firestore, so

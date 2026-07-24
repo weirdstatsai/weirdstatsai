@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { getAnimalSvg } from '../../animal-icons';
-import { WeirdCard, CardRow, ACCENT_COLORS } from '../../../models/weird-card.model';
+import { WeirdCard, CardRow, ACCENT_COLORS, gradientForAccent } from '../../../models/weird-card.model';
 
 const ACCENT_B_MAP: Record<string, string> = {
   '#6C5CE7': '#D85A30',
@@ -40,8 +40,9 @@ export class CardVersusComponent implements OnChanges {
     const h = (this.card?.uiMeta?.accentColor ?? '').trim();
     this.accent   = (ACCENT_COLORS as readonly string[]).includes(h) ? h : ACCENT_COLORS[0];
     this.accentB  = ACCENT_B_MAP[this.accent] ?? '#D85A30';
-    this.gradFrom = this.card?.uiMeta?.gradientFrom || '#f5f3ff';
-    this.gradTo   = this.card?.uiMeta?.gradientTo   || '#ffffff';
+    const grad = gradientForAccent(this.accent);
+    this.gradFrom = grad.from;
+    this.gradTo   = grad.to;
     this.pair    = (this.card.rows ?? []).slice(0, 2);
   }
 

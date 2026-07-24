@@ -1,0 +1,50 @@
+<!-- Markup lifted verbatim from the Home deck (home.page.html) so the shared
+     image is pixel-identical to the card people see on Home. Only the content
+     is bound instead of hardcoded. -->
+
+<!-- Editorial — image-right, stat bars (the mosquito card) -->
+<article class="story-card sc-a" *ngIf="eff === 'editorial'">
+  <div class="sc-photo"><span class="sc-emoji">{{ emoji }}</span></div>
+  <div class="sc-scrim"></div>
+  <div class="sc-body">
+    <span class="sc-pill"><ion-icon name="sparkles"></ion-icon>Today's highlight</span>
+    <h3 class="sc-title">{{ title }}</h3>
+    <p class="sc-quip" *ngIf="quip">{{ quip }}</p>
+    <div class="sc-bars">
+      <div class="sc-bar" *ngFor="let b of bars">
+        <span class="sc-lbl">{{ b.label }}</span>
+        <span class="sc-track"><i [style.--w.%]="b.pct"></i></span>
+        <span class="sc-val">{{ b.value }}</span>
+      </div>
+    </div>
+    <p class="sc-cap" *ngIf="caption">{{ caption }}</p>
+    <button class="sc-cta">See the full story <ion-icon name="arrow-forward"></ion-icon></button>
+  </div>
+</article>
+
+<!-- Cover — full-bleed, one big stat (the 11% card) -->
+<article class="story-card sc-b" *ngIf="eff === 'cover'">
+  <div class="sc-photo"><span class="sc-emoji">{{ emoji }}</span></div>
+  <div class="sc-scrim sc-scrim-b"></div>
+  <div class="sc-body sc-body-b">
+    <span class="sc-pill"><ion-icon name="sparkles"></ion-icon>Today's highlight</span>
+    <h3 class="sc-title">{{ title }}</h3>
+    <p class="sc-quip" *ngIf="quip">{{ quip }}</p>
+    <div class="sc-stat"><b>{{ statValue }}</b><small *ngIf="statLabel">{{ statLabel }}</small></div>
+    <button class="sc-cta">See the full story <ion-icon name="arrow-forward"></ion-icon></button>
+  </div>
+</article>
+
+<!-- Split — text left, donut panel right (the 2% water card) -->
+<article class="story-card sc-c" *ngIf="eff === 'split'">
+  <div class="sc-body sc-body-c">
+    <span class="sc-pill sc-pill-c"><ion-icon name="sparkles"></ion-icon>Today's highlight</span>
+    <h3 class="sc-title sc-title-c">{{ title }}</h3>
+    <p class="sc-quip sc-quip-c" *ngIf="quip">{{ quip }}</p>
+    <button class="sc-cta sc-cta-c">See the full story <ion-icon name="arrow-forward"></ion-icon></button>
+  </div>
+  <div class="sc-panel">
+    <div class="sc-donut" [style.--deg]="donutDeg"><span class="sc-donut-num">{{ donutPct | number:'1.0-1' }}%</span></div>
+    <span class="sc-panel-lbl" *ngIf="donutLabel">{{ donutLabel }}</span>
+  </div>
+</article>

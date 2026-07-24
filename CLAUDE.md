@@ -38,6 +38,22 @@ Flow: **research_agent → classify_card_type → format_validated**
   (in validator) is the real per-type data gate; add new type rules there.
 
 ## Card types & rendering
+> **ONE card design everywhere.** All 7 types render as the premium
+> `app-story-card` (dark, data-driven `treatment` from `buildStoryView`) on EVERY surface:
+> feed tiles, Home deck, detail hero, share PNG, OG image, share page.
+> `app-weird-card` is now a thin pass-through to it; the light `card-*` components
+> (`card-kpi/ranking/table/versus/map/chart/fact`) are **no longer rendered anywhere** —
+> dead code, safe to delete once the premium look is settled.
+> - **Alternatives = premium variants** (`story-view.ts::storyAltsFor`, data-gated,
+>   one variant per treatment). Persisted as `uiMeta.selectedStyle` = `'story-*'`; one
+>   pick restyles the card on every surface. ⚠️ The FIRST alt must reproduce the auto
+>   treatment (that's why `story-leaderboard`/`story-atlas` exist) — otherwise an unedited
+>   card looks different on tiles (auto) vs the detail hero (seeded variant).
+> - **`compact` input** = full chrome (quip + CTA) at tile density, for short fixed frames
+>   (the Home deck). Without it, chart/leaderboard/atlas overflow and clip.
+> - **Background photo** (`uiMeta.heroImage`) renders as a full-bleed layer under a
+>   strengthened scrim, on ALL types (the emoji steps aside). One merged edit panel
+>   (accent / badge / hero emoji / photo) serves every card type.
 7 types: `kpi | chart | ranking | table | versus | map | fact`. Classifier priority:
 versus → map → chart → table/ranking (by row count) → kpi → fact.
 - **map** = rows are *countries* (world atlas only; sub-national → ranking/table).
@@ -86,13 +102,78 @@ lifecycle field: **`draft | private | published`**. (`StoredStatCard.status` and
 - **`shared/publish-modal`** is now UNUSED (dead) after removing user-publish — safe to delete.
 - OG (link-preview) image: offscreen `.og-frame` 1200×630, `fitOgTile()` scales the card
   to fit (no clipped title/story). Regenerated on edit of a published card.
+- **Capture = the visible card.** All three PNG surfaces (card-detail `.share-capture`,
+  `.og-capture`, share-card page frame) mirror the detail hero's component switch
+  (kpi/ranking → `app-story-card`, etc.) and hide the in-card insight, and all frames use
+  the accent-derived gradient (`gradientForAccent`) — never raw `uiMeta.gradientFrom/To`.
+- ⚠️ GOTCHA: **dom-to-image's clone doesn't resolve container-query units** — the story
+  card's cqw type-scale blows up to its clamp caps in the clone (split hero number,
+  wrapped unit) while looking perfect on screen. Fix: `shared/capture.util.ts::
+  freezeCaptureLayout` pins the live computed layout inline around every
+  `domtoimage.toPng` call (read-ALL-then-write-ALL — writing `container-type:normal`
+  mid-walk re-inflates later reads). Wrap any new capture call site with it.
+- Story-card "See the full story" CTA: emits `(storyCta)` → detail page scrolls to the
+  story block; only rendered when `card.insight` exists; static visual CTA in captures.
+- **kpi + ranking are premium EVERYWHERE**: `app-weird-card` routes both types to
+  `app-story-card` (explore/detail/captures already did), so no surface shows the old
+  light card for them. **Premium alternatives** (`story-view.ts::storyAltsFor`, data-gated;
+  first entry = the auto treatment) render as story-card thumbnails on card-detail and the
+  profile draft panel; selection persists `uiMeta.selectedStyle` = `'story-*'` key, which
+  EVERY story-card instance resolves itself (hero, tiles, captures, share page). Legacy
+  light-card style keys are ignored by story-card; table/versus/map/fact still use them.
+  ⚠️ Keep `donutable()`/`storyAltsFor` and `buildStoryView` gates in lockstep (shared
+  `labelledRows`; offer and render must never disagree). Hollow cards get NO alts.
+- **Hero emoji is owner-editable** (edit panel "Hero emoji" → `setIcon`, emoji-grapheme
+  guard) — the AI's `uiMeta.icon` pick can be wrong (ant vs cockroach); prompts.py now
+  demands the literal species emoji (backend deploy needed for that to take effect).
+- Guest edits re-stash `weirdstats_pending_card` (persistCardEdits) so sign-in claims the
+  EDITED card, not the as-generated one.
+- **Fact-card background photo** (owner upload): edit panel → compress client-side
+  (`shared/image.util.ts`, ≤1200px JPEG) → Storage `card-media/{uid}/{cardId}` (rules:
+  owner-write, world-read, ≤5MB image; DEPLOYED) → URL on `uiMeta.heroImage` (+
+  `heroImagePath` for deletes). Poster/editorial: `.wcard-bgimg` layer at 0.16 opacity
+  under the text; split: photo fills the panel (emoji yields). Delete/duplicate clean up /
+  clear the photo. ⚠️ The bucket (`weirdstats-ai.firebasestorage.app`) has a **CORS
+  config** (GET, app origins) — REQUIRED so dom-to-image can inline photos into share/OG
+  captures; visible `<img>`s deliberately carry NO crossorigin attr so display never
+  depends on CORS. New origins (e.g. preview channels) must be added via
+  `gcloud storage buckets update --cors-file`.
 
 ### Legacy (do not extend): the `Graph` flow
 `generate/`, `graph-detail/`, `my-graphs/`, `services/graph.service.ts` are an orphaned
 parallel lifecycle. `GraphService` is still referenced by `project-generate`/`share`, so
 it can't be deleted cleanly yet — leave it alone.
 
+## Story cards — the three Home treatments (canonical)
+**Spec: `weird-stats-app/src/app/shared/story-poster/STORY-CARD-SPEC.md`** — structure,
+colour and depth of treatments **A editorial / B cover / C split**, transcribed from the
+shipped CSS. It is the source of truth: change the spec first, then keep BOTH
+`home/home.page.scss` (the deck) and `shared/story-poster/*` (detail hero + share PNG +
+OG image + share page) matching it.
+- `app-story-poster` renders those three designs from real card data (treatment picked
+  from the data: ≥2 metric rows → editorial · 0–100 % → split · else cover), so the card
+  people SHARE is the card they saw on Home. Maps keep their own atlas card.
+- Key invariants: 4 z-planes (photo 0 → scrim 1 → body 2 → cta 3); two-shadow frame;
+  scrim direction follows copy position; one radial accent bloom per plate; bars/donut are
+  white-on-translucent-white, never the accent.
+
 ## Home page (redesign) & story carousel
+> **Deck is now REAL cards** (the 3 hardcoded `sc-a/b/c` prototypes + their A/B/C tags are
+> gone). `storyCards` = first 5 curated (`showOnHome`) cards rendered with
+> `app-story-card size="full" [compact]="true"` — the same component the detail page,
+> Explore and share/OG captures use, so the deck IS the shareable card.
+> - **`compact` input** = full chrome (quip + CTA) at TILE density (4 bars / 5 rows /
+>   104px chart, 2-line title+quip, tighter padding). Without it, chart/leaderboard/atlas
+>   overflow the fixed 262px deck frame and clip the CTA. Verified: all 7 types fit at 262.
+> - **Tap**: `onStoryTap` — a peeking back card slides to front, only the FRONT card opens.
+>   Do NOT use Swiper's `slideToClickedSlide` (it mutates activeIndex before Angular's
+>   handler, so both cases look identical). Bind ONLY `(click)` on the host — also binding
+>   `(storyCta)` double-fires (the CTA click already bubbles).
+> - ⚠️ **Swiper owns the slide elements**: letting `*ngFor` reorder/remove them in place
+>   throws in `ViewContainerRef.move`. `syncDeck()` therefore tears the container down and
+>   rebuilds it when the curated set changes; the init guard is PER ELEMENT
+>   (`el.swiper?.initialized`), never a component-level latch (the `*ngIf` can recreate the
+>   element, and a latch would leave an empty shadow root = blank gap).
 `home/` was redesigned: "How WeirdStats works", "Explore by topic", "What you can
 discover" (mini-viz tiles — one is `assets/discover-map.svg`, a world map generated
 offline from `world-110m.json`), "Most shared today" (renamed from "Trending now";

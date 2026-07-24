@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, AfterViewInit, OnDestroy, ElementRef, NgZone } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { getAnimalSvg } from '../../animal-icons';
-import { WeirdCard, ACCENT_COLORS } from '../../../models/weird-card.model';
+import { WeirdCard, ACCENT_COLORS, gradientForAccent } from '../../../models/weird-card.model';
 
 /** The fact card renders in one of a small set of fixed layouts. Poster is the
  *  as-generated default; editorial is a pull-quote; split pairs a colour panel
@@ -55,8 +55,9 @@ export class CardFactComponent implements OnChanges, AfterViewInit, OnDestroy {
   ngOnChanges(): void {
     const h = (this.card?.uiMeta?.accentColor ?? '').trim();
     this.accent   = (ACCENT_COLORS as readonly string[]).includes(h) ? h : ACCENT_COLORS[0];
-    this.gradFrom = this.card?.uiMeta?.gradientFrom || '#f5f3ff';
-    this.gradTo   = this.card?.uiMeta?.gradientTo   || '#ffffff';
+    const grad = gradientForAccent(this.accent);
+    this.gradFrom = grad.from;
+    this.gradTo   = grad.to;
     this.scheduleFit();
   }
 

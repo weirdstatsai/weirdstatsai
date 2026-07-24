@@ -41,6 +41,50 @@ export type SourceType =
 export const ACCENT_COLORS = ['#6C5CE7', '#378ADD', '#1D9E75', '#D85A30', '#BA7517'] as const;
 export type AccentColor = typeof ACCENT_COLORS[number];
 
+/**
+ * Content-tinted card backgrounds — one soft-but-present gradient per accent.
+ * A card's accent is chosen from its content (by the agent, or the edit
+ * picker), so the background colour tracks the subject while staying light
+ * enough that dark text and dense data (charts, tables, numbers) read cleanly.
+ * Single source of truth: card components derive their background from here via
+ * `gradientForAccent`, and the edit picker persists the same values.
+ */
+export const ACCENT_GRADIENTS: Record<string, { from: string; to: string }> = {
+  '#6C5CE7': { from: '#ece7ff', to: '#d9ccfb' }, // violet
+  '#378ADD': { from: '#e4eefb', to: '#ccdef5' }, // blue
+  '#1D9E75': { from: '#e1f1e7', to: '#c9e7cd' }, // green
+  '#D85A30': { from: '#fce9e0', to: '#f6d5c4' }, // terracotta
+  '#BA7517': { from: '#fbeecb', to: '#f6dfa6' }, // amber
+};
+
+/** The card background gradient for an accent hex (case-insensitive), falling
+ *  back to the violet default for anything off-palette. */
+export function gradientForAccent(hex: string | undefined): { from: string; to: string } {
+  const key = ACCENT_COLORS.find(c => c.toLowerCase() === (hex || '').toLowerCase());
+  return ACCENT_GRADIENTS[key ?? ACCENT_COLORS[0]];
+}
+
+/**
+ * Vibrant DARK backgrounds for the premium "story card" treatment — the dark,
+ * white-text look from the home story cards, keyed off the same content-chosen
+ * accent as the light `ACCENT_GRADIENTS`. `from`/`to` form the deep base
+ * gradient; `glow` is a colored radial accent behind the hero. Distilled from
+ * the home sc-a/sc-b treatments + the existing dark `.card-fact` gradient.
+ */
+export const PREMIUM_GRADIENTS: Record<string, { from: string; mid: string; to: string; glow: string }> = {
+  '#6C5CE7': { from: '#241241', mid: '#3a2168', to: '#6d3b8e', glow: 'rgba(233,120,88,0.55)' }, // aubergine → purple (home sc-a)
+  '#378ADD': { from: '#08102e', mid: '#141c52', to: '#28348a', glow: 'rgba(72,150,235,0.55)' },  // navy → indigo (home sc-b)
+  '#1D9E75': { from: '#052a20', mid: '#0d5640', to: '#138a5f', glow: 'rgba(84,228,168,0.50)' },  // emerald → teal
+  '#D85A30': { from: '#2a1207', mid: '#722e14', to: '#b04d20', glow: 'rgba(255,142,82,0.55)' },  // ember terracotta
+  '#BA7517': { from: '#241a05', mid: '#63420c', to: '#a6781a', glow: 'rgba(255,196,92,0.50)' },  // warm amber
+};
+
+/** The premium (dark) background for an accent hex, falling back to violet. */
+export function premiumGradientForAccent(hex: string | undefined): { from: string; mid: string; to: string; glow: string } {
+  const key = ACCENT_COLORS.find(c => c.toLowerCase() === (hex || '').toLowerCase());
+  return PREMIUM_GRADIENTS[key ?? ACCENT_COLORS[0]];
+}
+
 export interface CardMetric {
   name: string;
   unit: string;
@@ -76,6 +120,13 @@ export interface CardUiMeta {
   mapStyles?: string[];
   selectedStyle?: string;
   factFontSize?: 'small' | 'medium' | 'large';
+  /** Owner-uploaded background photo (Storage download URL) — layers softly
+   *  under the card content; fills the panel on the fact split style. Set
+   *  client-side only (card-detail edit panel), never by the backend. */
+  heroImage?: string;
+  /** Storage path of that photo (card-media/{uid}/{cardId}) — kept so
+   *  replace/remove/delete can clean the object up without URL parsing. */
+  heroImagePath?: string;
 }
 
 export interface CardDataMeta {

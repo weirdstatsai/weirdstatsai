@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { getAnimalSvg } from '../../animal-icons';
-import { WeirdCard, ACCENT_COLORS } from '../../../models/weird-card.model';
+import { WeirdCard, ACCENT_COLORS, gradientForAccent } from '../../../models/weird-card.model';
 import { GraphConfig } from '../../../models/graph.model';
 
 @Component({
@@ -14,10 +14,15 @@ export class CardChartComponent implements OnChanges {
   @Input() size: 'feed' | 'full' | 'alt' = 'feed';
   /** Override chart type (used for alt variant cards in detail view) */
   @Input() forceType?: 'bar' | 'line' | 'doughnut';
+  /** Play the draw-on reveal. Set false on offscreen PNG-capture frames
+   *  (OG/share) so a still, finished chart is captured, never a half-drawn one. */
+  @Input() animate = true;
 
   accent = '#6C5CE7';
   gradFrom = '#f5f3ff';
   gradTo   = '#ffffff';
+  /** True when the resolved chart renders as a line/area — gates the CSS reveal. */
+  chartIsLine = false;
 
   constructor(private sanitizer: DomSanitizer) {}
 
@@ -30,8 +35,9 @@ export class CardChartComponent implements OnChanges {
   ngOnChanges(): void {
     const h = (this.card?.uiMeta?.accentColor ?? '').trim();
     this.accent   = (ACCENT_COLORS as readonly string[]).includes(h) ? h : ACCENT_COLORS[0];
-    this.gradFrom = this.card?.uiMeta?.gradientFrom || '#f5f3ff';
-    this.gradTo   = this.card?.uiMeta?.gradientTo   || '#ffffff';
+    const grad = gradientForAccent(this.accent);
+    this.gradFrom = grad.from;
+    this.gradTo   = grad.to;
     this.chartConfig = this.buildConfig();
   }
 
@@ -40,6 +46,9 @@ export class CardChartComponent implements OnChanges {
     if (this.size === 'alt') return 100;
     return 120;
   }
+
+  /** CSS-reveal duration — snappier on the feed, a touch longer on detail. */
+  get revealMs(): number { return this.size === 'full' ? 1000 : 560; }
 
   /** Max value across fallback rows, for bar-width scaling. */
   get fallbackMax(): number {
@@ -86,8 +95,25 @@ export class CardChartComponent implements OnChanges {
     return max === 0 ? true : (min / max) <= 0.5;
   }
 
+  /** Scriptable vertical area fill: a rich accent gradient fading to fully
+   *  transparent at the baseline — the "premium area graph" look. Returns a flat
+   *  translucent fallback on the first paint, before the chart area exists. */
+  private areaFill(hex: string) {
+    return (ctx: any) => {
+      const area = ctx?.chart?.chartArea;
+      const c = ctx?.chart?.ctx;
+      if (!area || !c) return hex + '24';
+      const g = c.createLinearGradient(0, area.top, 0, area.bottom);
+      g.addColorStop(0, hex + '52');    // ~32% at the peak
+      g.addColorStop(0.55, hex + '1f'); // ~12% midway
+      g.addColorStop(1, hex + '00');    // transparent at the baseline
+      return g;
+    };
+  }
+
   buildConfig(overrideType?: 'bar' | 'line' | 'doughnut'): GraphConfig | undefined {
     const c = this.card;
+    this.chartIsLine = false;
     if (!c.labels?.length || !c.datasets?.length) return undefined;
     const hex = this.accent;
     let type = overrideType ?? this.forceType ?? (c.chartType as any) ?? 'bar';
@@ -158,22 +184,38 @@ export class CardChartComponent implements OnChanges {
     });
 
     if (type === 'line') {
+      // The line renders in ONE cheap pass (glow + points baked in). The
+      // left-to-right "draw-on" is a GPU-friendly CSS clip on the canvas (see
+      // .line-reveal in the scss) — no per-frame canvas redraw, so it can't
+      // stutter. Capture frames (animate=false) simply get no reveal class.
+      this.chartIsLine = true;
       return {
         type: 'line',
         data: {
           labels: c.labels,
           datasets: [{
             label: c.datasets[0].label || unit, data: c.datasets[0].data,
-            borderColor: hex, backgroundColor: hex + '1f', borderWidth: 2.5,
-            fill: true, tension: 0.4,
+            borderColor: hex, backgroundColor: this.areaFill(hex),
+            borderWidth: full ? 3 : 2.5,
+            fill: true, tension: 0.42,
             pointRadius: full ? 3 : 0, pointHoverRadius: 5,
             pointBackgroundColor: hex, pointBorderColor: '#fff', pointBorderWidth: 1.5,
           } as any],
         },
         options: {
           ...baseOpts,
-          plugins: { ...baseOpts.plugins, tooltip: { ...baseOpts.plugins.tooltip,
-            callbacks: { label: (ctx: any) => `${this.fmt(Number(ctx.parsed.y))}${unit ? ' ' + unit : ''}` } } },
+          animation: { duration: 0 },   // instant; the CSS clip does the reveal
+          plugins: {
+            ...baseOpts.plugins,
+            // Soft accent glow under the stroke — the premium home-card look.
+            lineGlow: { enabled: this.size !== 'alt', color: hex + '59', blur: full ? 14 : 9, offsetY: 3 },
+            // Glowing head that traces the line while it draws, then rests on the
+            // latest point as an end-cap. Detail view only — kept off the feed so
+            // grids stay calm. Static (no travel) on capture frames, which is fine.
+            lineHead: { enabled: full, color: hex, radius: 5 },
+            tooltip: { ...baseOpts.plugins.tooltip,
+              callbacks: { label: (ctx: any) => `${this.fmt(Number(ctx.parsed.y))}${unit ? ' ' + unit : ''}` } },
+          },
           scales: { x: xScale, y: yScale(this.zeroBaselineOk()) },
         },
       };

@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { getAnimalSvg } from '../../animal-icons';
-import { WeirdCard, CardRow, ACCENT_COLORS } from '../../../models/weird-card.model';
+import { WeirdCard, CardRow, ACCENT_COLORS, gradientForAccent } from '../../../models/weird-card.model';
 
 export type TableStyle = 'pill' | 'bars' | 'rows';
 
@@ -29,8 +29,9 @@ export class CardTableComponent implements OnChanges {
   ngOnChanges(): void {
     const h = (this.card?.uiMeta?.accentColor ?? '').trim();
     this.accent   = (ACCENT_COLORS as readonly string[]).includes(h) ? h : ACCENT_COLORS[0];
-    this.gradFrom = this.card?.uiMeta?.gradientFrom || '#f5f3ff';
-    this.gradTo   = this.card?.uiMeta?.gradientTo   || '#ffffff';
+    const grad = gradientForAccent(this.accent);
+    this.gradFrom = grad.from;
+    this.gradTo   = grad.to;
   }
 
   get rows(): CardRow[] {

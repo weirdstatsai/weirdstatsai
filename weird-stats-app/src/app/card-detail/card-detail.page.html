@@ -107,9 +107,22 @@
         <!-- Act 2: dashed wireframe of the decided shape -->
         <div class="frame-wire" *ngIf="skeletonType" [ngSwitch]="skeletonType">
           <ng-container *ngSwitchCase="'chart'">
-            <div class="wf-plot">
+            <!-- "Line loading": a glowing area graph that draws itself in on a
+                 gentle loop while the backend researches + builds the card. -->
+            <div class="wf-line-load">
+              <div class="wf-grid"><span></span><span></span><span></span></div>
+              <svg class="wf-svg" viewBox="0 0 300 150" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="wfArea" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#6C5CE7" stop-opacity="0.30"/>
+                    <stop offset="1" stop-color="#6C5CE7" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path class="wf-area" d="M0,112 C38,72 66,120 104,86 S170,32 214,64 S280,40 300,52 L300,150 L0,150 Z" fill="url(#wfArea)"/>
+                <path class="wf-stroke" pathLength="100" d="M0,112 C38,72 66,120 104,86 S170,32 214,64 S280,40 300,52" fill="none" stroke="#6C5CE7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle class="wf-head" r="4.5" fill="#6C5CE7"></circle>
+              </svg>
               <div class="wf-axis"></div>
-              <i></i><i></i><i></i><i></i><i></i>
             </div>
           </ng-container>
           <ng-container *ngSwitchCase="'kpi'">
@@ -136,15 +149,19 @@
         <div class="frame-status">{{ statusMsg || 'Starting…' }}</div>
       </div>
 
-      <!-- Act 3: the real card -->
+      <!-- Act 3: the real card — premium story-card for kpi/ranking, light data card for the rest -->
       <div class="card-live" *ngIf="card && !isLoading">
+        <!-- That one card is a hand-authored Home story — show it EXACTLY as Home does. -->
+        <app-story-poster *ngIf="storyPreset" [card]="card" [preset]="storyPreset" (click)="scrollToStory()"></app-story-poster>
+        <ng-container *ngIf="!storyPreset">
         <ng-container [ngSwitch]="card.cardType">
+          <app-story-card   *ngSwitchCase="'kpi'"     [card]="card" size="full" (storyCta)="scrollToStory()"></app-story-card>
           <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>
-          <app-card-kpi     *ngSwitchCase="'kpi'"     [card]="card" size="full" [kpiStyle]="selectedKpiStyle"></app-card-kpi>
           <app-card-table   *ngSwitchCase="'table'"   [card]="card" size="full" [tableStyle]="selectedTableStyle"></app-card-table>
           <app-card-versus  *ngSwitchCase="'versus'"  [card]="card" size="full" [versusStyle]="selectedVersusStyle"></app-card-versus>
           <app-card-map     *ngSwitchCase="'map'"     [card]="card" size="full" [mapStyle]="selectedMapStyle"></app-card-map>
           <app-weird-card   *ngSwitchDefault           [card]="card" size="full"></app-weird-card>
+        </ng-container>
         </ng-container>
       </div>
 
@@ -157,17 +174,29 @@
     <!-- Offscreen 1200x630 social-preview frame — captured to PNG on publish.
          Mirrors the Save-Image look: the real feed card on a white tile,
          floating on the card's own gradient. -->
-    <div class="og-capture" aria-hidden="true">
+    <!-- inert: the frames now contain a real <button> (story-card CTA), which
+         must not be reachable by keyboard while parked offscreen. -->
+    <div class="og-capture" aria-hidden="true" inert *ngIf="capturesReady">
       <div class="og-frame" #ogArea [style.background]="ogGradient">
         <div class="og-tile">
           <div class="og-card-full">
-            <ng-container [ngSwitch]="card.cardType">
+            <!-- Same component switch as the visible hero (.card-live): what the
+                 link preview shows is exactly the card design on screen. -->
+            <!-- That one card is a hand-authored Home story — show it EXACTLY as Home does. -->
+            <app-story-poster *ngIf="storyPreset" [card]="card" [preset]="storyPreset"></app-story-poster>
+            <ng-container *ngIf="!storyPreset">
+            <!-- That one card is a hand-authored Home story — show it EXACTLY as Home does. -->
+          <app-story-poster *ngIf="storyPreset" [card]="card" [preset]="storyPreset"></app-story-poster>
+          <ng-container *ngIf="!storyPreset">
+          <ng-container [ngSwitch]="card.cardType">
+              <app-story-card   *ngSwitchCase="'kpi'"     [card]="card" size="full"></app-story-card>
               <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>
-              <app-card-kpi     *ngSwitchCase="'kpi'"     [card]="card" size="full" [kpiStyle]="selectedKpiStyle"></app-card-kpi>
               <app-card-table   *ngSwitchCase="'table'"   [card]="card" size="full" [tableStyle]="selectedTableStyle"></app-card-table>
               <app-card-versus  *ngSwitchCase="'versus'"  [card]="card" size="full" [versusStyle]="selectedVersusStyle"></app-card-versus>
               <app-card-map     *ngSwitchCase="'map'"     [card]="card" size="full" [mapStyle]="selectedMapStyle"></app-card-map>
-              <app-weird-card   *ngSwitchDefault           [card]="card" size="full"></app-weird-card>
+              <app-weird-card   *ngSwitchDefault           [card]="card" size="full" [animate]="false"></app-weird-card>
+            </ng-container>
+          </ng-container>
             </ng-container>
           </div>
           <div class="og-brand"><span class="og-logo">🐙</span> Generated by weirdstats<span class="og-accent">.ai</span></div>
@@ -195,10 +224,19 @@
     <!-- View-only (Explore): inline share fills the space below the card -->
     <div class="share-inline" *ngIf="viewOnly">
 
-      <!-- Offscreen watermarked frame — captured to PNG when sharing/saving -->
-      <div class="share-capture" #shareArea aria-hidden="true" [style.background]="ogGradient">
+      <!-- Offscreen watermarked frame — captured to PNG when sharing/saving.
+           Mirrors the visible hero's component switch exactly, so the image a
+           recipient gets is the same design the sharer is looking at. -->
+      <div class="share-capture" #shareArea aria-hidden="true" inert *ngIf="capturesReady" [style.background]="ogGradient">
         <div class="card-wrap">
-          <app-weird-card [card]="card" size="full"></app-weird-card>
+          <ng-container [ngSwitch]="card.cardType">
+            <app-story-card   *ngSwitchCase="'kpi'"     [card]="card" size="full"></app-story-card>
+            <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>
+            <app-card-table   *ngSwitchCase="'table'"   [card]="card" size="full" [tableStyle]="selectedTableStyle"></app-card-table>
+            <app-card-versus  *ngSwitchCase="'versus'"  [card]="card" size="full" [versusStyle]="selectedVersusStyle"></app-card-versus>
+            <app-card-map     *ngSwitchCase="'map'"     [card]="card" size="full" [mapStyle]="selectedMapStyle"></app-card-map>
+            <app-weird-card   *ngSwitchDefault           [card]="card" size="full" [animate]="false"></app-weird-card>
+          </ng-container>
         </div>
         <div class="brand-strip">
           <span class="brand-name">Generated by weirdstats<span class="brand-dot">.ai</span></span>
@@ -249,20 +287,6 @@
       </div>
     </div>
 
-    <!-- Alternatives: KPI card -->
-    <div class="alts-section" *ngIf="card.cardType === 'kpi' && !viewOnly">
-      <p class="alts-label">Alternatives</p>
-      <div class="alts-hscroll">
-        <div class="rank-alt-wrap"
-             *ngFor="let s of kpiAltStyles; trackBy: trackByKey"
-             [class.selected]="selectedKpiStyle === s.key"
-             (click)="selectKpiAlt(s.key)">
-          <p class="alt-type-label">{{ s.label }}</p>
-          <app-card-kpi [card]="card" size="alt" [kpiStyle]="s.key"></app-card-kpi>
-        </div>
-      </div>
-    </div>
-
     <!-- Alternatives: map card (hidden when the rows can't render on the map) -->
     <div class="alts-section" *ngIf="card.cardType === 'map' && !viewOnly && mapAltStyles.length > 0">
       <p class="alts-label">Alternatives</p>
@@ -276,7 +300,6 @@
         </div>
       </div>
     </div>
-
     <!-- Alternatives: versus card -->
     <div class="alts-section" *ngIf="card.cardType === 'versus' && !viewOnly">
       <p class="alts-label">Alternatives</p>
@@ -290,7 +313,6 @@
         </div>
       </div>
     </div>
-
     <!-- Alternatives: ranking card -->
     <div class="alts-section" *ngIf="card.cardType === 'ranking' && !viewOnly">
       <p class="alts-label">Alternatives</p>
@@ -304,7 +326,6 @@
         </div>
       </div>
     </div>
-
     <!-- Alternatives: table card -->
     <div class="alts-section" *ngIf="card.cardType === 'table' && !viewOnly">
       <p class="alts-label">Alternatives</p>
@@ -318,7 +339,6 @@
         </div>
       </div>
     </div>
-
     <!-- Alternatives: chart card -->
     <div class="alts-section" *ngIf="card.cardType === 'chart' && !viewOnly">
       <p class="alts-label">Alternatives</p>
@@ -341,7 +361,6 @@
         </div>
       </div>
     </div>
-
     <!-- Alternatives: fact card (fixed layouts) -->
     <div class="alts-section" *ngIf="card.cardType === 'fact' && !viewOnly">
       <p class="alts-label">Style</p>
@@ -356,32 +375,28 @@
       </div>
     </div>
 
-    <!-- Edit panel: fact cards -->
-    <div class="edit-panel fact-edit-panel" *ngIf="card.cardType === 'fact' && !viewOnly">
-      <p class="edit-label">Accent color</p>
-      <div class="swatches">
-        <button
-          *ngFor="let hex of accentOptions"
-          class="swatch"
-          [class.active]="card.uiMeta.accentColor === hex"
-          [style.background]="hex"
-          (click)="setAccent(hex)"
-          [attr.aria-label]="hex"></button>
-      </div>
-
-      <p class="edit-label">Badge</p>
-      <div class="badge-chips">
-        <button
-          *ngFor="let b of badgeOptions"
-          class="badge-opt"
-          [class.active]="card.uiMeta.insightBadge === b"
-          (click)="setBadge(b)">{{ b }}</button>
+    <!-- Alternatives — premium variants for EVERY card type (the light per-type
+         styles are gone with the light cards). Selecting persists
+         uiMeta.selectedStyle ('story-*'), which the hero, feed tiles, share PNG
+         and OG image all resolve, so one pick restyles the card everywhere. -->
+    <div class="alts-section" *ngIf="storyAltStyles.length > 1 && !viewOnly && card.cardType === 'kpi'">
+      <p class="alts-label">Alternatives</p>
+      <div class="alts-hscroll">
+        <div class="rank-alt-wrap"
+             *ngFor="let s of storyAltStyles; trackBy: trackByKey"
+             [class.selected]="selectedStoryVariant === s.key"
+             (click)="selectStoryAlt(s.key)">
+          <p class="alt-type-label">{{ s.label }}</p>
+          <app-story-card [card]="card" size="alt" [variant]="s.key"></app-story-card>
+        </div>
       </div>
     </div>
 
-    <!-- Edit panel — accent + badge, always available on the owner's editable
-         view (view-only shared links never show it). -->
-    <div class="edit-panel" *ngIf="!viewOnly && card.cardType !== 'fact'">
+    <!-- Edit panel: fact cards -->
+    <!-- Edit panel — one panel for EVERY card type now that the premium story
+         card is the only card: accent, badge, hero emoji and the background
+         photo all apply to it regardless of cardType. -->
+    <div class="edit-panel" *ngIf="!viewOnly">
       <p class="edit-label">Accent color</p>
       <div class="swatches">
         <button
@@ -401,6 +416,29 @@
           [class.active]="card.uiMeta.insightBadge === b"
           (click)="setBadge(b)">{{ b }}</button>
       </div>
+
+      <p class="edit-label">Hero emoji</p>
+      <div class="emoji-edit-row">
+        <input class="emoji-input" type="text" maxlength="16" placeholder="🙂"
+               [value]="card.uiMeta.icon || ''"
+               (change)="setIcon($any($event.target).value)"
+               aria-label="Hero emoji" />
+        <span class="emoji-hint">The AI picks one — fix it here if it got the subject wrong.</span>
+      </div>
+
+      <p class="edit-label">Background photo</p>
+      <div class="img-edit-row">
+        <img class="img-thumb" *ngIf="card.uiMeta.heroImage" [src]="card.uiMeta.heroImage" alt="Background photo preview">
+        <button class="img-upload-btn" (click)="heroImgInput.click()" [disabled]="isUploadingImage">
+          <ion-spinner name="crescent" *ngIf="isUploadingImage"></ion-spinner>
+          <span *ngIf="!isUploadingImage">{{ card.uiMeta.heroImage ? 'Replace photo' : 'Upload photo' }}</span>
+        </button>
+        <button class="img-remove-btn" *ngIf="card.uiMeta.heroImage && !isUploadingImage" (click)="removeHeroImage()" aria-label="Remove photo">
+          <ion-icon name="trash-outline"></ion-icon>
+        </button>
+        <input #heroImgInput type="file" accept="image/*" hidden (change)="uploadHeroImage($event)">
+      </div>
+      <span class="img-edit-hint">Fills the card behind the text — the emoji steps aside when a photo is set.</span>
     </div>
 
   </ng-container>

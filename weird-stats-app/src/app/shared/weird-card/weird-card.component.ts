@@ -25,6 +25,8 @@ const FACT_STYLE_KEYS: FactStyle[] = ['poster', 'editorial', 'split'];
 export class WeirdCardComponent {
   @Input() card!: WeirdCard;
   @Input() size: 'feed' | 'full' | 'alt' = 'feed';
+  /** Offscreen capture frames pass false so no draw-on lands mid-flight. */
+  @Input() animate = true;
 
   // Whichever alternative style the owner picked (stored in uiMeta.selectedStyle
   // when they browsed alternatives on the card-detail page) is what the feed

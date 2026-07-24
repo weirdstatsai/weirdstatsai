@@ -38,10 +38,14 @@
   <!-- Feed -->
   <div class="feed" *ngIf="!isLoading && filteredCards.length > 0; else noResults">
     <div class="card-tile"
-         *ngFor="let card of filteredCards; let i = index"
+         *ngFor="let card of filteredCards; let i = index; trackBy: trackByCard"
          [class.span-full]="isFullWidth(card)"
          (click)="open(card)">
-      <app-weird-card [card]="card.data" size="feed"></app-weird-card>
+      <ng-container [ngSwitch]="card.data.cardType">
+        <app-story-card *ngSwitchCase="'kpi'"     [card]="card.data" size="feed"></app-story-card>
+        <app-story-card *ngSwitchCase="'ranking'" [card]="card.data" size="feed"></app-story-card>
+        <app-weird-card *ngSwitchDefault          [card]="card.data" size="feed"></app-weird-card>
+      </ng-container>
     </div>
   </div>
 

@@ -132,7 +132,7 @@ $yellow: #BA7517;
     grid-column: span 2;
   }
 
-  app-weird-card {
+  app-weird-card, app-story-card {
     display: block;
     min-width: 0;
     aspect-ratio: 3 / 4;
@@ -142,7 +142,8 @@ $yellow: #BA7517;
 
   // 17:11 ≈ two 3:4 tiles plus the gap — same rendered height as the
   // single-column tiles, so feed rows line up.
-  &.span-full app-weird-card {
+  &.span-full app-weird-card,
+  &.span-full app-story-card {
     aspect-ratio: 17 / 11;
   }
 }

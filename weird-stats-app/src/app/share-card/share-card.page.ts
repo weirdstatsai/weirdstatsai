@@ -1,7 +1,8 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController, NavController } from '@ionic/angular';
-import { WeirdCard } from '../models/weird-card.model';
+import { WeirdCard, gradientForAccent } from '../models/weird-card.model';
+import { freezeCaptureLayout } from '../shared/capture.util';
 import { AuthService } from '../services/auth.service';
 import { MembershipService } from '../services/membership.service';
 import { firstValueFrom } from 'rxjs';
@@ -28,11 +29,14 @@ export class ShareCardPage implements OnInit {
   }
 
   /** The card's own gradient, so the share image matches the in-card look and
-   *  the link-preview (OG) — no white frame. */
+   *  the link-preview (OG) — no white frame. Derived from the accent (same as
+   *  card-detail's ogGradient and the card components' own backgrounds) — the
+   *  raw stored gradientFrom/To are agent-picked and often DON'T match the
+   *  accent palette, which made this page's PNG a different tint from the
+   *  detail page's share/OG captures of the very same card. */
   get cardGradient(): string {
-    const from = this.card?.uiMeta?.gradientFrom || '#f5f3ff';
-    const to = this.card?.uiMeta?.gradientTo || '#ede9fe';
-    return `linear-gradient(135deg, ${from}, ${to})`;
+    const g = gradientForAccent(this.card?.uiMeta?.accentColor);
+    return `linear-gradient(135deg, ${g.from}, ${g.to})`;
   }
 
   constructor(
@@ -71,7 +75,17 @@ export class ShareCardPage implements OnInit {
   private async renderPng(): Promise<string | null> {
     const el = this.shareArea?.nativeElement;
     if (!el) return null;
-    return domtoimage.toPng(el, { bgcolor: '#ffffff', scale: 2 });
+    // Pin the live layout so dom-to-image's clone can't re-resolve the story
+    // card's container-query type scale (see capture.util.ts).
+    const restore = freezeCaptureLayout(el);
+    try {
+      // cacheBust: the visible <img> caches the card photo WITHOUT CORS
+      // headers; a capture-time CORS fetch would reuse that poisoned entry and
+      // silently drop the photo from the PNG. Busting forces a fresh request.
+      return await domtoimage.toPng(el, { bgcolor: '#ffffff', scale: 2, cacheBust: true });
+    } finally {
+      restore();
+    }
   }
 
   /** Convert data URL to a File object */

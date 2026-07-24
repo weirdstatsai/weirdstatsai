@@ -11,7 +11,8 @@
   pointer-events: none;
   position: relative;
   // No overflow/radius — let the card's own rounded border + shadow render fully.
-  app-weird-card { display: block; }
+  app-weird-card,
+  app-story-card { display: block; }
 }
 
 .brand-strip {
@@ -103,8 +104,29 @@
 
 // The "Chart card" / "KPI card" type label is an internal tag — not useful in
 // a shared image. Hide it in the captured frame only (still on the detail page).
-.share-frame ::ng-deep .weird-badge {
-  display: none;
+// Same for the in-card insight: the card-detail hero shows the story BELOW the
+// card, so the shared image carries the same clean card design.
+// !important is required: the emulated-encapsulation component rule
+// `.full .wcard-insight { display: block }` (_card-base.scss) compiles with an
+// extra attribute selector and out-specifies this page rule otherwise.
+.share-frame ::ng-deep .weird-badge,
+.share-frame ::ng-deep .wcard-insight,
+.share-frame ::ng-deep .map-insight {
+  display: none !important;
+}
+
+// ── Desktop: same centered reading column as the card-detail page ──────────
+// Without the cap the share frame (and buttons) stretch across the whole
+// desktop shell — the same too-wide-card problem the detail page had.
+@media (min-width: 850px) {
+  .share-frame,
+  .section-title,
+  .share-grid,
+  .download-btn {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
 // ── Toolbar / title — match the app's clean bold heading (not Ionic default) ─

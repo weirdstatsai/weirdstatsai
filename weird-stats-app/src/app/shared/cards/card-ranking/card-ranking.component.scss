@@ -67,9 +67,18 @@
 .bar {
   height: 100%;
   border-radius: 6px;
-  background: var(--accent);
+  // Premium gradient fill (deep accent → light) like the home story-card bars,
+  // with a soft top highlight for a glossy read.
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0) 55%),
+    linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 58%, #fff));
+  width: var(--bar-w, 0%);
   transition: width 0.6s ease;
+  animation: bar-grow 0.85s cubic-bezier(0.22, 0.7, 0.24, 1) both;
 }
+// Grow from zero → the row's --bar-w on first paint (the "to" keyframe falls
+// back to the bound width). Staggered per row so the list cascades in.
+@keyframes bar-grow { from { width: 0; } }
 
 // ── Style: pill ────────────────────────────────────────────────────────────
 .pill-wrap {
@@ -86,10 +95,11 @@
 .pill-fill {
   position: absolute;
   left: 0; top: 0; bottom: 0;
-  background: var(--accent);
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 58%, #fff));
   border-radius: 20px;
+  width: var(--bar-w, 0%);
   transition: width 0.6s ease;
-  opacity: 0.85;
+  animation: bar-grow 0.85s cubic-bezier(0.22, 0.7, 0.24, 1) both;
 }
 
 .pill-text {
@@ -363,4 +373,17 @@
   font-size: 13px;
   color: #999;
   margin: 0;
+}
+
+// ── Grow-in cascade — bars/pills fill from top to bottom, one after another ──
+@for $i from 1 through 6 {
+  .rows .row:nth-child(#{$i}) .bar,
+  .rows .row:nth-child(#{$i}) .pill-fill {
+    animation-delay: #{0.04 + ($i - 1) * 0.075}s;
+  }
+}
+
+// Accessibility: no growth animation; bars rest at their final width.
+@media (prefers-reduced-motion: reduce) {
+  .bar, .pill-fill { animation: none !important; }
 }

@@ -16,7 +16,11 @@
          charts/maps show their axes and values, not a bare sparkline. -->
     <div class="share-frame" #shareArea [style.background]="cardGradient">
       <div class="card-wrap">
-        <app-weird-card [card]="card" size="full"></app-weird-card>
+        <!-- Same design as the card-detail hero: kpi/ranking use the premium
+             story card; everything else goes through app-weird-card, which
+             resolves the owner's persisted style (uiMeta.selectedStyle). -->
+        <app-story-card *ngIf="card.cardType === 'kpi'" [card]="card" size="full"></app-story-card>
+        <app-weird-card *ngIf="card.cardType !== 'kpi'" [card]="card" size="full" [animate]="false"></app-weird-card>
       </div>
 
       <!-- Bottom brand strip -->

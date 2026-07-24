@@ -9,12 +9,14 @@ import { ActionSheetController, AlertController, ToastController, LoadingControl
 const domtoimage = require('dom-to-image-more');
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { WeirdCard, StoredStatCard, ACCENT_COLORS } from '../models/weird-card.model';
+import { WeirdCard, StoredStatCard, ACCENT_COLORS, gradientForAccent } from '../models/weird-card.model';
 import { cardHasData } from '../shared/card-data.util';
+import { freezeCaptureLayout } from '../shared/capture.util';
+import { compressImage } from '../shared/image.util';
 import { AuthService } from '../services/auth.service';
-import { RankStyle, rankAltStylesFor } from '../shared/cards/card-ranking/card-ranking.component';
 import { TableStyle } from '../shared/cards/card-table/card-table.component';
-import { KpiStyle, kpiAltStylesFor } from '../shared/cards/card-kpi/card-kpi.component';
+import { RankStyle, rankAltStylesFor } from '../shared/cards/card-ranking/card-ranking.component';
+import { StoryVariant, storyAltsFor, asStoryVariant } from '../shared/story-card/story-view';
 import { VersusStyle } from '../shared/cards/card-versus/card-versus.component';
 import { MapStyle, hasMappableRows } from '../shared/cards/card-map/card-map.component';
 import { FactStyle, FACT_STYLES } from '../shared/cards/card-fact/card-fact.component';
@@ -36,6 +38,10 @@ export class CardDetailPage implements OnInit {
   storedCard?: StoredStatCard;
   isLoading = false;
   statusMsg = '';
+  // Offscreen PNG-capture frames (OG + share) each build their own chart, so we
+  // keep them out of the first render and mount them only when a capture is
+  // actually needed — otherwise they'd stutter the card's entrance draw-on.
+  capturesReady = false;
   // Card type revealed by the backend mid-generation, before the card is ready —
   // drives the shape-specific loading skeleton. Empty until the classifier reports.
   skeletonType = '';
@@ -152,23 +158,27 @@ export class CardDetailPage implements OnInit {
   @ViewChild('ogArea') ogArea?: ElementRef<HTMLElement>;
   isPremium = false;
 
-  /** Card gradient used as the OG frame backdrop (blends with the card). */
+  /** Card gradient used as the OG frame backdrop (blends with the card). Derived
+   *  from the accent so it always matches the card's own tinted background. */
   get ogGradient(): string {
-    const from = this.card?.uiMeta?.gradientFrom || '#f5f3ff';
-    const to = this.card?.uiMeta?.gradientTo || '#ede9fe';
-    return `linear-gradient(135deg, ${from}, ${to})`;
+    const g = gradientForAccent(this.card?.uiMeta?.accentColor);
+    return `linear-gradient(135deg, ${g.from}, ${g.to})`;
   }
 
   altTypes: Array<'bar' | 'line' | 'doughnut'> = ['bar', 'line', 'doughnut'];
   selectedAltType?: 'bar' | 'line' | 'doughnut';
 
-  private readonly styleLabels: Record<string, string> = {
-    pill: 'Value pill', percent: 'Percentage', vertical: 'Vertical', circular: 'Circular',
-  };
-
-  // Stable arrays — recomputed once per card load in ionViewWillEnter, never in getters
+  // ── Premium alternatives (kpi/ranking — the story-card hero types) ────────
+  // Data-gated variants of the premium look; selection persists to
+  // uiMeta.selectedStyle ('story-*'), which every story-card instance (hero,
+  // feed tiles, captures, share page) resolves on its own.
   rankAltStyles: Array<{ key: RankStyle; label: string }> = [];
   selectedRankStyle: RankStyle = 'bars';
+  selectRankAlt(style: RankStyle): void { this.selectedRankStyle = style; this._persistStyle(style); }
+
+  storyAltStyles: Array<{ key: StoryVariant; label: string }> = [];
+  selectedStoryVariant?: StoryVariant;
+  selectStoryAlt(key: StoryVariant): void { this.selectedStoryVariant = key; this._persistStyle(key); }
 
   readonly tableAltStyles: Array<{ key: TableStyle; label: string }> = [
     { key: 'pill',  label: 'Value pill' },
@@ -193,13 +203,6 @@ export class CardDetailPage implements OnInit {
   selectedMapStyle: MapStyle = 'choropleth';
   selectMapAlt(style: MapStyle): void { this.selectedMapStyle = style; this._persistStyle(style); }
 
-  // Data-gated: a KPI style is only offered when the card's data can honestly
-  // support it. Single source of truth lives next to the component.
-  get kpiAltStyles(): Array<{ key: KpiStyle; label: string }> {
-    return kpiAltStylesFor(this.card);
-  }
-  selectedKpiStyle: KpiStyle = 'default';
-
   // Fact cards pick a fixed layout (poster / editorial / split) the same way
   // other types pick a style — persisted to uiMeta.selectedStyle. The text
   // auto-fits the fixed frame, so there is no manual font-size control.
@@ -214,6 +217,7 @@ export class CardDetailPage implements OnInit {
   ];
 
   constructor(
+    private hostRef: ElementRef<HTMLElement>,
     private route: ActivatedRoute,
     private router: Router,
     private afs: AngularFirestore,
@@ -327,13 +331,14 @@ export class CardDetailPage implements OnInit {
   private _buildAltStyles(): void {
     const ui = this.card?.uiMeta;
 
-    // Ranking alts — data-gated: a value-less "top X" list offers only "List";
-    // a real metric offers the numeric styles (+ List). Keep the selected style
-    // valid for what's offered.
+    // Premium alts (kpi/ranking) — data-gated; the first entry always matches
+    // the auto treatment, so it doubles as the default selection.
     this.rankAltStyles = rankAltStylesFor(this.card);
     if (!this.rankAltStyles.some(s => s.key === this.selectedRankStyle)) {
       this.selectedRankStyle = this.rankAltStyles[0]?.key ?? 'bars';
     }
+    this.storyAltStyles = storyAltsFor(this.card);
+    this.selectedStoryVariant = this.storyAltStyles[0]?.key;
 
     // Versus alts
     const versusKeys = ui?.versusStyles?.length
@@ -367,12 +372,19 @@ export class CardDetailPage implements OnInit {
       this.selectedAltType = this.altTypes.includes(cur) ? cur : this.altTypes[0];
     }
 
-    // Restore previously selected style
+    // Restore the owner's saved premium variant — for EVERY card type. (This
+    // was gated to kpi/ranking while the other types still used light cards;
+    // leaving it gated made the hero and both capture frames render the default
+    // while feed tiles — which resolve uiMeta.selectedStyle themselves — showed
+    // the saved pick.) Unknown/legacy keys narrow to undefined = auto.
     const saved = ui?.selectedStyle;
-    if (saved) {
-      const ct = this.card?.cardType;
+    const ct = this.card?.cardType;
+    const story = asStoryVariant(saved);
+    if (ct === 'kpi') {
+      if (story && this.storyAltStyles.some(s => s.key === story)) this.selectedStoryVariant = story;
+    } else if (saved) {
+      // Every other type went back to its original light card + styles.
       if (ct === 'ranking' && this.rankAltStyles.some(s => s.key === saved)) this.selectedRankStyle = saved as RankStyle;
-      else if (ct === 'kpi') this.selectedKpiStyle = saved as KpiStyle;
       else if (ct === 'table') this.selectedTableStyle = saved as TableStyle;
       else if (ct === 'versus') this.selectedVersusStyle = saved as VersusStyle;
       else if (ct === 'map') this.selectedMapStyle = saved as MapStyle;
@@ -399,7 +411,13 @@ export class CardDetailPage implements OnInit {
     this.storedCard = { ...this.storedCard, data: this.card };
     const card = this.storedCard;
     if (this.isDraftCard()) {
-      this.uid().then(uid => { if (uid) this.drafts.add(uid, card); });
+      this.uid().then(uid => {
+        if (uid) this.drafts.add(uid, card);
+        // Guest editing their just-generated card: keep the localStorage stash
+        // current, so signing in claims the EDITED card (accent/badge/emoji/
+        // premium variant), not the as-generated version.
+        else this.stashGuestCard(card);
+      });
     } else if (card.id) {
       this.afs.doc(`stats/${card.id}`).update({ data: card.data, updatedAt: new Date().toISOString() }).catch(() => {});
       // A published card's share/link-preview image must not drift from its
@@ -428,6 +446,7 @@ export class CardDetailPage implements OnInit {
     this.storedCard = undefined;
     this.errorMsg = '';
     this.isSaved = false;
+    this.capturesReady = false;
     this.viewOnly = !!state?.viewOnly;
     this.isAdminView = !!state?.isAdminView;
     this.returnUrl = state?.returnUrl ?? '';
@@ -448,7 +467,7 @@ export class CardDetailPage implements OnInit {
       this.applyCardSeo();
       this.trackCardOpen('in_app');
       this.maybeBackfillOg();
-      this.prepareShareImage();
+      this.scheduleCaptures();
     } else {
       const id = this.route.snapshot.paramMap.get('id');
       if (id) {
@@ -486,7 +505,7 @@ export class CardDetailPage implements OnInit {
         // the clean public view.
         if (this.isOwner) this.viewOnly = false;
         this._buildAltStyles(); this.applyCardSeo(); this.trackCardOpen('deep_link'); this.maybeBackfillOg();
-        if (this.viewOnly) this.prepareShareImage();
+        if (this.viewOnly) this.scheduleCaptures();
       }
     } catch {
       this.errorMsg = 'Could not load this card.';
@@ -684,9 +703,20 @@ export class CardDetailPage implements OnInit {
 
   /** Render the watermarked share frame to a PNG data URL */
   private async renderPng(): Promise<string | null> {
+    await this.mountCaptures();   // frame is lazy-mounted — ensure it exists
     const el = this.shareArea?.nativeElement;
     if (!el) return null;
-    return domtoimage.toPng(el, { bgcolor: '#ffffff', scale: 2 });
+    // Pin the live layout so dom-to-image's clone can't re-resolve the story
+    // card's container-query type scale (see capture.util.ts).
+    const restore = freezeCaptureLayout(el);
+    try {
+      // cacheBust: the visible <img> caches the photo WITHOUT CORS headers; a
+      // capture-time CORS fetch would reuse that poisoned entry and be blocked
+      // (photo silently missing from the PNG). Busting forces a fresh request.
+      return await domtoimage.toPng(el, { bgcolor: '#ffffff', scale: 2, cacheBust: true });
+    } finally {
+      restore();
+    }
   }
 
   private slug(): string {
@@ -707,11 +737,37 @@ export class CardDetailPage implements OnInit {
     return new File([arr], filename, { type: mime });
   }
 
+  /** Resolve when the main thread is next idle (short fallback otherwise), so a
+   *  heavy dom-to-image capture never competes with the entrance animation. */
+  private whenIdle(timeout = 500): Promise<void> {
+    return new Promise((res) => {
+      const ric = (window as any).requestIdleCallback;
+      ric ? ric(() => res(), { timeout }) : setTimeout(res, 120);
+    });
+  }
+
+  /** Mount the offscreen capture frames on demand and resolve once Angular has
+   *  rendered them (so their ViewChild refs are live). Kept out of the initial
+   *  render so building their charts never stutters the card's draw-on. */
+  private async mountCaptures(): Promise<void> {
+    if (this.capturesReady) return;
+    // Set inside the zone: mountCaptures can be reached from requestIdleCallback,
+    // which Zone.js doesn't patch, so a bare assignment wouldn't run change
+    // detection and the *ngIf frames would never appear.
+    this.ngZone.run(() => { this.capturesReady = true; });
+    await new Promise((r) => setTimeout(r, 0));
+  }
+
+  /** After the entrance animation (≤1.3s) and once the thread is idle, mount the
+   *  capture frames and pre-render the share image — never during the draw-on. */
+  private scheduleCaptures(): void {
+    setTimeout(() => this.whenIdle().then(() => this.prepareShareImage()), 1400);
+  }
+
   /** Render the shareable card image once, in the background, and cache it. */
   private async prepareShareImage(): Promise<void> {
     if (!this.viewOnly) return;
-    // Give the card (and any chart) a beat to settle before capturing.
-    await new Promise((r) => setTimeout(r, 900));
+    await this.mountCaptures();
     try {
       const dataUrl = await this.renderPng();
       if (dataUrl) this.shareFile = this.dataUrlToFile(dataUrl, `${this.slug()}.png`);
@@ -999,6 +1055,11 @@ export class CardDetailPage implements OnInit {
   private async duplicateCard(): Promise<void> {
     const uid = await this.uid();
     if (!this.card || !uid) return;
+    const data: WeirdCard = JSON.parse(JSON.stringify(this.card));
+    // The uploaded photo belongs to the ORIGINAL card's storage path — sharing
+    // it would break the copy when the original is deleted. The duplicate
+    // starts photo-less; the owner can upload again.
+    data.uiMeta = { ...data.uiMeta, heroImage: '', heroImagePath: '' };
     const copy: StoredStatCard = {
       id: this.afs.createId(),
       status: 'completed',
@@ -1007,7 +1068,7 @@ export class CardDetailPage implements OnInit {
       createdAt: new Date().toISOString(),
       prompt: this.storedCard?.prompt ?? '',
       promptHash: '',
-      data: JSON.parse(JSON.stringify(this.card)),
+      data,
     };
     this.drafts.add(uid, copy);
     this.toast('Copy added to your Drafts');
@@ -1094,6 +1155,11 @@ export class CardDetailPage implements OnInit {
       // and clean up its social-preview image so no orphan is left in Storage.
       await this.afs.doc(`stats/${card.id}`).delete();
       await this.deleteOgImage(card.id);
+      // Same for the owner-uploaded background photo, if any.
+      const heroPath = card.data?.uiMeta?.heroImagePath;
+      if (heroPath) {
+        try { await firstValueFrom(this.storage.ref(heroPath).delete()); } catch { /* already gone */ }
+      }
       this.toast('Card deleted.');
       this.back();
     } catch {
@@ -1102,8 +1168,6 @@ export class CardDetailPage implements OnInit {
   }
 
   selectTableAlt(style: TableStyle): void { this.selectedTableStyle = style; this._persistStyle(style); }
-  selectRankAlt(style: RankStyle): void { this.selectedRankStyle = style; this._persistStyle(style); }
-  selectKpiAlt(style: KpiStyle): void { this.selectedKpiStyle = style; this._persistStyle(style); }
 
   trackByKey(_: number, item: { key: string }): string { return item.key; }
 
@@ -1137,17 +1201,11 @@ export class CardDetailPage implements OnInit {
     this.persistCardEdits();
   }
 
-  private readonly accentGradients: Record<string, { from: string; to: string }> = {
-    '#6C5CE7': { from: '#f5f3ff', to: '#ede9fe' },
-    '#378ADD': { from: '#e3f2fd', to: '#e8eaf6' },
-    '#1D9E75': { from: '#e8f5e9', to: '#f1f8e9' },
-    '#D85A30': { from: '#fff3ee', to: '#fce8e0' },
-    '#BA7517': { from: '#fff8e1', to: '#fef3c7' },
-  };
-
   setAccent(hex: string): void {
     if (!this.card) return;
-    const grad = this.accentGradients[hex] ?? { from: '#f5f3ff', to: '#ffffff' };
+    // Persist the accent + its matching tint (shared palette) so the stored
+    // gradient stays in sync for the OG image and any non-derived readers.
+    const grad = gradientForAccent(hex);
     this.card = {
       ...this.card,
       uiMeta: {
@@ -1166,6 +1224,125 @@ export class CardDetailPage implements OnInit {
     this.persistCardEdits();
   }
 
+  /**
+   * Owner-editable hero emoji (uiMeta.icon) — the AI's pick can be wrong
+   * (e.g. an ant 🐜 for a cockroach 🪳 story), so the edit panel lets the owner
+   * type/paste the right one. Keeps only the FIRST emoji grapheme (ZWJ
+   * sequences and modifiers stay intact); non-emoji input is ignored; clearing
+   * the field removes the hero emoji entirely.
+   */
+  /** The hand-authored Home story card for the mosquito stat, reproduced EXACTLY
+   *  (same copy, same four bars) so opening/sharing it matches Home 1:1.
+   *  Values transcribed from home.page.html. */
+  private static readonly MOSQUITO_STORY = {
+    design: 'editorial' as const,
+    title: 'Mosquitoes kill more humans than sharks every year',
+    quip: 'Yep. Tiny, annoying, deadly.',
+    emoji: '🦟',
+    caption: 'Deaths per year (estimated)',
+    bars: [
+      { label: 'Mosquito', value: '725K+', pct: 100 },
+      { label: 'Human',    value: '475K+', pct: 66 },
+      { label: 'Snake',    value: '50K+',  pct: 12 },
+      { label: 'Shark',    value: '10K+',  pct: 4 },
+    ],
+  };
+
+  private static readonly OLD_AGE_STORY = {
+    design: 'cover' as const,
+    title: 'Only 11% of everyone who ever lived died of old age',
+    quip: "You're part of a very lucky 1 in 12.",
+    emoji: '🌍',
+    statValue: '1 in 12',
+    statLabel: 'lived to grow old',
+  };
+
+  private static readonly WATER_STORY = {
+    design: 'split' as const,
+    title: "Only about 2% of Earth's water is drinkable",
+    quip: 'Most of the blue planet, off the menu.',
+    donutPct: 2,
+    donutDeg: '30deg',          // decorative sweep, exactly as on Home
+    donutLabel: 'freshwater accessible',
+  };
+
+  /** The three hand-authored Home story cards, reproduced verbatim on the detail
+   *  page (and in the share PNG / OG image) so what opens matches Home 1:1.
+   *  Null for every other card — those keep their normal card. */
+  get storyPreset(): any | null {
+    const t = this.card?.title || '';
+    if (/mosquito/i.test(t)) return CardDetailPage.MOSQUITO_STORY;
+    if (/old age|age-related/i.test(t)) return CardDetailPage.OLD_AGE_STORY;
+    if (/freshwater|drinkable/i.test(t)) return CardDetailPage.WATER_STORY;
+    return null;
+  }
+
+  // ── Owner-uploaded background photo (fact cards) ─────────────────────────
+  isUploadingImage = false;
+
+  /** Compress + upload a background photo to card-media/{uid}/{cardId} and
+   *  save its URL on uiMeta.heroImage — the fact card layers it softly under
+   *  the text (or full-strength in the split panel). Storage rules require an
+   *  authenticated owner, so guests get the sign-in prompt. */
+  async uploadHeroImage(ev: Event): Promise<void> {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';                                  // allow re-picking the same file
+    if (!file || !this.card) return;
+    if (!file.type.startsWith('image/')) { this.toast('Please choose an image file.'); return; }
+    if (file.size > 10 * 1024 * 1024) { this.toast('Image too large — 10 MB max.'); return; }
+    const uid = await this.uid();
+    if (!uid) { this.promptSignIn(); return; }
+    const cardId = this.storedCard?.id;
+    if (!cardId) { this.toast('Save the card first, then add a photo.'); return; }
+    this.isUploadingImage = true;
+    try {
+      const blob = await compressImage(file);          // ≤1200px JPEG, ~150-250 KB
+      const path = `card-media/${uid}/${cardId}`;
+      const ref = this.storage.ref(path);
+      // Immutable cache: replacements go to the same path but a new download
+      // token, so the URL changes and stale caches never show the old photo.
+      await ref.put(blob, { contentType: 'image/jpeg', cacheControl: 'public,max-age=31536000,immutable' });
+      const url = await firstValueFrom(ref.getDownloadURL());
+      this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, heroImage: url, heroImagePath: path } };
+      this.persistCardEdits();
+      this.toast('Photo added!');
+    } catch {
+      this.toast('Upload failed — please try again.');
+    } finally {
+      this.isUploadingImage = false;
+    }
+  }
+
+  /** Remove the uploaded photo: delete the Storage object (non-fatal if it's
+   *  already gone) and clear the card fields — the emoji layout returns. */
+  async removeHeroImage(): Promise<void> {
+    if (!this.card) return;
+    const path = this.card.uiMeta?.heroImagePath;
+    if (path) {
+      try { await firstValueFrom(this.storage.ref(path).delete()); } catch { /* already gone */ }
+    }
+    this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, heroImage: '', heroImagePath: '' } };
+    this.persistCardEdits();
+  }
+
+  setIcon(value: string): void {
+    if (!this.card) return;
+    const v = (value || '').trim();
+    let icon = '';
+    if (v) {
+      try {
+        const seg: any = new (Intl as any).Segmenter(undefined, { granularity: 'grapheme' });
+        icon = seg.segment(v)[Symbol.iterator]().next().value?.segment ?? '';
+      } catch {
+        icon = Array.from(v)[0] ?? '';   // engines without Intl.Segmenter
+      }
+      if (!/\p{Extended_Pictographic}/u.test(icon)) return;   // letters/digits: keep the old emoji
+    }
+    this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, icon } };
+    this.persistCardEdits();
+  }
+
   async goShare(): Promise<void> {
     if (!this.card || !this.ensureShareable()) return;
     // Sharing makes the card viewable by anyone with the LINK. It is NEVER added
@@ -1179,6 +1356,15 @@ export class CardDetailPage implements OnInit {
     this.router.navigate(['/share-card'], {
       state: { card: this.card, cardId: this.storedCard?.id ?? null },
     });
+  }
+
+  /** "See the full story" CTA on the premium hero card. The story text lives
+   *  BELOW the card (the .card-info block), so glide the page down to it.
+   *  Scoped to this page's own element — Ionic can keep a previous page
+   *  instance mounted, so a document-wide query could hit the wrong one. */
+  scrollToStory(): void {
+    this.hostRef.nativeElement.querySelector('.card-info')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   back(): void {
@@ -1216,17 +1402,30 @@ export class CardDetailPage implements OnInit {
    */
   private async generateOgImage(): Promise<void> {
     const id = this.storedCard?.id;
+    if (!id) return;
+    await this.mountCaptures();
     const el = this.ogArea?.nativeElement;
-    if (!id || !el) return;
+    if (!el) return;
     try {
-      // Let Chart.js and layout settle before capturing.
-      await new Promise((r) => setTimeout(r, 700));
+      // Stay clear of the card's entrance draw-on, then let layout settle and
+      // capture only when idle — this is heavy and must not stutter the chart.
+      await new Promise((r) => setTimeout(r, 1400));
+      await this.whenIdle();
       // Scale the card down to fit the fixed 1200×630 canvas so a tall card
       // (long table, big chart + story) is never clipped at the title/story.
       this.fitOgTile(el);
-      const dataUrl: string = await domtoimage.toPng(el, {
-        width: 1200, height: 630, bgcolor: '#ffffff',
-      });
+      // Pin the live layout so dom-to-image's clone can't re-resolve the story
+      // card's container-query type scale (see capture.util.ts).
+      const restore = freezeCaptureLayout(el);
+      let dataUrl: string;
+      try {
+        dataUrl = await domtoimage.toPng(el, {
+          // cacheBust: see renderPng — avoids the CORS-poisoned image cache.
+          width: 1200, height: 630, bgcolor: '#ffffff', cacheBust: true,
+        });
+      } finally {
+        restore();
+      }
       const ref = this.storage.ref(`og/${id}.png`);
       await ref.putString(dataUrl, 'data_url', { contentType: 'image/png' });
       const url = await firstValueFrom(ref.getDownloadURL());

@@ -15,7 +15,7 @@
   text-align: center;
 
   @media (min-width: 850px) {
-    max-width: 720px;
+    max-width: 1280px;
     margin-left: auto;
     margin-right: auto;
   }
@@ -187,7 +187,7 @@
   padding: 4px 16px 28px;
 
   @media (min-width: 850px) {
-    max-width: 560px;
+    max-width: 900px;
     margin: 0 auto;
   }
 }
@@ -285,7 +285,7 @@
 // Desktop: align the sections to the hero's 560px column so the whole page
 // reads as one centered column instead of the sections sprawling full-width.
 @media (min-width: 850px) {
-  .hsec { max-width: 720px; margin-left: auto; margin-right: auto; }
+  .hsec { max-width: 1280px; margin-left: auto; margin-right: auto; }
 }
 
 .sec-head { display: flex; align-items: center; gap: 9px; margin: 0 2px 13px; }
@@ -354,12 +354,18 @@
 // the peek stays well inside the crisp zone).
 .stories-viewport {
   width: 100%;
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
+  // No edge-fade mask: it washed the peeking back cards out into a white haze
+  // at the sides. The deck is clipped by the section instead, so the back cards
+  // simply run to the content edge like every other block on the page.
+  overflow: hidden;
+  padding: 4px 0 40px;
 }
 .stories-swiper {
-  display: block; width: 82%; max-width: 400px; margin: 0 auto;
-  overflow: visible; padding: 4px 0 40px;
+  // Front card matches the page's content width (same inset as the topic grid
+  // and the "How WeirdStats works" card); the back cards peek INSIDE that box,
+  // so nothing overhangs the screen on mobile.
+  display: block; width: 76%; max-width: 360px; margin: 0 auto;
+  overflow: visible; padding: 0;
   --swiper-pagination-color: #6C5CE7;
   --swiper-pagination-bullet-inactive-color: rgba(20, 22, 31, 0.22);
   --swiper-pagination-bullet-inactive-opacity: 1;
@@ -545,20 +551,31 @@
 .share-count { font-size: 12.5px; font-weight: 700; color: var(--ion-color-medium); }
 .share-arrow { flex: none; color: var(--ion-color-medium); font-size: 15px; }
 
-// Desktop: with the wider 720px column, spread the sections into more columns
-// so they fill the space elegantly instead of leaving big empty gutters.
+// Desktop: with the wider ~1120px column, the sections spread into more columns
+// AND the type/controls scale up, so the page fills the screen instead of
+// leaving big empty gutters.
 @media (min-width: 850px) {
-  .hiw-card { padding: 28px 32px; gap: 12px; }
-  .hiw-arrow i { width: 34px; }
+  // Hero: bigger headline + input; the input keeps a comfortable max width so it
+  // doesn't stretch awkwardly across the full column.
+  .hero h1 { font-size: 42px; margin: 18px 0 26px; }
+  .greeting-row .greeting-emoji { font-size: 32px; }
+  .greeting-row .greeting-text  { font-size: 18px; }
+  .ask-card { max-width: 860px; margin: 0 auto 16px; padding: 18px 22px; }
+  .ask-textarea { font-size: 17px; min-height: 52px; }
+  .ask-btn { max-width: 320px; padding: 18px 26px; font-size: 17px; }
+
+  // How it works: roomier card, larger step icons.
+  .hiw-card { padding: 32px 44px; gap: 16px; }
+  .hiw-ic { width: 74px; height: 74px; ion-icon { font-size: 32px; } }
+  .hiw-arrow i { width: 44px; }
+
   .topic-grid { grid-template-columns: repeat(4, 1fr); }
   .discover-row { grid-template-columns: repeat(4, 1fr); }
   .share-card { flex: 1 1 0; }   // 4 cards fill the wider column evenly
-  .stories-swiper { max-width: 440px; }
-  .story-card { height: 300px; }
-  // Desktop has wide side margins, so the peek never reaches the edge — no fade needed.
-  .stories-viewport { -webkit-mask-image: none; mask-image: none; }
-  .sc-title { font-size: 21px; }
-  .sc-a .sc-emoji { font-size: 124px; }
-  .sc-b .sc-emoji { font-size: 150px; }
-  .sec-title { font-size: 19px; }
+  .stories-swiper { max-width: 520px; }
+  .story-card { height: 340px; }
+  .sc-title { font-size: 22px; }
+  .sc-a .sc-emoji { font-size: 132px; }
+  .sc-b .sc-emoji { font-size: 160px; }
+  .sec-title { font-size: 22px; }
 }

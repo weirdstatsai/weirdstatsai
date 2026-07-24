@@ -66,6 +66,69 @@ const ValueLabelsPlugin = {
 };
 Chart.register(ValueLabelsPlugin);
 
+/**
+ * Soft accent glow beneath a line/area stroke — wraps the line dataset draw in
+ * a canvas shadow so the stroke reads like the premium home story cards rather
+ * than a flat 1px chart line. Opt-in per chart via
+ * `options.plugins.lineGlow = { enabled, color, blur, offsetY }`. Scoped to the
+ * line dataset only (fill is translucent so its shadow is negligible), and the
+ * shadow is torn down before value labels/points-on-top are drawn.
+ */
+const LineGlowPlugin = {
+  id: 'lineGlow',
+  beforeDatasetDraw(chart: any, args: any, opts: any) {
+    if (!opts?.enabled || args?.meta?.type !== 'line') return;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.shadowColor = opts.color || 'rgba(108,92,231,0.45)';
+    ctx.shadowBlur = opts.blur ?? 12;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = opts.offsetY ?? 4;
+  },
+  afterDatasetDraw(chart: any, args: any, opts: any) {
+    if (!opts?.enabled || args?.meta?.type !== 'line') return;
+    chart.ctx.restore();
+  },
+};
+Chart.register(LineGlowPlugin);
+
+/**
+ * A glowing "head" that rides the drawing frontier of a line as it animates on —
+ * a bright accent dot (white core) at the right-most drawn vertex each frame, so
+ * the line reads as being traced live. Once the animation settles it rests on the
+ * final point as an emphasised end-cap on the latest value. Opt-in via
+ * `options.plugins.lineHead = { enabled, color, radius }`.
+ */
+const LineHeadPlugin = {
+  id: 'lineHead',
+  afterDatasetsDraw(chart: any, _args: any, opts: any) {
+    if (!opts?.enabled || chart.config?.type !== 'line') return;
+    const pts = chart.getDatasetMeta(0)?.data || [];
+    let head: any = null;
+    for (const el of pts) {
+      if (el && isFinite(el.x) && isFinite(el.y) && (!head || el.x > head.x)) head = el;
+    }
+    if (!head) return;
+    const ctx = chart.ctx;
+    const color = opts.color || '#6C5CE7';
+    const r = opts.radius ?? 5;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(head.x, head.y, r, 0, Math.PI * 2);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.shadowBlur = 0;                       // crisp white core, no halo
+    ctx.beginPath();
+    ctx.arc(head.x, head.y, r * 0.42, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.restore();
+  },
+};
+Chart.register(LineHeadPlugin);
+
 @Component({
   selector: 'app-chart',
   template: `<canvas #canvas></canvas>`,
@@ -81,12 +144,28 @@ export class ChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() mini = false;
 
   private chart?: Chart;
+  private ro?: ResizeObserver;
 
   constructor(private zone: NgZone) {}
 
   ngAfterViewInit(): void {
     this.canvasRef.nativeElement.style.height = `${this.height}px`;
     requestAnimationFrame(() => this.render());
+    // A card can be laid out at ZERO size (tile still off-screen / parent not
+    // sized yet). Chart.js measures once at construction, so it would render
+    // into a 0x0 canvas and stay blank forever. Re-render the first time the
+    // canvas actually gains a size.
+    if (typeof ResizeObserver !== 'undefined') {
+      this.zone.runOutsideAngular(() => {
+        this.ro = new ResizeObserver(entries => {
+          const box = entries[0]?.contentRect;
+          if (!box || box.width < 1) return;
+          if (!this.chart) this.render();
+          else this.chart.resize();
+        });
+        this.ro.observe(this.canvasRef.nativeElement);
+      });
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -97,11 +176,16 @@ export class ChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.ro?.disconnect();
+    this.ro = undefined;
     this.destroy();
   }
 
   private render(): void {
     if (!this.canvasRef || !this.config) return;
+    // Nothing to draw into yet — the ResizeObserver will call back with a size.
+    if (this.canvasRef.nativeElement.clientWidth < 1) return;
+    this.destroy();
     this.zone.runOutsideAngular(() => {
       const baseOpts = this.config.options ?? {};
       const isRadial = ['radar', 'polarArea', 'doughnut', 'pie'].includes(this.config.type);

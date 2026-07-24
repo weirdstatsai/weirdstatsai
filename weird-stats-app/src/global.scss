@@ -343,7 +343,7 @@ $app-frame-width: 480px;
 // ion-app fills the viewport; AppComponent supplies its own fixed left rail +
 // top-right nav + right gutter around the (still independently scrolling)
 // content outlet — see app.component.scss.
-$desktop-content-max: 1040px;
+$desktop-content-max: 1280px;
 
 @media (min-width: 850px) {
   body {

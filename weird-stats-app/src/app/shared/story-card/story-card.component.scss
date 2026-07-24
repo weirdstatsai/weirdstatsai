@@ -1,0 +1,264 @@
+:host { display: block; height: 100%; }
+
+// ── Premium card shell ──────────────────────────────────────────────────────
+// One dark, white-text card that fills its tile. It is its own size container,
+// so type + chrome scale fluidly with the card width (cqw) — the same card
+// reads well as a small feed tile and as a big detail hero.
+.pcard {
+  container-type: inline-size;
+  position: relative;
+  height: 100%;
+  min-height: 168px;
+  border-radius: 20px;
+  overflow: hidden;
+  color: #fff;
+  text-align: left;
+  background:
+    radial-gradient(125% 100% at 80% 30%, var(--pg-glow, rgba(233,120,88,0.55)), transparent 60%),
+    linear-gradient(150deg, var(--pg-from, #241241) 0%, var(--pg-mid, #3a2168) 50%, var(--pg-to, #6d3b8e) 100%);
+  box-shadow: 0 2px 4px rgba(20,22,31,0.10), 0 28px 50px -22px rgba(20,22,31,0.65);
+  isolation: isolate;
+}
+.full .pcard, .pcard.full { min-height: 300px; border-radius: 22px; }
+
+// Desktop detail: keep the hero a compact landscape banner (it was taking up
+// too much vertical space), and clamp the headline so it can't balloon the card.
+@media (min-width: 850px) {
+  .pcard.full { min-height: 288px; max-height: 400px; }
+  .pcard.full .pc-title {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+  }
+}
+
+// Hero subject emoji — big, behind the content, right side (home-card style).
+// Capped at ~164px: colour-emoji bitmaps blur when scaled past that, so this
+// keeps them crisp (matches the home cards' clarity).
+.pc-emoji {
+  position: absolute; z-index: 0; right: 3%; top: 46%;
+  transform: translateY(-50%) rotate(-6deg);
+  font-size: clamp(88px, 30cqw, 164px);
+  line-height: 1; pointer-events: none;
+  filter: drop-shadow(0 12px 26px rgba(0,0,0,0.5));
+  opacity: 0.97;
+}
+.pcard[data-treat="statement"] .pc-emoji { right: -4%; top: 50%; opacity: 0.32; }
+
+// Owner-uploaded photo: fills the card behind the scrim.
+.pc-photo {
+  position: absolute; inset: 0; z-index: 0;
+  width: 100%; height: 100%; object-fit: cover;
+  pointer-events: none;
+}
+
+// Scrim so text stays legible over the emoji.
+.pc-scrim {
+  position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(90deg, rgba(12,8,26,0.82) 0%, rgba(12,8,26,0.5) 44%, transparent 74%);
+}
+// Over a real photo the text needs a stronger, full-coverage wash than over the
+// gradient+emoji (a photo can be bright anywhere, not just on the right).
+.pc-scrim-photo {
+  background:
+    linear-gradient(90deg, rgba(10,7,22,0.88) 0%, rgba(10,7,22,0.62) 52%, rgba(10,7,22,0.34) 100%),
+    linear-gradient(0deg, rgba(10,7,22,0.55) 0%, transparent 55%);
+}
+.pcard.full .pc-scrim-photo,
+.pcard.compact .pc-scrim-photo {
+  background:
+    linear-gradient(90deg, rgba(10,7,22,0.86) 0%, rgba(10,7,22,0.55) 58%, rgba(10,7,22,0.3) 100%),
+    linear-gradient(0deg, rgba(10,7,22,0.5) 0%, transparent 58%);
+}
+.pcard.full .pc-scrim { background: linear-gradient(90deg, rgba(12,8,26,0.78) 0%, rgba(12,8,26,0.42) 50%, transparent 80%); }
+
+// ── Body + shared chrome ────────────────────────────────────────────────────
+.pc-body {
+  position: relative; z-index: 2;
+  height: 100%;
+  display: flex; flex-direction: column;
+  padding: clamp(12px, 4.5cqw, 26px);
+  gap: clamp(4px, 1cqw, 8px);
+}
+
+.pc-pill {
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.16);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.24);
+  color: #fff; font-weight: 800; letter-spacing: 0.01em;
+  font-size: clamp(9px, 2.6cqw, 12px);
+  padding: 4px clamp(8px, 2.4cqw, 11px); border-radius: 999px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92%;
+  ion-icon { font-size: 1em; }
+}
+
+.pc-title {
+  font-size: clamp(16px, 4.6cqw, 32px);
+  font-weight: 850; line-height: 1.12; letter-spacing: -0.02em;
+  margin: clamp(3px, 1.5cqw, 8px) 0 0;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.4);
+  max-width: 66%;
+  text-wrap: balance;
+}
+.pc-quip {
+  font-size: clamp(11px, 2.6cqw, 15px);
+  opacity: 0.9; margin: 5px 0 0; max-width: 62%;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.35);
+}
+
+// Feed tiles clip (overflow:hidden), so clamp the title to two lines — the viz
+// (hero number, donut, bars) always keeps its room in the lower half.
+.pcard.feed .pc-title {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+
+// ── Compact: full chrome (quip + CTA) inside a short fixed frame ─────────────
+// Used by the Home stories deck. Everything tightens so no treatment overflows
+// and gets clipped: shorter title/quip, tighter padding and gaps.
+.pcard.compact {
+  .pc-title {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+    font-size: clamp(15px, 4.1cqw, 24px);
+  }
+  .pc-quip {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+    font-size: clamp(10.5px, 2.4cqw, 13px); margin-top: 3px;
+  }
+  .pc-body { padding: clamp(11px, 3.6cqw, 18px); gap: clamp(2px, 0.6cqw, 5px); }
+  .pc-cta { margin-top: clamp(6px, 1.4cqw, 10px); padding: 8px 14px; }
+  .pc-num { font-size: clamp(34px, 12cqw, 64px); }
+  .pc-donut { width: clamp(74px, 26cqw, 116px); }
+  // The chart is the tallest viz — it needs the quip's room back.
+  &[data-treat="chart"] .pc-quip { display: none; }
+}
+
+.pc-cta {
+  align-self: flex-start; margin-top: clamp(8px, 2cqw, 14px);
+  display: inline-flex; align-items: center; gap: 6px; border: 0; cursor: pointer;
+  background: rgba(255,255,255,0.95); color: #20223A;
+  font-weight: 800; font-size: clamp(11px, 2.6cqw, 13px);
+  padding: clamp(8px,1.8cqw,11px) clamp(13px,2.6cqw,18px); border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.28);
+  // Never wrap — dom-to-image capture resolves fonts slightly wider than the
+  // live page, which broke the label onto two lines in shared PNGs.
+  white-space: nowrap;
+  ion-icon { font-size: 1.05em; }
+}
+
+// ── COVER (kpi) ─────────────────────────────────────────────────────────────
+.pc-stat {
+  display: flex; align-items: baseline; gap: clamp(5px, 1.6cqw, 10px);
+  margin-top: auto; flex-wrap: wrap;
+}
+.pc-num {
+  font-size: clamp(40px, 15cqw, 90px);
+  font-weight: 900; letter-spacing: -0.035em; line-height: 0.92;
+  text-shadow: 0 3px 24px rgba(0,0,0,0.4);
+  // A number must never break across lines — belt-and-braces for the PNG
+  // capture clone, where font metrics can drift from the live render.
+  white-space: nowrap;
+}
+.pc-unit { font-size: clamp(12px, 3.4cqw, 22px); font-weight: 800; opacity: 0.82; white-space: nowrap; }
+.pc-delta {
+  display: inline-flex; align-items: center; gap: 2px;
+  font-size: clamp(10px, 2.6cqw, 14px); font-weight: 800;
+  padding: 3px 8px; border-radius: 999px; align-self: center;
+  background: rgba(255,120,120,0.22); color: #ffbcbc;
+  &.up { background: rgba(120,240,180,0.2); color: #b6f5cf; }
+  ion-icon { font-size: 1em; }
+}
+.pc-stat-lbl {
+  font-size: clamp(10px, 2.4cqw, 14px); opacity: 0.78; font-weight: 600;
+  margin-top: 6px; max-width: 62%;
+}
+
+// Donut (kpi %)
+.pc-donut {
+  margin-top: auto; align-self: flex-start;
+  position: relative; width: clamp(88px, 34cqw, 168px); aspect-ratio: 1;
+  display: grid; place-items: center;
+  svg { width: 100%; height: 100%; }
+  .pc-ring-bg { stroke: rgba(255,255,255,0.18); }
+  .pc-ring { stroke: #ffffff; filter: drop-shadow(0 0 6px rgba(255,255,255,0.5)); }
+}
+.pc-donut-c {
+  position: absolute; display: flex; flex-direction: column; align-items: center; text-align: center;
+  b { font-size: clamp(20px, 7cqw, 34px); font-weight: 900; letter-spacing: -0.02em; }
+  small { font-size: clamp(9px, 2.2cqw, 12px); opacity: 0.8; font-weight: 700; line-height: 1.2; max-width: 90px; }
+}
+
+// ── BARS / LEADERBOARD / ATLAS ──────────────────────────────────────────────
+.pc-bars { display: flex; flex-direction: column; gap: clamp(4px, 1.4cqw, 9px); margin-top: auto; max-width: 66%; }
+.pc-bar {
+  display: flex; align-items: center; gap: clamp(6px, 2cqw, 10px);
+  font-size: clamp(9.5px, 2.6cqw, 13px);
+}
+.pc-lbl {
+  flex: 0 0 clamp(46px, 20cqw, 120px); font-weight: 700; opacity: 0.94;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pc-track { flex: 1 1 auto; height: clamp(6px, 1.8cqw, 9px); border-radius: 5px; background: rgba(255,255,255,0.18); overflow: hidden; }
+.pc-track i {
+  display: block; height: 100%; width: var(--w, 0%); border-radius: 5px;
+  background: linear-gradient(90deg, #ffffff, rgba(255,255,255,0.72));
+}
+.pc-val { flex: none; font-weight: 800; font-variant-numeric: tabular-nums;
+  small { font-weight: 600; opacity: 0.7; } }
+
+.pc-list {
+  list-style: none; margin: auto 0 0; padding: 0;
+  display: flex; flex-direction: column; gap: clamp(4px, 1.4cqw, 9px);
+  li { display: flex; align-items: center; gap: 9px; font-size: clamp(11px, 3cqw, 15px); font-weight: 700; }
+}
+.pc-rank {
+  flex: none; width: clamp(18px, 5cqw, 26px); height: clamp(18px, 5cqw, 26px);
+  border-radius: 50%; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.24);
+  display: grid; place-items: center; font-size: 0.8em; font-weight: 900;
+}
+
+// ── DUEL (versus) ───────────────────────────────────────────────────────────
+.pc-duel { display: flex; align-items: center; justify-content: center; gap: clamp(8px, 3cqw, 22px); margin-top: auto; }
+.pc-side {
+  flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px;
+  .pc-side-em { font-size: clamp(26px, 9cqw, 54px); line-height: 1; }
+  b { font-size: clamp(18px, 6cqw, 40px); font-weight: 900; letter-spacing: -0.02em; }
+  .pc-side-lbl { font-size: clamp(9px, 2.4cqw, 13px); opacity: 0.82; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  &.win b { text-shadow: 0 0 16px rgba(255,255,255,0.5); }
+}
+.pc-vs {
+  flex: none; font-size: clamp(11px, 3cqw, 16px); font-weight: 900; opacity: 0.72;
+  padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+}
+.pc-splitbar {
+  height: clamp(6px, 1.6cqw, 9px); border-radius: 5px; margin-top: clamp(8px, 2cqw, 12px);
+  background: var(--accent, #6C5CE7); overflow: hidden; position: relative;
+  i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--w, 50%); background: rgba(255,255,255,0.92); }
+}
+
+// ── CHART ───────────────────────────────────────────────────────────────────
+.pc-chart {
+  margin-top: auto; width: 100%;
+  border-radius: 12px; padding: 4px 2px 0;
+  // flex:none — .pc-body is a flex column, and when the card's text is tall the
+  // chart (a flex item) was shrunk to ZERO height, so Chart.js rendered into a
+  // 0x0 canvas and the graph never appeared until something forced a resize.
+  flex: none;
+  canvas { display: block; }
+}
+.pc-empty { margin: auto 0 0; opacity: 0.65; font-size: 13px; }
+
+// ── STATEMENT (fact) — the title carries the card ───────────────────────────
+.pcard[data-treat="statement"] {
+  .pc-body { justify-content: center; }
+  .pc-title { font-size: clamp(20px, 7.4cqw, 46px); max-width: 88%; margin-top: clamp(6px, 2cqw, 14px); }
+  .pc-quip { font-size: clamp(12px, 3.4cqw, 18px); opacity: 0.86; margin-top: clamp(6px, 1.6cqw, 12px); }
+}
+
+
+// The premium card renders at its FINAL state — bars at their width, the donut
+// ring filled, the hero number crisp. (Mount-time CSS entrance animations proved
+// unreliable in this app's change-detection context — they could stick at their
+// start frame and hide the hero number / bars — so the card is static and always
+// fully legible. The "premium" is carried by the design, not an entrance.)
+.pc-track i { width: var(--w, 0%); }
+.pc-ring { stroke-dashoffset: 0; }

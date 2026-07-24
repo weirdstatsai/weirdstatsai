@@ -8,8 +8,8 @@
   display: flex;
   flex-direction: column;
   --accent: #6C5CE7;
-  --grad-from: #f5f3ff;
-  --grad-to: #ffffff;
+  --grad-from: #ece7ff;
+  --grad-to: #d9ccfb;
   background: linear-gradient(135deg, var(--grad-from), var(--grad-to));
   border-radius: 20px;
   border: 0.5px solid rgba(0,0,0,0.06);
