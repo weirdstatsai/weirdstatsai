@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { WeirdCard } from '../../models/weird-card.model';
+import { StoryPreset, presetForCard } from '../story-poster/story-poster.component';
 import { RankStyle } from '../cards/card-ranking/card-ranking.component';
 import { KpiStyle } from '../cards/card-kpi/card-kpi.component';
 import { TableStyle } from '../cards/card-table/card-table.component';
@@ -27,6 +28,10 @@ export class WeirdCardComponent {
   @Input() size: 'feed' | 'full' | 'alt' = 'feed';
   /** Offscreen capture frames pass false so no draw-on lands mid-flight. */
   @Input() animate = true;
+
+  /** Non-null for the three hand-designed Home cards — makes every list tile
+   *  render the same poster the detail page shows. */
+  get preset(): StoryPreset | null { return presetForCard(this.card); }
 
   // Whichever alternative style the owner picked (stored in uiMeta.selectedStyle
   // when they browsed alternatives on the card-detail page) is what the feed

@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { RouterModule, Routes } from '@angular/router';
 import { PricingPage } from './pricing.page';
@@ -7,7 +8,7 @@ import { PricingPage } from './pricing.page';
 const routes: Routes = [{ path: '', component: PricingPage }];
 
 @NgModule({
-  imports: [CommonModule, IonicModule, RouterModule.forChild(routes)],
+  imports: [CommonModule, FormsModule, IonicModule, RouterModule.forChild(routes)],
   declarations: [PricingPage],
 })
 export class PricingPageModule {}

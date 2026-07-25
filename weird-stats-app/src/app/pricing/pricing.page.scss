@@ -37,12 +37,25 @@
 }
 
 /* Plan grid */
+// Per-card auto-renew switch — a small row on the plan it controls.
+.card-renew {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin: 4px 0 4px; padding: 9px 12px; border-radius: 12px;
+  background: rgba(108, 92, 231, 0.06); border: 1px solid var(--line);
+  cursor: pointer;
+}
+.card-renew-label { font-size: 13px; font-weight: 700; color: var(--ink); }
+.card-renew ion-toggle {
+  --handle-background-checked: #fff;
+  padding: 0; min-height: 0; height: 24px;
+}
+
 .plans {
   display: grid; gap: 16px; align-items: stretch;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 900px; margin: 0 auto;
 }
-@media (max-width: 860px) { .plans { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 520px) { .plans { grid-template-columns: 1fr; } }
+@media (max-width: 780px) { .plans { grid-template-columns: 1fr; max-width: 420px; } }
 
 .plan {
   position: relative; background: var(--panel); border: 1px solid var(--line);

@@ -12,6 +12,7 @@ Three purchase options (Stripe Prices you create in the dashboard, wired via env
   monthly_auto  — recurring monthly subscription   ($9.99/mo)   STRIPE_PRICE_MONTHLY
   monthly_once  — one-time 30-day pass, no renewal  ($9.99)      STRIPE_PRICE_MONTHLY_ONCE
   yearly_auto   — recurring yearly subscription     ($100/yr)    STRIPE_PRICE_YEARLY
+  yearly_once   — one-time 365-day pass             ($100 once)  STRIPE_PRICE_YEARLY_ONCE
 
 Env vars (all required for billing to work; absent = billing endpoints 503):
   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
@@ -59,6 +60,7 @@ PLANS = {
     "monthly_auto": {"price_env": "STRIPE_PRICE_MONTHLY",      "mode": "subscription"},
     "monthly_once": {"price_env": "STRIPE_PRICE_MONTHLY_ONCE", "mode": "payment", "days": 30},
     "yearly_auto":  {"price_env": "STRIPE_PRICE_YEARLY",       "mode": "subscription"},
+    "yearly_once":  {"price_env": "STRIPE_PRICE_YEARLY_ONCE",  "mode": "payment", "days": 365},
 }
 
 
@@ -108,13 +110,19 @@ def _verify_bearer(request: Request) -> tuple[str, str]:
     endpoints must trust the token, never a client-sent uid."""
     from firebase_admin import auth as fb_auth
 
+    # firebase_admin init is lazy (inside _get_db). A billing request that lands
+    # on a fresh Cloud Run instance before any Firestore call would otherwise hit
+    # "default app does not exist" and 401 — so make sure the SDK is up first.
+    _db()
+
     header = request.headers.get("authorization", "")
     if not header.lower().startswith("bearer "):
         raise HTTPException(status_code=401, detail="Missing bearer token.")
     token = header.split(" ", 1)[1].strip()
     try:
         decoded = fb_auth.verify_id_token(token)
-    except Exception:
+    except Exception as e:
+        logger.warning(f"billing: token verify failed: {e}")
         raise HTTPException(status_code=401, detail="Invalid or expired token.")
     return decoded["uid"], decoded.get("email", "") or ""
 

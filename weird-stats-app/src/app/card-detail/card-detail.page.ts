@@ -13,6 +13,7 @@ import { WeirdCard, StoredStatCard, ACCENT_COLORS, gradientForAccent } from '../
 import { cardHasData } from '../shared/card-data.util';
 import { freezeCaptureLayout } from '../shared/capture.util';
 import { compressImage } from '../shared/image.util';
+import { StoryPreset, presetForCard } from '../shared/story-poster/story-poster.component';
 import { AuthService } from '../services/auth.service';
 import { TableStyle } from '../shared/cards/card-table/card-table.component';
 import { RankStyle, rankAltStylesFor } from '../shared/cards/card-ranking/card-ranking.component';
@@ -1234,47 +1235,10 @@ export class CardDetailPage implements OnInit {
   /** The hand-authored Home story card for the mosquito stat, reproduced EXACTLY
    *  (same copy, same four bars) so opening/sharing it matches Home 1:1.
    *  Values transcribed from home.page.html. */
-  private static readonly MOSQUITO_STORY = {
-    design: 'editorial' as const,
-    title: 'Mosquitoes kill more humans than sharks every year',
-    quip: 'Yep. Tiny, annoying, deadly.',
-    emoji: '🦟',
-    caption: 'Deaths per year (estimated)',
-    bars: [
-      { label: 'Mosquito', value: '725K+', pct: 100 },
-      { label: 'Human',    value: '475K+', pct: 66 },
-      { label: 'Snake',    value: '50K+',  pct: 12 },
-      { label: 'Shark',    value: '10K+',  pct: 4 },
-    ],
-  };
-
-  private static readonly OLD_AGE_STORY = {
-    design: 'cover' as const,
-    title: 'Only 11% of everyone who ever lived died of old age',
-    quip: "You're part of a very lucky 1 in 12.",
-    emoji: '🌍',
-    statValue: '1 in 12',
-    statLabel: 'lived to grow old',
-  };
-
-  private static readonly WATER_STORY = {
-    design: 'split' as const,
-    title: "Only about 2% of Earth's water is drinkable",
-    quip: 'Most of the blue planet, off the menu.',
-    donutPct: 2,
-    donutDeg: '30deg',          // decorative sweep, exactly as on Home
-    donutLabel: 'freshwater accessible',
-  };
-
-  /** The three hand-authored Home story cards, reproduced verbatim on the detail
-   *  page (and in the share PNG / OG image) so what opens matches Home 1:1.
-   *  Null for every other card — those keep their normal card. */
-  get storyPreset(): any | null {
-    const t = this.card?.title || '';
-    if (/mosquito/i.test(t)) return CardDetailPage.MOSQUITO_STORY;
-    if (/old age|age-related/i.test(t)) return CardDetailPage.OLD_AGE_STORY;
-    if (/freshwater|drinkable/i.test(t)) return CardDetailPage.WATER_STORY;
-    return null;
+  /** The Home-design preset for this card (or null) — shared with the feed
+   *  tiles (app-weird-card) so the list and the open card render identically. */
+  get storyPreset(): StoryPreset | null {
+    return presetForCard(this.card);
   }
 
   // ── Owner-uploaded background photo (fact cards) ─────────────────────────

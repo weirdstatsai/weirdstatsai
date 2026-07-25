@@ -288,7 +288,7 @@
     </div>
 
     <!-- Alternatives: map card (hidden when the rows can't render on the map) -->
-    <div class="alts-section" *ngIf="card.cardType === 'map' && !viewOnly && mapAltStyles.length > 0">
+    <div class="alts-section" *ngIf="card.cardType === 'map' && !viewOnly && mapAltStyles.length > 0 && !storyPreset">
       <p class="alts-label">Alternatives</p>
       <div class="alts-hscroll">
         <div class="rank-alt-wrap"
@@ -301,7 +301,7 @@
       </div>
     </div>
     <!-- Alternatives: versus card -->
-    <div class="alts-section" *ngIf="card.cardType === 'versus' && !viewOnly">
+    <div class="alts-section" *ngIf="card.cardType === 'versus' && !viewOnly && !storyPreset">
       <p class="alts-label">Alternatives</p>
       <div class="alts-hscroll">
         <div class="rank-alt-wrap"
@@ -314,7 +314,7 @@
       </div>
     </div>
     <!-- Alternatives: ranking card -->
-    <div class="alts-section" *ngIf="card.cardType === 'ranking' && !viewOnly">
+    <div class="alts-section" *ngIf="card.cardType === 'ranking' && !viewOnly && !storyPreset">
       <p class="alts-label">Alternatives</p>
       <div class="alts-hscroll">
         <div class="rank-alt-wrap"
@@ -327,7 +327,7 @@
       </div>
     </div>
     <!-- Alternatives: table card -->
-    <div class="alts-section" *ngIf="card.cardType === 'table' && !viewOnly">
+    <div class="alts-section" *ngIf="card.cardType === 'table' && !viewOnly && !storyPreset">
       <p class="alts-label">Alternatives</p>
       <div class="alts-hscroll">
         <div class="rank-alt-wrap"
@@ -340,7 +340,7 @@
       </div>
     </div>
     <!-- Alternatives: chart card -->
-    <div class="alts-section" *ngIf="card.cardType === 'chart' && !viewOnly">
+    <div class="alts-section" *ngIf="card.cardType === 'chart' && !viewOnly && !storyPreset">
       <p class="alts-label">Alternatives</p>
       <div class="alts-row">
         <div
@@ -362,7 +362,7 @@
       </div>
     </div>
     <!-- Alternatives: fact card (fixed layouts) -->
-    <div class="alts-section" *ngIf="card.cardType === 'fact' && !viewOnly">
+    <div class="alts-section" *ngIf="card.cardType === 'fact' && !viewOnly && !storyPreset">
       <p class="alts-label">Style</p>
       <div class="alts-hscroll">
         <div class="rank-alt-wrap"
@@ -379,7 +379,7 @@
          styles are gone with the light cards). Selecting persists
          uiMeta.selectedStyle ('story-*'), which the hero, feed tiles, share PNG
          and OG image all resolve, so one pick restyles the card everywhere. -->
-    <div class="alts-section" *ngIf="storyAltStyles.length > 1 && !viewOnly && card.cardType === 'kpi'">
+    <div class="alts-section" *ngIf="storyAltStyles.length > 1 && !viewOnly && card.cardType === 'kpi' && !storyPreset">
       <p class="alts-label">Alternatives</p>
       <div class="alts-hscroll">
         <div class="rank-alt-wrap"
@@ -396,7 +396,7 @@
     <!-- Edit panel — one panel for EVERY card type now that the premium story
          card is the only card: accent, badge, hero emoji and the background
          photo all apply to it regardless of cardType. -->
-    <div class="edit-panel" *ngIf="!viewOnly">
+    <div class="edit-panel" *ngIf="!viewOnly && !storyPreset">
       <p class="edit-label">Accent color</p>
       <div class="swatches">
         <button

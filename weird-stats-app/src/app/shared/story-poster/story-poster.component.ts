@@ -5,6 +5,50 @@ import { rowsHaveMetric } from '../card-data.util';
 
 export type PosterDesign = 'editorial' | 'cover' | 'split';
 
+export interface StoryPreset {
+  design: PosterDesign;
+  title: string; quip: string; emoji?: string; caption?: string;
+  bars?: Array<{ label: string; value: string; pct: number }>;
+  statValue?: string; statLabel?: string;
+  donutPct?: number; donutLabel?: string; donutDeg?: string;
+}
+
+/** The three hand-authored Home story cards, verbatim from home.page.html.
+ *  Rendered wherever their card appears — feed tiles, detail hero, share PNG,
+ *  OG image — so the pretty Home design is what shows everywhere for these. */
+export const STORY_PRESETS: ReadonlyArray<{ match: RegExp; preset: StoryPreset }> = [
+  { match: /mosquito/i, preset: {
+      design: 'editorial',
+      title: 'Mosquitoes kill more humans than sharks every year',
+      quip: 'Yep. Tiny, annoying, deadly.', emoji: '🦟',
+      caption: 'Deaths per year (estimated)',
+      bars: [
+        { label: 'Mosquito', value: '725K+', pct: 100 },
+        { label: 'Human',    value: '475K+', pct: 66 },
+        { label: 'Snake',    value: '50K+',  pct: 12 },
+        { label: 'Shark',    value: '10K+',  pct: 4 },
+      ],
+  } },
+  { match: /old age|age-related/i, preset: {
+      design: 'cover',
+      title: 'Only 11% of everyone who ever lived died of old age',
+      quip: "You're part of a very lucky 1 in 12.", emoji: '🌍',
+      statValue: '1 in 12', statLabel: 'lived to grow old',
+  } },
+  { match: /freshwater|drinkable/i, preset: {
+      design: 'split',
+      title: "Only about 2% of Earth's water is drinkable",
+      quip: 'Most of the blue planet, off the menu.',
+      donutPct: 2, donutDeg: '30deg', donutLabel: 'freshwater accessible',
+  } },
+];
+
+/** The Home-design preset for a card, or null if it isn't one of the three. */
+export function presetForCard(card: { title?: string } | undefined): StoryPreset | null {
+  const t = card?.title || '';
+  return STORY_PRESETS.find(p => p.match.test(t))?.preset ?? null;
+}
+
 /**
  * The three hand-designed "Today's weird stories" treatments, rebuilt as a real
  * component so the SAME cards can be opened and SHARED (detail hero + share PNG

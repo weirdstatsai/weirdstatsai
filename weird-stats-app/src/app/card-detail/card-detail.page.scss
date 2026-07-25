@@ -473,7 +473,10 @@ $alt-tile-w: min(45vw, 190px);
   flex: 0 0 $alt-tile-w;
   height: calc(#{$alt-tile-w} * 4 / 3);
   cursor: pointer;
-  border-radius: 16px;
+  // Match the inner card's own radius (.pcard = 20px) so the selection ring
+  // and the wrap clip hug the card corners exactly — a 16px wrap left a 4px
+  // sliver of page background poking out at each rounded corner.
+  border-radius: 20px;
   opacity: 0.6;
   transition: opacity 0.15s ease, box-shadow 0.15s ease;
   overflow: hidden;
@@ -492,9 +495,12 @@ $alt-tile-w: min(45vw, 190px);
     display: block;
     flex: 1;
     min-height: 0;
-    border-radius: 16px;
+    border-radius: 20px;
     overflow: hidden;
   }
+  // The premium card paints its own surface — pin its radius to the wrap so the
+  // ring, the clip and the surface all coincide.
+  ::ng-deep app-story-card .pcard { border-radius: 20px; }
 
   &.selected {
     opacity: 1;

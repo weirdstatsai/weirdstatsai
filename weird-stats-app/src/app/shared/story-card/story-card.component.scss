@@ -112,6 +112,19 @@
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
 }
 
+// Feed tiles have a fixed 3:4 height, which left a big void between the title
+// and the bottom stat. Two light touches: show the quip (2 lines) under the
+// title to fill the top of the gap, and lift the bottom stat a LITTLE off the
+// edge (extra bottom padding) — it stays anchored low, just not glued down.
+.pcard.feed {
+  .pc-quip {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+    margin-top: 5px;
+  }
+  // Keeps the viz's margin-top:auto (bottom-anchored); this only raises it a bit.
+  .pc-body { padding-bottom: clamp(26px, 9cqw, 46px); }
+}
+
 // ── Compact: full chrome (quip + CTA) inside a short fixed frame ─────────────
 // Used by the Home stories deck. Everything tightens so no treatment overflows
 // and gets clipped: shorter title/quip, tighter padding and gaps.

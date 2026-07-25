@@ -19,7 +19,9 @@
     </span>
 
     <p class="pc-title">{{ view.title }}</p>
-    <p class="pc-quip" *ngIf="view.quip && size==='full'">{{ view.quip }}</p>
+    <!-- Show the quip on feed tiles too (a couple of lines) — it fills the gap
+         between the title and the bottom stat. Hidden only on tiny alt thumbs. -->
+    <p class="pc-quip" *ngIf="view.quip && size!=='alt'">{{ view.quip }}</p>
 
     <ng-container [ngSwitch]="view.treatment">
 

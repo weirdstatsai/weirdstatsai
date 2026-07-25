@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 /** The three purchase options — must match the backend `PLANS` keys. */
-export type BillingPlan = 'monthly_auto' | 'monthly_once' | 'yearly_auto';
+export type BillingPlan = 'monthly_auto' | 'monthly_once' | 'yearly_auto' | 'yearly_once';
 
 /**
  * Client half of the Stripe flow: it only ever asks the backend for a hosted

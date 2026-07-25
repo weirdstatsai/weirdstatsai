@@ -4,11 +4,10 @@ import { BillingService, BillingPlan } from '../services/billing.service';
 import { MembershipService } from '../services/membership.service';
 
 interface PaidPlan {
-  id: BillingPlan;
+  base: 'monthly' | 'yearly';
   name: string;
   price: string;
   period: string;
-  note: string;
   badge?: string;
   featured?: boolean;
 }
@@ -21,16 +20,36 @@ interface PaidPlan {
 export class PricingPage implements OnInit {
   isPremium = false;
   loading: BillingPlan | null = null;
-  selected: 'free' | BillingPlan = 'monthly_auto';
+  selected: 'free' | 'monthly' | 'yearly' = 'monthly';
+  /** Per-card auto-renew choice, made HERE on the page (Stripe fixes the
+   *  checkout mode per session, so it can't be toggled inside Stripe's own
+   *  page). ON → a recurring subscription; OFF → a one-time pass. Each card
+   *  owns its own switch so the choice sits next to the price it controls. */
+  //  Monthly can auto-renew (toggle); the Yearly plan is a one-time annual
+  //  pass only — no auto-renew — so it stays false and shows no toggle.
+  autoRenew: Record<'monthly' | 'yearly', boolean> = { monthly: true, yearly: false };
 
   readonly paid: PaidPlan[] = [
-    { id: 'monthly_auto', name: 'Monthly', price: '$9.99', period: '/mo',
-      note: 'Auto-renews monthly. Cancel anytime.', badge: 'Popular', featured: true },
-    { id: 'yearly_auto', name: 'Yearly', price: '$100', period: '/yr',
-      note: 'Auto-renews yearly — 2 months free.', badge: 'Best value' },
-    { id: 'monthly_once', name: '30-day pass', price: '$9.99', period: 'once',
-      note: 'One 30-day pass. No auto-renew.' },
+    { base: 'monthly', name: 'Monthly', price: '$9.99', period: '/mo', badge: 'Popular', featured: true },
+    { base: 'yearly',  name: 'Yearly',  price: '$100',  period: '/yr', badge: 'Best value' },
   ];
+
+  /** Resolve a card + its toggle into the actual Stripe plan key. */
+  planId(base: 'monthly' | 'yearly'): BillingPlan {
+    return `${base}_${this.autoRenew[base] ? 'auto' : 'once'}` as BillingPlan;
+  }
+
+  /** Sub-line under the price, reflecting that card's renew choice. */
+  noteFor(base: 'monthly' | 'yearly'): string {
+    if (this.autoRenew[base]) {
+      return base === 'monthly'
+        ? 'Auto-renews monthly. Cancel anytime.'
+        : 'Auto-renews yearly — 2 months free.';
+    }
+    return base === 'monthly'
+      ? 'One-time — 30 days of Premium, no auto-renew.'
+      : 'One-time — a full year of Premium, no auto-renew.';
+  }
 
   readonly compare: Array<{ label: string; free: string; premium: string }> = [
     { label: 'Stat cards per day', free: '3', premium: 'Unlimited' },

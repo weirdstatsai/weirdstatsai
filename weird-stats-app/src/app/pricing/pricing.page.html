@@ -36,22 +36,34 @@
         <button class="btn ghost" (click)="back()">Keep using Free</button>
       </div>
 
-      <!-- Paid options -->
+      <!-- Paid: Monthly / Yearly. The auto-renew toggle above decides whether
+           each is a subscription or a one-time pass at checkout. -->
       <div class="plan" *ngFor="let p of paid" [class.featured]="p.featured"
-           [class.selected]="selected === p.id" (click)="selected = p.id">
+           [class.selected]="selected === p.base" (click)="selected = p.base">
         <span class="ribbon" *ngIf="p.badge">{{ p.badge }}</span>
         <p class="plan-name">{{ p.name }}</p>
-        <div class="price"><span class="amt">{{ p.price }}</span><span class="per">{{ p.period }}</span></div>
-        <p class="plan-note">{{ p.note }}</p>
+        <div class="price">
+          <span class="amt">{{ p.price }}</span>
+          <span class="per">{{ autoRenew[p.base] ? p.period : 'once' }}</span>
+        </div>
+        <p class="plan-note">{{ noteFor(p.base) }}</p>
+
+        <!-- Auto-renew switch — Monthly only. The Yearly plan is a one-time
+             annual pass, so it never shows the toggle. ON = subscription. -->
+        <label class="card-renew" *ngIf="!isPremium && p.base === 'monthly'" (click)="$event.stopPropagation()">
+          <span class="card-renew-label">Auto-renew</span>
+          <ion-toggle [(ngModel)]="autoRenew[p.base]" [attr.aria-label]="'Auto-renew ' + p.name"></ion-toggle>
+        </label>
+
         <ul class="feats">
           <li><ion-icon name="checkmark"></ion-icon> <b>Unlimited</b> stat cards</li>
           <li><ion-icon name="checkmark"></ion-icon> Watermark-free sharing</li>
           <li><ion-icon name="checkmark"></ion-icon> Keep cards private</li>
         </ul>
-        <button *ngIf="!isPremium" class="btn primary" [class.loading]="loading === p.id"
-                [disabled]="loading" (click)="choose(p.id)">
-          <ion-spinner *ngIf="loading === p.id" name="dots"></ion-spinner>
-          <span *ngIf="loading !== p.id">Choose {{ p.name }}</span>
+        <button *ngIf="!isPremium" class="btn primary" [class.loading]="loading === planId(p.base)"
+                [disabled]="loading" (click)="choose(planId(p.base))">
+          <ion-spinner *ngIf="loading === planId(p.base)" name="dots"></ion-spinner>
+          <span *ngIf="loading !== planId(p.base)">Choose {{ p.name }}</span>
         </button>
         <button *ngIf="isPremium" class="btn ghost" (click)="manage()">Manage subscription</button>
       </div>

@@ -13,7 +13,7 @@ export interface UserPlan {
   totalGenerated: number;          // lifetime total
   planChosenAt: string | null;     // ISO date — when they chose a plan
   // Set ONLY by the Stripe webhook (backend, Admin SDK). Never client-written.
-  planType?: 'monthly_auto' | 'monthly_once' | 'yearly_auto';
+  planType?: 'monthly_auto' | 'monthly_once' | 'yearly_auto' | 'yearly_once';
   autoRenew?: boolean;
   subscriptionId?: string | null;
   stripeCustomerId?: string;

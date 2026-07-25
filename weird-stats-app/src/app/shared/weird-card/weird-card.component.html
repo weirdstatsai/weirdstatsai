@@ -1,5 +1,9 @@
-<app-card-kpi *ngIf="renderChartAsComparison" [card]="comparisonCard" [size]="size" kpiStyle="comparison"></app-card-kpi>
-<ng-container *ngIf="!renderChartAsComparison" [ngSwitch]="card.cardType">
+<!-- The three hand-designed Home cards render as their poster EVERYWHERE (feed
+     tiles included) so the list matches the open card 1:1. -->
+<app-story-poster *ngIf="preset" [card]="card" [preset]="preset"></app-story-poster>
+
+<app-card-kpi *ngIf="!preset && renderChartAsComparison" [card]="comparisonCard" [size]="size" kpiStyle="comparison"></app-card-kpi>
+<ng-container *ngIf="!preset && !renderChartAsComparison" [ngSwitch]="card.cardType">
   <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" [size]="size" [rankStyle]="rankStyle"></app-card-ranking>
   <!-- KPI is the one type kept on the premium story card (it reads far better
        as a big hero number); every other type uses its original light card. -->
