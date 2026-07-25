@@ -11,10 +11,12 @@
   padding: 14px 14px 14px;
   position: relative;
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: box-shadow 0.18s ease;
   word-break: break-word;
 
-  &:active { transform: scale(0.98); }
+  // No button-press scale on tap — stat cards should open, not depress like a
+  // button (matches the premium story cards, which never press). The feed tile
+  // handles any tap feedback at the wrapper level.
   &.full {
     box-shadow: none;
     border: none;

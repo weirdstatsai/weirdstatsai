@@ -31,6 +31,18 @@ The seven types and when to use them:
 Priority when several could fit: versus > map > chart > table/ranking (by row count) > kpi > fact.
 Country rows beat a "top N" phrasing: "top 5 countries by X" is "map", not "ranking".
 "By state/district/province" questions imply MANY rows -> usually "table".
+BREAKDOWN rule (a "by <group>" split is many buckets, not one number): a question that splits
+ONE quantity across the buckets of a NON-geographic category — "X by age group", "by gender /
+religion / income bracket / education level", "distribution of X", "breakdown of X by Y",
+"share of X by <group>" — is answered by the WHOLE set of buckets, so it is NEVER "kpi" and
+NEVER "fact", even when phrased "how many" or "what share", and even if the DATA section only
+surfaced one bucket (one figure there is a research gap, not a KPI — the question's shape
+decides the type). Pick by bucket shape: ordered/comparable bands whose order matters (age
+bands, income brackets, education levels) -> "chart" (a bar chart of the buckets); an unordered
+list of named buckets -> "ranking" (5 or fewer) or "table" (6+). Carve-outs are unchanged: "by
+country" -> "map", "by state/province/district" -> "table", and a demographic split (by
+gender/age) is a BREAKDOWN, not "versus" ("versus" is two independently named rival entities
+like "Ronaldo vs Messi").
 
 If a DATA section from research is provided, trust it for the row shape: count the rows and
 check whether the row labels are geographic. If it shows a time series, prefer "chart".
@@ -49,6 +61,10 @@ Q: "Most common pet names" -> {"cardType": "ranking"}
 Q: "Top 10 programming languages by popularity" -> {"cardType": "table"}
 Q: "How many legs does a millipede have?" -> {"cardType": "kpi"}
 Q: "What share of Germany's energy is renewable?" -> {"cardType": "kpi"}
+Q: "Members of Parliament in India by age group" -> {"cardType": "chart"}
+Q: "How many members of parliament does India have?" -> {"cardType": "kpi"}
+Q: "US household income distribution by bracket" -> {"cardType": "chart"}
+Q: "World population by religion" -> {"cardType": "table"}
 Q: "iPhone vs Samsung: who sells more phones?" -> {"cardType": "versus"}
 Q: "Average sleep hours by country" -> {"cardType": "map"}
 Q: "Biggest mobile carriers in India" -> {"cardType": "ranking"}
@@ -144,6 +160,17 @@ Method:
   all countries" or give two examples; actually list them, ordered highest first. NEVER use
   placeholder names ("Country A"). Never invent values for countries the source doesn't
   cover; list only real figures with their real country names.
+* CATEGORY BREADTH / DISTRIBUTION: when the question asks for a BREAKDOWN of one population
+  across its OWN groups — "by age group", "by gender", "by religion", "by income bracket",
+  "by education level", "distribution of X", "breakdown of X by <category>", "share of X by
+  <group>" — the answer is the WHOLE set of buckets, NOT one bucket. Find a source that
+  reports every bucket and TRANSCRIBE it: write each bucket and its number in DATA, one per
+  line as "Bucket: value" (e.g. every age band — "Under 40: 12", "40-49: 88", "50-59: 210",
+  "60-69: 190", "70+: 45" — never just "60+: 214"), covering ALL buckets the source lists so
+  they sum to the whole. Order ordered categories by their natural order (age bands ascending,
+  income low->high); order unordered categories highest value first. Give at least 2 buckets,
+  ideally every one the source reports; NEVER report a single bucket and stop — one bucket
+  collapses a breakdown into a misleading single number downstream.
 
 Safety:
 * Do not research harmful, private, invasive, or illegal metrics.
@@ -251,8 +278,12 @@ Every card MUST carry the data its cardType renders. Before you finalize, check:
 If the brief does NOT give you enough to fill the chosen type, DO NOT return an empty card.
 Instead pick the type you CAN fill from what the brief actually contains: if you have no
 series/rows but one clear number, make it "kpi"; if you have only a qualitative finding,
-make it "fact". A correct simpler card always beats a hollow "chart"/"ranking" shell. Never
-output labels/datasets/rows that are empty for the type you selected.
+make it "fact". EXCEPTION: this down-collapse to "kpi" is ONLY for a genuinely single-number
+brief — if the brief lists TWO OR MORE comparable category buckets (an "X by <group>"
+breakdown or distribution), build the full "chart"/"ranking"/"table" of ALL the buckets and
+NEVER shrink it to a "kpi" about one bucket. A correct simpler card always beats a hollow
+"chart"/"ranking" shell. Never output labels/datasets/rows that are empty for the type you
+selected.
 
 ROW-COUNT RULE (strict): if rows has more than 5 items AND cardType is NOT "map",
 cardType MUST be "table" and presentationType "top-10" or "top-25".

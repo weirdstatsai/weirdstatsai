@@ -417,28 +417,34 @@
           (click)="setBadge(b)">{{ b }}</button>
       </div>
 
-      <p class="edit-label">Hero emoji</p>
-      <div class="emoji-edit-row">
-        <input class="emoji-input" type="text" maxlength="16" placeholder="🙂"
-               [value]="card.uiMeta.icon || ''"
-               (change)="setIcon($any($event.target).value)"
-               aria-label="Hero emoji" />
-        <span class="emoji-hint">The AI picks one — fix it here if it got the subject wrong.</span>
-      </div>
+      <!-- Hero emoji + background photo don't apply to chart cards — the chart IS
+           the visual, so an emoji or photo behind it only clutters it (and the
+           light chart card ignores the photo entirely). Both are hidden for
+           cardType 'chart'; accent + badge still apply. -->
+      <ng-container *ngIf="card.cardType !== 'chart'">
+        <p class="edit-label">Hero emoji</p>
+        <div class="emoji-edit-row">
+          <input class="emoji-input" type="text" maxlength="16" placeholder="🙂"
+                 [value]="card.uiMeta.icon || ''"
+                 (change)="setIcon($any($event.target).value)"
+                 aria-label="Hero emoji" />
+          <span class="emoji-hint">The AI picks one — fix it here if it got the subject wrong.</span>
+        </div>
 
-      <p class="edit-label">Background photo</p>
-      <div class="img-edit-row">
-        <img class="img-thumb" *ngIf="card.uiMeta.heroImage" [src]="card.uiMeta.heroImage" alt="Background photo preview">
-        <button class="img-upload-btn" (click)="heroImgInput.click()" [disabled]="isUploadingImage">
-          <ion-spinner name="crescent" *ngIf="isUploadingImage"></ion-spinner>
-          <span *ngIf="!isUploadingImage">{{ card.uiMeta.heroImage ? 'Replace photo' : 'Upload photo' }}</span>
-        </button>
-        <button class="img-remove-btn" *ngIf="card.uiMeta.heroImage && !isUploadingImage" (click)="removeHeroImage()" aria-label="Remove photo">
-          <ion-icon name="trash-outline"></ion-icon>
-        </button>
-        <input #heroImgInput type="file" accept="image/*" hidden (change)="uploadHeroImage($event)">
-      </div>
-      <span class="img-edit-hint">Fills the card behind the text — the emoji steps aside when a photo is set.</span>
+        <p class="edit-label">Background photo</p>
+        <div class="img-edit-row">
+          <img class="img-thumb" *ngIf="card.uiMeta.heroImage" [src]="card.uiMeta.heroImage" alt="Background photo preview">
+          <button class="img-upload-btn" (click)="heroImgInput.click()" [disabled]="isUploadingImage">
+            <ion-spinner name="crescent" *ngIf="isUploadingImage"></ion-spinner>
+            <span *ngIf="!isUploadingImage">{{ card.uiMeta.heroImage ? 'Replace photo' : 'Upload photo' }}</span>
+          </button>
+          <button class="img-remove-btn" *ngIf="card.uiMeta.heroImage && !isUploadingImage" (click)="removeHeroImage()" aria-label="Remove photo">
+            <ion-icon name="trash-outline"></ion-icon>
+          </button>
+          <input #heroImgInput type="file" accept="image/*" hidden (change)="uploadHeroImage($event)">
+        </div>
+        <span class="img-edit-hint">Fills the card behind the text — the emoji steps aside when a photo is set.</span>
+      </ng-container>
     </div>
 
   </ng-container>

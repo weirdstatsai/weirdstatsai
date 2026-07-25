@@ -146,10 +146,24 @@ export class ChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   private chart?: Chart;
   private ro?: ResizeObserver;
 
-  constructor(private zone: NgZone) {}
+  constructor(private zone: NgZone, private host: ElementRef<HTMLElement>) {}
+
+  /** Pin BOTH the host and the canvas to the requested height. Chart.js
+   *  (responsive + maintainAspectRatio:false) sizes the canvas to its PARENT's
+   *  box; if the parent — this host — has no explicit height, it derives its
+   *  height from the canvas, a circular dependency that intermittently collapses
+   *  the canvas to ~0px. That left the 2nd+ chart in a row blank (the card-detail
+   *  "Alternatives" previews) and could blank a chart after a scroll-driven
+   *  resize(). An explicit host height breaks the cycle so every instance keeps
+   *  its intended size. */
+  private applyHeight(): void {
+    const h = `${this.height}px`;
+    this.host.nativeElement.style.height = h;
+    if (this.canvasRef) this.canvasRef.nativeElement.style.height = h;
+  }
 
   ngAfterViewInit(): void {
-    this.canvasRef.nativeElement.style.height = `${this.height}px`;
+    this.applyHeight();
     requestAnimationFrame(() => this.render());
     // A card can be laid out at ZERO size (tile still off-screen / parent not
     // sized yet). Chart.js measures once at construction, so it would render
@@ -169,6 +183,7 @@ export class ChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['height'] && !changes['height'].firstChange) this.applyHeight();
     if (changes['config'] && !changes['config'].firstChange) {
       this.destroy();
       setTimeout(() => this.render(), 0);
