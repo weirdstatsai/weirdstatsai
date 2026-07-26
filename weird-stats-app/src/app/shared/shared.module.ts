@@ -7,6 +7,7 @@ import { ChartComponent } from './chart/chart.component';
 import { LoginComponent } from '../login/login.component';
 import { MiniChartComponent } from './mini-chart/mini-chart.component';
 import { EmojiPickerComponent } from './emoji-picker/emoji-picker.component';
+import { ImageAdjustComponent } from './image-adjust/image-adjust.component';
 import { WeirdCardComponent } from './weird-card/weird-card.component';
 import { CardBadgesComponent } from './card-badges/card-badges.component';
 
@@ -45,6 +46,7 @@ const CARD_COMPONENTS = [
     LoginComponent,
     MiniChartComponent,
     EmojiPickerComponent,
+    ImageAdjustComponent,
     WeirdCardComponent,
     CardBadgesComponent,
     PlanModalComponent,
@@ -60,6 +62,7 @@ const CARD_COMPONENTS = [
     LoginComponent,
     MiniChartComponent,
     EmojiPickerComponent,
+    ImageAdjustComponent,
     WeirdCardComponent,
     CardBadgesComponent,
     PlanModalComponent,

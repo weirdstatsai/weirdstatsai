@@ -12,6 +12,7 @@ import { environment } from '../../environments/environment';
 import { WeirdCard, StoredStatCard, ACCENT_COLORS, CardSurface, cardSurfaceOf, gradientForAccent, premiumGradientForAccent, isHexColor } from '../models/weird-card.model';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.component';
+import { ImageAdjustComponent } from '../shared/image-adjust/image-adjust.component';
 import { cardHasData } from '../shared/card-data.util';
 import { freezeCaptureLayout } from '../shared/capture.util';
 import { compressImage } from '../shared/image.util';
@@ -1341,6 +1342,21 @@ export class CardDetailPage implements OnInit {
    *  save its URL on uiMeta.heroImage — the fact card layers it softly under
    *  the text (or full-strength in the split panel). Storage rules require an
    *  authenticated owner, so guests get the sign-in prompt. */
+  /** Show the pan/zoom framing step. Resolves to the framed JPEG, or null when
+   *  the user cancels (which must abort the whole upload). */
+  private async adjustHeroImage(file: File): Promise<Blob | null> {
+    // Deliberately NOT a sheet modal: with breakpoints, Ionic's drag-to-dismiss
+    // gesture swallows a downward drag on the content, so panning the photo down
+    // closed the dialog instead of moving the image.
+    const modal = await this.modalCtrl.create({
+      component: ImageAdjustComponent,
+      componentProps: { file },
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss();
+    return data instanceof Blob ? data : null;
+  }
+
   async uploadHeroImage(ev: Event): Promise<void> {
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -1352,9 +1368,17 @@ export class CardDetailPage implements OnInit {
     if (!uid) { this.promptSignIn(); return; }
     const cardId = this.storedCard?.id;
     if (!cardId) { this.toast('Save the card first, then add a photo.'); return; }
+    // Let the owner frame the shot first — the card crops to a wide frame, so an
+    // unadjusted portrait photo would otherwise land on whatever the centre crop
+    // happened to catch. Returns a baked JPEG, or null if they backed out.
+    const framed = await this.adjustHeroImage(file);
+    if (!framed) return;
+
     this.isUploadingImage = true;
     try {
-      const blob = await compressImage(file);          // ≤1200px JPEG, ~150-250 KB
+      // Already downsized + framed by the adjuster; this just enforces the
+      // ceiling (and re-encodes if the adjuster was skipped).
+      const blob = await compressImage(framed, 1400);
       const path = `card-media/${uid}/${cardId}`;
       const ref = this.storage.ref(path);
       // Immutable cache: replacements go to the same path but a new download
