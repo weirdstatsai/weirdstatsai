@@ -10,7 +10,7 @@ const domtoimage = require('dom-to-image-more');
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { WeirdCard, StoredStatCard, ACCENT_COLORS, CardSurface, cardSurfaceOf, gradientForAccent, premiumGradientForAccent, isHexColor } from '../models/weird-card.model';
-import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
+import { PlanModalComponent, planModalOptions } from '../shared/plan-modal/plan-modal.component';
 import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.component';
 import { ImageAdjustComponent } from '../shared/image-adjust/image-adjust.component';
 import { cardHasData } from '../shared/card-data.util';
@@ -1340,10 +1340,7 @@ export class CardDetailPage implements OnInit {
    *  backgrounds are a Premium perk; free cards stay on the clean light look. */
   async promptGradientUpgrade(): Promise<void> {
     const modal = await this.modalCtrl.create({
-      component: PlanModalComponent,
-      componentProps: { mode: 'upgrade' },
-      breakpoints: [0, 1], initialBreakpoint: 1,
-      handle: false,
+      ...planModalOptions('upgrade'),
     });
     await modal.present();
     // If they upgraded in the sheet, refresh premium state so the swatches unlock.

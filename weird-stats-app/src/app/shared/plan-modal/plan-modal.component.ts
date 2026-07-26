@@ -1,9 +1,29 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ModalController, ToastController } from '@ionic/angular';
+import { ModalController, ModalOptions, ToastController } from '@ionic/angular';
 import { MembershipService } from '../../services/membership.service';
 import { BillingService, BillingPlan } from '../../services/billing.service';
 
 type PlanId = 'free' | BillingPlan;
+
+export type PlanModalMode = 'onboard' | 'limit' | 'upgrade';
+
+/**
+ * Modal options for the plan sheet — the single place that decides how it is
+ * presented. A bottom sheet reads right on a phone, but on desktop Ionic
+ * positions a sheet by transform against the full viewport height, which left it
+ * stranded as a tall phone-width column overflowing the bottom of the screen.
+ * At >=768px it becomes a plain modal instead, which `.ws-plan-modal` in
+ * global.scss then centres as an auto-height card.
+ */
+export function planModalOptions(mode: PlanModalMode): ModalOptions {
+  const phone = typeof window === 'undefined' || window.innerWidth < 768;
+  return {
+    component: PlanModalComponent,
+    componentProps: { mode },
+    cssClass: 'ws-plan-modal',
+    ...(phone ? { breakpoints: [0, 1], initialBreakpoint: 1, handle: false } : {}),
+  };
+}
 
 interface PlanOption {
   id: PlanId;

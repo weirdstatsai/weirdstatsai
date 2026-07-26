@@ -10,7 +10,7 @@ import { AuthService } from '../services/auth.service';
 import { MembershipService } from '../services/membership.service';
 import { ProjectService } from '../services/project.service';
 import { Project } from '../models/project.model';
-import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
+import { PlanModalComponent, planModalOptions } from '../shared/plan-modal/plan-modal.component';
 
 @Component({
   selector: 'app-project-generate',
@@ -90,10 +90,7 @@ export class ProjectGeneratePage implements OnInit, OnDestroy {
     const canGenerate = await this.membership.canGenerate();
     if (!canGenerate) {
       const modal = await this.modalCtrl.create({
-        component: PlanModalComponent,
-        componentProps: { mode: 'limit' },
-        breakpoints: [0, 1], initialBreakpoint: 1,
-        handle: false,
+        ...planModalOptions('limit'),
       });
       await modal.present();
       await modal.onWillDismiss();

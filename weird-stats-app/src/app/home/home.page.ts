@@ -7,7 +7,7 @@ import { Subscription, firstValueFrom, of, switchMap } from 'rxjs';
 import { StoredStatCard } from '../models/weird-card.model';
 import { MembershipService, UsageInfo } from '../services/membership.service';
 import { EmojiService } from '../services/emoji.service';
-import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
+import { PlanModalComponent, planModalOptions } from '../shared/plan-modal/plan-modal.component';
 
 const SUGGESTIONS = [
   'Which country drinks the most coffee?',
@@ -299,10 +299,7 @@ export class HomePage implements OnInit, OnDestroy, AfterViewInit {
     const hasChosen = await this.membership.hasChosenPlan();
     if (!hasChosen) {
       const modal = await this.modalCtrl.create({
-        component: PlanModalComponent,
-        componentProps: { mode: 'onboard' },
-        breakpoints: [0, 1], initialBreakpoint: 1,
-        handle: false,
+        ...planModalOptions('onboard'),
       });
       await modal.present();
       await modal.onWillDismiss();
@@ -313,10 +310,7 @@ export class HomePage implements OnInit, OnDestroy, AfterViewInit {
     const canGenerate = await this.membership.canGenerate();
     if (!canGenerate) {
       const modal = await this.modalCtrl.create({
-        component: PlanModalComponent,
-        componentProps: { mode: 'limit' },
-        breakpoints: [0, 1], initialBreakpoint: 1,
-        handle: false,
+        ...planModalOptions('limit'),
       });
       await modal.present();
       await modal.onWillDismiss();
@@ -330,10 +324,7 @@ export class HomePage implements OnInit, OnDestroy, AfterViewInit {
 
   async openUpgrade(): Promise<void> {
     const modal = await this.modalCtrl.create({
-      component: PlanModalComponent,
-      componentProps: { mode: 'upgrade' },
-      breakpoints: [0, 1], initialBreakpoint: 1,
-      handle: false,
+      ...planModalOptions('upgrade'),
     });
     await modal.present();
     await modal.onWillDismiss();

@@ -14,7 +14,7 @@ import { AppConfigService } from '../services/app-config.service';
 import { MembershipService } from '../services/membership.service';
 import { AdminService } from '../services/admin.service';
 import { DraftService } from '../services/draft.service';
-import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
+import { PlanModalComponent, planModalOptions } from '../shared/plan-modal/plan-modal.component';
 import { TableStyle } from '../shared/cards/card-table/card-table.component';
 import { StoryVariant, storyAltsFor, asStoryVariant } from '../shared/story-card/story-view';
 import { EmojiService } from '../services/emoji.service';
@@ -211,10 +211,7 @@ export class ProfilePage implements OnInit, OnDestroy {
   async openProjectsUpgrade(ev?: Event): Promise<void> {
     ev?.stopPropagation();
     const modal = await this.modalCtrl.create({
-      component: PlanModalComponent,
-      componentProps: { mode: 'upgrade' },
-      breakpoints: [0, 1], initialBreakpoint: 1,
-      handle: false,
+      ...planModalOptions('upgrade'),
     });
     await modal.present();
     await modal.onWillDismiss();
@@ -298,10 +295,7 @@ export class ProfilePage implements OnInit, OnDestroy {
 
     // Free users see the upgrade sheet first.
     const modal = await this.modalCtrl.create({
-      component: PlanModalComponent,
-      componentProps: { mode: 'limit' },
-      breakpoints: [0, 1], initialBreakpoint: 1,
-      handle: false,
+      ...planModalOptions('limit'),
     });
     await modal.present();
     const { data } = await modal.onWillDismiss();

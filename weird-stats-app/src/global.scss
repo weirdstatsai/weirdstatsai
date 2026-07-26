@@ -411,7 +411,8 @@ $desktop-content-max: 1280px;
 // max-width/margin resets these inherit the global "stay phone-width" rule above
 // and render off-centre with their content clipped.
 @media (min-width: 768px) {
-  ion-modal.ws-picker-modal {
+  ion-modal.ws-picker-modal,
+  ion-modal.ws-plan-modal {
     max-width: none !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
@@ -424,7 +425,8 @@ $desktop-content-max: 1280px;
 
   // Ionic's documented recipe for an auto-height modal — the wrapper otherwise
   // stretches to fill --height and the card floats in a tall empty box.
-  ion-modal.ws-picker-modal .ion-page {
+  ion-modal.ws-picker-modal .ion-page,
+  ion-modal.ws-plan-modal .ion-page {
     position: relative;
     contain: content;
     max-height: 86vh;
