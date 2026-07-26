@@ -406,6 +406,32 @@ $desktop-content-max: 1280px;
   }
 }
 
+// Emoji picker + photo adjuster — same treatment as the login modal: a centered
+// card on tablet/desktop instead of a phone-width full-height panel. Without the
+// max-width/margin resets these inherit the global "stay phone-width" rule above
+// and render off-centre with their content clipped.
+@media (min-width: 768px) {
+  ion-modal.ws-picker-modal {
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    --width: 480px !important;
+    --height: auto !important;
+    --max-height: 86vh !important;
+    --border-radius: 24px !important;
+    --box-shadow: 0 24px 70px rgba(20,20,43,0.28), 0 4px 16px rgba(0,0,0,0.08) !important;
+  }
+
+  // Ionic's documented recipe for an auto-height modal — the wrapper otherwise
+  // stretches to fill --height and the card floats in a tall empty box.
+  ion-modal.ws-picker-modal .ion-page {
+    position: relative;
+    contain: content;
+    max-height: 86vh;
+    overflow-y: auto;
+  }
+}
+
 // ── Floating centered "New project" modal ───────────────────────────────────
 ion-modal.project-modal {
   --width: 86%;

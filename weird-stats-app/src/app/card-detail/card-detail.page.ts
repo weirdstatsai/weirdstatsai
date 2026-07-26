@@ -448,6 +448,18 @@ export class CardDetailPage implements OnInit {
 
   private pendingState?: { card?: StoredStatCard; prompt?: string; fromSaved?: boolean; viewOnly?: boolean; isAdminView?: boolean; returnUrl?: string };
 
+  /**
+   * Tear down anything modal before the page goes away. Ionic only auto-dismisses
+   * on hardware back, so a browser/in-app Back left the emoji picker (or the photo
+   * adjuster) floating over the next screen with no way to close it. Loops because
+   * dismissing the top one can reveal another beneath.
+   */
+  async ionViewWillLeave(): Promise<void> {
+    for (let top = await this.modalCtrl.getTop(); top; top = await this.modalCtrl.getTop()) {
+      await top.dismiss();
+    }
+  }
+
   ionViewWillEnter(): void {
     const state = this.pendingState ?? (history.state as { card?: StoredStatCard; prompt?: string; fromSaved?: boolean; viewOnly?: boolean; isAdminView?: boolean; returnUrl?: string } | undefined);
     this.pendingState = undefined;
@@ -1377,6 +1389,7 @@ export class CardDetailPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: ImageAdjustComponent,
       componentProps: { file },
+      cssClass: 'ws-picker-modal',
     });
     await modal.present();
     const { data } = await modal.onWillDismiss();
@@ -1446,8 +1459,10 @@ export class CardDetailPage implements OnInit {
         mode: 'all',
         allowClear: true,
       },
-      breakpoints: [0, 1], initialBreakpoint: 1,
-      handle: false,
+      // A plain modal, not a sheet: the app centres modals at >=600px, and the
+      // sheet's own transform positioning fought those overrides on desktop
+      // (the panel sat off-centre with its tabs clipped).
+      cssClass: 'ws-picker-modal',
     });
     await modal.present();
     const { data } = await modal.onWillDismiss();
