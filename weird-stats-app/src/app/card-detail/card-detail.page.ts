@@ -9,7 +9,7 @@ import { ActionSheetController, AlertController, ToastController, LoadingControl
 const domtoimage = require('dom-to-image-more');
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { WeirdCard, StoredStatCard, ACCENT_COLORS, CardSurface, cardSurfaceOf, gradientForAccent, premiumGradientForAccent, isHexColor } from '../models/weird-card.model';
+import { WeirdCard, StoredStatCard, ACCENT_COLORS, CardSurface, cardSurfaceOf, gradientForAccent, premiumGradientForAccent, isHexColor, SHADOW_DEFAULT } from '../models/weird-card.model';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 import { cardHasData } from '../shared/card-data.util';
 import { freezeCaptureLayout } from '../shared/capture.util';
@@ -1278,6 +1278,34 @@ export class CardDetailPage implements OnInit {
   previewGradient(hex: string): void {
     if (!this.card || !this.isPremium || !isHexColor(hex)) return;
     this.applyGradient(hex);
+  }
+
+  // ── Premium: card shadow depth ───────────────────────────────────────────
+  /** Current shadow setting (0–100); SHADOW_DEFAULT when never adjusted. */
+  get shadowValue(): number {
+    const v = this.card?.uiMeta?.shadow;
+    return typeof v === 'number' && isFinite(v) ? v : SHADOW_DEFAULT;
+  }
+
+  /** Live repaint while the slider is dragged — no write per frame. */
+  previewShadow(value: string | number): void {
+    if (!this.card || !this.isPremium) return;
+    this.applyShadow(value);
+  }
+
+  /** Commit the shadow depth (slider released / stepped). */
+  setShadow(value: string | number): void {
+    if (!this.card) return;
+    if (!this.isPremium) { this.promptGradientUpgrade(); return; }
+    this.applyShadow(value);
+    this.persistCardEdits();
+  }
+
+  private applyShadow(value: string | number): void {
+    if (!this.card) return;
+    const n = Math.min(100, Math.max(0, Math.round(Number(value))));
+    if (!isFinite(n)) return;
+    this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, shadow: n } };
   }
 
   /** Shared in-memory repaint for a gradient in `hex` (no persistence). */

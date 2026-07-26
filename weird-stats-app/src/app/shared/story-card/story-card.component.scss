@@ -16,7 +16,15 @@
   background:
     radial-gradient(125% 100% at 80% 30%, var(--pg-glow, rgba(233,120,88,0.55)), transparent 60%),
     linear-gradient(150deg, var(--pg-from, #241241) 0%, var(--pg-mid, #3a2168) 50%, var(--pg-to, #6d3b8e) 100%);
-  box-shadow: 0 2px 4px rgba(20,22,31,0.10), 0 28px 50px -22px rgba(20,22,31,0.65);
+  // Shadow depth is owner-adjustable (premium): --sh scales every length AND the
+  // alpha, so 0 removes the shadow completely and 2 doubles it, with no jump at
+  // the extremes. Defaults to 1 = the stock depth.
+  --sh: 1;
+  // Alpha is capped so the deepest setting stays a shadow rather than a solid
+  // black slab (0.65 × 2 would clamp to fully opaque).
+  box-shadow:
+    0 calc(2px * var(--sh)) calc(4px * var(--sh)) rgba(20,22,31, min(0.2, calc(0.10 * var(--sh)))),
+    0 calc(28px * var(--sh)) calc(50px * var(--sh)) calc(-22px * var(--sh)) rgba(20,22,31, min(0.8, calc(0.65 * var(--sh))));
   isolation: isolate;
 }
 // COLOUR surface: the same card in ONE flat basic colour — no multi-stop
@@ -44,7 +52,9 @@
   background: #ffffff;
   color: #16172a;
   border: 1px solid rgba(20,22,45,0.09);
-  box-shadow: 0 2px 4px rgba(20,22,31,0.06), 0 22px 44px -26px rgba(20,22,31,0.42);
+  box-shadow:
+    0 calc(2px * var(--sh)) calc(4px * var(--sh)) rgba(20,22,31, calc(0.06 * var(--sh))),
+    0 calc(22px * var(--sh)) calc(44px * var(--sh)) calc(-26px * var(--sh)) rgba(20,22,31, calc(0.42 * var(--sh)));
 
   // The dark legibility wash exists to rescue white text over the emoji — on a
   // white plate it would just dirty the card.
