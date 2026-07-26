@@ -613,6 +613,33 @@ $alt-tile-w: min(45vw, 190px);
   &.active { border-color: #1a1a2e; transform: scale(1.08); }
 }
 
+// "Any colour" swatch — a rainbow chip wrapping a hidden native colour input.
+.grad-custom {
+  position: relative;
+  display: grid; place-items: center;
+  cursor: pointer;
+  // Rainbow so it reads as "any colour", with the current pick filling the
+  // centre once the member has chosen one.
+  background:
+    radial-gradient(circle at 50% 50%, var(--custom-hex, transparent) 0 34%, transparent 36%),
+    conic-gradient(#ff5f6d, #ffc371, #47e08b, #38b6ff, #8b5cf6, #ff5f6d);
+  color: #fff;
+  ion-icon {
+    font-size: 15px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.45));
+    pointer-events: none;
+  }
+}
+// The native input covers the chip so a tap anywhere opens the picker, but it
+// stays invisible (opacity 0 rather than display:none, which would stop some
+// browsers from opening it at all).
+.grad-custom-input {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  opacity: 0; border: 0; padding: 0;
+  cursor: pointer;
+}
+
 .grad-lockwrap {
   position: relative;
   display: inline-block;

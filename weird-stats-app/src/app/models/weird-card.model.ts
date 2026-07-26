@@ -57,11 +57,15 @@ export const ACCENT_GRADIENTS: Record<string, { from: string; to: string }> = {
   '#BA7517': { from: '#fbeecb', to: '#f6dfa6' }, // amber
 };
 
-/** The card background gradient for an accent hex (case-insensitive), falling
- *  back to the violet default for anything off-palette. */
+/** The light card-background tint for an accent hex (case-insensitive). The five
+ *  presets keep their hand-picked tints; a custom (premium) colour gets a soft
+ *  wash derived from it, so light surfaces track the chosen hue too. Defined
+ *  below `derivePremiumGradient`'s helpers — see `deriveLightTint`. */
 export function gradientForAccent(hex: string | undefined): { from: string; to: string } {
   const key = ACCENT_COLORS.find(c => c.toLowerCase() === (hex || '').toLowerCase());
-  return ACCENT_GRADIENTS[key ?? ACCENT_COLORS[0]];
+  if (key) return ACCENT_GRADIENTS[key];
+  const norm = normalizeHex(hex);
+  return norm ? deriveLightTint(norm) : ACCENT_GRADIENTS[ACCENT_COLORS[0]];
 }
 
 /**
@@ -79,10 +83,84 @@ export const PREMIUM_GRADIENTS: Record<string, { from: string; mid: string; to: 
   '#BA7517': { from: '#241a05', mid: '#63420c', to: '#a6781a', glow: 'rgba(255,196,92,0.50)' },  // warm amber
 };
 
-/** The premium (dark) background for an accent hex, falling back to violet. */
+// ── Arbitrary-colour support ────────────────────────────────────────────────
+// Premium members aren't limited to the five presets: they can pick ANY colour,
+// so a gradient has to be derivable from an arbitrary hex rather than looked up.
+
+/** True for a well-formed `#rgb` / `#rrggbb` string. */
+export function isHexColor(hex: string | undefined): boolean {
+  return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test((hex || '').trim());
+}
+
+/** Normalise `#abc` → `#aabbcc` (lower-case); '' when not a hex. */
+export function normalizeHex(hex: string | undefined): string {
+  const h = (hex || '').trim().toLowerCase();
+  if (!isHexColor(h)) return '';
+  return h.length === 4 ? '#' + [...h.slice(1)].map(c => c + c).join('') : h;
+}
+
+function hexToHsl(hex: string): { h: number; s: number; l: number } {
+  const h = normalizeHex(hex) || '#6c5ce7';
+  const r = parseInt(h.slice(1, 3), 16) / 255;
+  const g = parseInt(h.slice(3, 5), 16) / 255;
+  const b = parseInt(h.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (!d) return { h: 0, s: 0, l };
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let hue: number;
+  if (max === r) hue = ((g - b) / d + (g < b ? 6 : 0));
+  else if (max === g) hue = (b - r) / d + 2;
+  else hue = (r - g) / d + 4;
+  return { h: hue * 60, s, l };
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const hh = ((h % 360) + 360) % 360;
+  const ss = Math.min(1, Math.max(0, s));
+  const ll = Math.min(1, Math.max(0, l));
+  const c = (1 - Math.abs(2 * ll - 1)) * ss;
+  const x = c * (1 - Math.abs(((hh / 60) % 2) - 1));
+  const m = ll - c / 2;
+  const seg = Math.floor(hh / 60) % 6;
+  const rgb = [[c,x,0],[x,c,0],[0,c,x],[0,x,c],[x,0,c],[c,0,x]][seg];
+  const to255 = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, '0');
+  return `#${to255(rgb[0])}${to255(rgb[1])}${to255(rgb[2])}`;
+}
+
+/**
+ * Build the deep three-stop card gradient for ANY colour, shaped like the
+ * hand-tuned presets: a near-black base at the chosen hue, a mid tone, and a
+ * lighter, slightly hue-rotated top, plus a bright same-hue bloom. Saturation is
+ * floored so greys still read as a colour and capped so neons don't vibrate.
+ */
+export function derivePremiumGradient(hex: string): { from: string; mid: string; to: string; glow: string } {
+  const { h, s } = hexToHsl(hex);
+  const sat = Math.min(0.86, Math.max(0.42, s));
+  return {
+    from: hslToHex(h - 5, sat * 0.95, 0.10),
+    mid:  hslToHex(h,     sat * 0.92, 0.25),
+    to:   hslToHex(h + 9, sat * 0.82, 0.42),
+    glow: `hsla(${Math.round(((h + 12) % 360 + 360) % 360)}, ${Math.round(sat * 100)}%, 64%, 0.5)`,
+  };
+}
+
+/** Soft light wash for an arbitrary colour — the light-surface counterpart of
+ *  `derivePremiumGradient` (used by the OG/share backdrops and light cards). */
+export function deriveLightTint(hex: string): { from: string; to: string } {
+  const { h, s } = hexToHsl(hex);
+  const sat = Math.min(0.62, Math.max(0.22, s));
+  return { from: hslToHex(h, sat * 0.55, 0.94), to: hslToHex(h + 6, sat * 0.7, 0.87) };
+}
+
+/** The premium (dark) background for an accent hex. The five presets keep their
+ *  hand-tuned values; any other colour is derived (premium custom colours). */
 export function premiumGradientForAccent(hex: string | undefined): { from: string; mid: string; to: string; glow: string } {
   const key = ACCENT_COLORS.find(c => c.toLowerCase() === (hex || '').toLowerCase());
-  return PREMIUM_GRADIENTS[key ?? ACCENT_COLORS[0]];
+  if (key) return PREMIUM_GRADIENTS[key];
+  const norm = normalizeHex(hex);
+  return norm ? derivePremiumGradient(norm) : PREMIUM_GRADIENTS[ACCENT_COLORS[0]];
 }
 
 /**
@@ -101,10 +179,13 @@ export const SOLID_CARD_COLORS: Record<string, string> = {
   '#BA7517': '#BA7517', // amber
 };
 
-/** The flat card colour for an accent hex, falling back to violet. */
+/** The flat card colour for an accent hex. Off-palette values are used as-is
+ *  (premium custom colours), so the card wears exactly the colour that was
+ *  picked; only an unparseable value falls back to violet. */
 export function solidColorForAccent(hex: string | undefined): string {
   const key = ACCENT_COLORS.find(c => c.toLowerCase() === (hex || '').toLowerCase());
-  return SOLID_CARD_COLORS[key ?? ACCENT_COLORS[0]];
+  if (key) return SOLID_CARD_COLORS[key];
+  return normalizeHex(hex) || SOLID_CARD_COLORS[ACCENT_COLORS[0]];
 }
 
 /**

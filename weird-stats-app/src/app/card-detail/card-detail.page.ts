@@ -9,7 +9,7 @@ import { ActionSheetController, AlertController, ToastController, LoadingControl
 const domtoimage = require('dom-to-image-more');
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { WeirdCard, StoredStatCard, ACCENT_COLORS, CardSurface, cardSurfaceOf, gradientForAccent, premiumGradientForAccent } from '../models/weird-card.model';
+import { WeirdCard, StoredStatCard, ACCENT_COLORS, CardSurface, cardSurfaceOf, gradientForAccent, premiumGradientForAccent, isHexColor } from '../models/weird-card.model';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 import { cardHasData } from '../shared/card-data.util';
 import { freezeCaptureLayout } from '../shared/capture.util';
@@ -1259,6 +1259,30 @@ export class CardDetailPage implements OnInit {
   setGradient(hex: string): void {
     if (!this.card) return;
     if (!this.isPremium) { this.promptGradientUpgrade(); return; }
+    this.applyGradient(hex);
+    this.persistCardEdits();
+  }
+
+  /** True when the card is on a gradient in a colour outside the five presets —
+   *  i.e. the member picked their own. Highlights the custom swatch. */
+  get isCustomGradient(): boolean {
+    const hex = (this.card?.uiMeta?.accentColor || '').toLowerCase();
+    return this.cardSurface === 'gradient'
+      && isHexColor(hex)
+      && !ACCENT_COLORS.some(c => c.toLowerCase() === hex);
+  }
+
+  /** Live preview while the colour picker is being dragged — repaints the card
+   *  without writing, so a drag can't fire a Firestore write per frame. The
+   *  commit (`change`) calls setGradient and persists once. */
+  previewGradient(hex: string): void {
+    if (!this.card || !this.isPremium || !isHexColor(hex)) return;
+    this.applyGradient(hex);
+  }
+
+  /** Shared in-memory repaint for a gradient in `hex` (no persistence). */
+  private applyGradient(hex: string): void {
+    if (!this.card) return;
     const grad = gradientForAccent(hex);
     this.card = {
       ...this.card,
@@ -1270,7 +1294,6 @@ export class CardDetailPage implements OnInit {
         cardSurface: 'gradient',
       },
     };
-    this.persistCardEdits();
   }
 
   /** Free users tapping "Choose gradients" → the upgrade plan sheet. Gradient

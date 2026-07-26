@@ -429,6 +429,21 @@
               [attr.tabindex]="isPremium ? null : -1"
               (click)="setGradient(hex)"
               [attr.aria-label]="'Gradient ' + hex"></button>
+
+            <!-- Any colour: opens the OS colour picker (full spectrum on mobile,
+                 eyedropper in desktop Chrome). `input` previews live while the
+                 user drags; `change` commits the single write. -->
+            <label class="swatch grad-swatch grad-custom"
+                   [class.active]="isCustomGradient"
+                   [style.--custom-hex]="card.uiMeta.accentColor"
+                   [attr.aria-label]="'Custom gradient colour'">
+              <input type="color" class="grad-custom-input"
+                     [value]="card.uiMeta.accentColor || '#6C5CE7'"
+                     [attr.tabindex]="isPremium ? null : -1"
+                     (input)="previewGradient($any($event.target).value)"
+                     (change)="setGradient($any($event.target).value)">
+              <ion-icon name="color-palette"></ion-icon>
+            </label>
           </div>
           <!-- Frosted overlay: blurs the swatches it covers, so they read as a
                real (but locked) premium option rather than a disabled row. -->
