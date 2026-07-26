@@ -9,7 +9,8 @@ import { ActionSheetController, AlertController, ToastController, LoadingControl
 const domtoimage = require('dom-to-image-more');
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { WeirdCard, StoredStatCard, ACCENT_COLORS, gradientForAccent } from '../models/weird-card.model';
+import { WeirdCard, StoredStatCard, ACCENT_COLORS, gradientForAccent, premiumGradientForAccent } from '../models/weird-card.model';
+import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 import { cardHasData } from '../shared/card-data.util';
 import { freezeCaptureLayout } from '../shared/capture.util';
 import { compressImage } from '../shared/image.util';
@@ -453,11 +454,10 @@ export class CardDetailPage implements OnInit {
     this.returnUrl = state?.returnUrl ?? '';
     this.fromGenerate = false;
 
-    // View-only cards show inline share — watermark hidden for premium users
-    if (this.viewOnly) {
-      this.isPremium = false;
-      this.membership.isPremium().then((p) => (this.isPremium = p)).catch(() => {});
-    }
+    // Resolve premium once per entry: gates BOTH the share watermark (view-only)
+    // and the premium gradient option in the owner's edit panel.
+    this.isPremium = false;
+    this.membership.isPremium().then((p) => (this.isPremium = p)).catch(() => {});
 
     if (state?.fromSaved) this.isSaved = true;
 
@@ -1204,8 +1204,9 @@ export class CardDetailPage implements OnInit {
 
   setAccent(hex: string): void {
     if (!this.card) return;
-    // Persist the accent + its matching tint (shared palette) so the stored
-    // gradient stays in sync for the OG image and any non-derived readers.
+    // Accent = the card's COLOR (hue) only — it applies to BOTH the light and the
+    // gradient treatment and NEVER changes which one is active. So a premium
+    // member can recolor their gradient card without losing the gradient.
     const grad = gradientForAccent(hex);
     this.card = {
       ...this.card,
@@ -1217,6 +1218,43 @@ export class CardDetailPage implements OnInit {
       },
     };
     this.persistCardEdits();
+  }
+
+  // ── Premium KPI gradient background ──────────────────────────────────────
+  /** CSS for the gradient preview (matches the story-card's .pcard fill). */
+  gradientSwatchCss(hex: string): string {
+    const g = premiumGradientForAccent(hex);
+    return `radial-gradient(120% 100% at 80% 25%, ${g.glow}, transparent 60%), `
+      + `linear-gradient(150deg, ${g.from} 0%, ${g.mid} 50%, ${g.to} 100%)`;
+  }
+
+  /** Premium toggle: layer the dark GRADIENT treatment on/off over the card's
+   *  current accent — independent of the colour, so it survives recolouring.
+   *  Free members are sent to the upgrade sheet instead. */
+  toggleGradient(): void {
+    if (!this.card) return;
+    if (!this.isPremium) { this.promptGradientUpgrade(); return; }
+    const on = !this.card.uiMeta?.useGradient;
+    this.card = {
+      ...this.card,
+      uiMeta: { ...this.card.uiMeta, useGradient: on },
+    };
+    this.persistCardEdits();
+  }
+
+  /** Free users tapping "Choose gradients" → the upgrade plan sheet. Gradient
+   *  backgrounds are a Premium perk; free cards stay on the clean light look. */
+  async promptGradientUpgrade(): Promise<void> {
+    const modal = await this.modalCtrl.create({
+      component: PlanModalComponent,
+      componentProps: { mode: 'upgrade' },
+      breakpoints: [0, 1], initialBreakpoint: 1,
+      handle: false,
+    });
+    await modal.present();
+    // If they upgraded in the sheet, refresh premium state so the swatches unlock.
+    await modal.onWillDismiss();
+    this.membership.isPremium().then((p) => (this.isPremium = p)).catch(() => {});
   }
 
   setBadge(badge: string): void {

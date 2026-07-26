@@ -5,8 +5,8 @@
 <app-card-kpi *ngIf="!preset && renderChartAsComparison" [card]="comparisonCard" [size]="size" kpiStyle="comparison"></app-card-kpi>
 <ng-container *ngIf="!preset && !renderChartAsComparison" [ngSwitch]="card.cardType">
   <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" [size]="size" [rankStyle]="rankStyle"></app-card-ranking>
-  <!-- KPI is the one type kept on the premium story card (it reads far better
-       as a big hero number); every other type uses its original light card. -->
+  <!-- KPI keeps the premium story-card DESIGN for everyone; only the COLORATION
+       differs (solid by default, gradient for premium — see uiMeta.useGradient). -->
   <app-story-card   *ngSwitchCase="'kpi'"     [card]="card" [size]="size"></app-story-card>
   <app-card-versus  *ngSwitchCase="'versus'"  [card]="card" [size]="size" [versusStyle]="versusStyle"></app-card-versus>
   <app-card-fact    *ngSwitchCase="'fact'"    [card]="card" [size]="size" [factStyle]="factStyle"></app-card-fact>

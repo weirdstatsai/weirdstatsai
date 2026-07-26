@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
-import { WeirdCard, premiumGradientForAccent } from '../../models/weird-card.model';
+import { WeirdCard, premiumGradientForAccent, solidColorForAccent } from '../../models/weird-card.model';
 import { GraphConfig } from '../../models/graph.model';
 import { buildStoryView, StoryView, StoryVariant, asStoryVariant, fmtNum } from './story-view';
 
@@ -29,6 +29,10 @@ export class StoryCardComponent implements OnChanges {
    *  shorter chart. For fixed short frames like the Home stories deck, where
    *  the full 8-bar / 12-row / 220px-chart treatments would overflow and clip. */
   @Input() compact = false;
+  /** Always paint the premium gradient regardless of the card's own
+   *  `uiMeta.useGradient` — for curated showcase surfaces (the Home deck) and
+   *  the edit panel's gradient preview. */
+  @Input() forceGradient = false;
   /** "See the full story" CTA tapped. Live views wire this (card-detail scrolls
    *  to the story block); offscreen capture frames leave it unbound — there the
    *  button is a visual invitation to open the shared link. */
@@ -40,6 +44,11 @@ export class StoryCardComponent implements OnChanges {
   pgMid = '#3a2168';
   pgTo = '#6d3b8e';
   pgGlow = 'rgba(233,120,88,0.55)';
+  /** Flat colour used when this card isn't on the premium gradient. */
+  pgSolid = '#3a2168';
+  /** True = paint the premium multi-stop gradient; false = the flat colour.
+   *  Same card design either way — only the coloration differs. */
+  gradientOn = false;
   chartConfig?: GraphConfig;
 
   ngOnChanges(): void {
@@ -53,6 +62,11 @@ export class StoryCardComponent implements OnChanges {
     this.pgMid = g.mid;
     this.pgTo = g.to;
     this.pgGlow = g.glow;
+    this.pgSolid = solidColorForAccent(this.accent);
+    // Coloration is the ONLY premium difference: gradient when the owner opted
+    // in (premium-gated in the edit panel) or on forced showcase surfaces,
+    // otherwise the flat colour. Structure/design is identical either way.
+    this.gradientOn = this.forceGradient || !!this.card?.uiMeta?.useGradient;
     this.chartConfig = this.view.treatment === 'chart' ? this.buildChartConfig() : undefined;
   }
 

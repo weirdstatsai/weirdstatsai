@@ -408,6 +408,26 @@
           [attr.aria-label]="hex"></button>
       </div>
 
+      <!-- KPI gradient background — a premium perk layered on the chosen accent.
+           The clean light card is the free default. Accent (above) is the colour;
+           this toggle only flips the gradient treatment on/off, so recolouring
+           never loses the gradient. Free users get an upgrade link instead. -->
+      <ng-container *ngIf="card.cardType === 'kpi'">
+        <p class="edit-label">Gradient <span class="premium-tag">Premium</span></p>
+        <button class="grad-toggle" *ngIf="isPremium"
+                [class.active]="card.uiMeta.useGradient"
+                [style.background]="gradientSwatchCss(card.uiMeta.accentColor)"
+                (click)="toggleGradient()">
+          <span class="grad-toggle-label">{{ card.uiMeta.useGradient ? 'Gradient on' : 'Use gradient' }}</span>
+          <ion-icon [name]="card.uiMeta.useGradient ? 'checkmark-circle' : 'add-circle-outline'"></ion-icon>
+        </button>
+        <button class="gradient-upsell" *ngIf="!isPremium" (click)="promptGradientUpgrade()">
+          <ion-icon name="sparkles-outline"></ion-icon>
+          <span>Choose gradients</span>
+          <span class="gradient-upsell-tag">Premium</span>
+        </button>
+      </ng-container>
+
       <p class="edit-label">Badge</p>
       <div class="badge-chips">
         <button

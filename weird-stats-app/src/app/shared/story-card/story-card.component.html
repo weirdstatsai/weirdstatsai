@@ -1,7 +1,8 @@
 <div class="pcard" *ngIf="view"
      [class.full]="size==='full'" [class.feed]="size!=='full'" [class.compact]="compact"
-     [attr.data-treat]="view.treatment"
-     [style.--accent]="accent" [style.--pg-from]="pgFrom" [style.--pg-mid]="pgMid" [style.--pg-to]="pgTo" [style.--pg-glow]="pgGlow">
+     [attr.data-treat]="view.treatment" [class.pc-flat]="!gradientOn"
+     [style.--accent]="accent" [style.--pg-from]="pgFrom" [style.--pg-mid]="pgMid" [style.--pg-to]="pgTo" [style.--pg-glow]="pgGlow"
+     [style.--pg-solid]="pgSolid">
 
   <!-- Owner-uploaded background photo — full-bleed under the scrim. Takes the
        emoji's place when present (no crossorigin: display must not depend on

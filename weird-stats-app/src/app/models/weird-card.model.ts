@@ -85,6 +85,27 @@ export function premiumGradientForAccent(hex: string | undefined): { from: strin
   return PREMIUM_GRADIENTS[key ?? ACCENT_COLORS[0]];
 }
 
+/**
+ * FLAT (non-gradient) card colours — the standard, free coloration for the same
+ * premium card DESIGN. One deep, solid tone per accent, sampled from the middle
+ * of each premium gradient so the white text/donut chrome keeps identical
+ * contrast. Premium members can switch a card to the multi-stop gradient
+ * (`uiMeta.useGradient`); everything else about the card is unchanged.
+ */
+export const SOLID_CARD_COLORS: Record<string, string> = {
+  '#6C5CE7': '#3a2168', // violet
+  '#378ADD': '#1b2560', // navy
+  '#1D9E75': '#0d5640', // emerald
+  '#D85A30': '#722e14', // terracotta
+  '#BA7517': '#5d3f0c', // amber
+};
+
+/** The flat card colour for an accent hex, falling back to violet. */
+export function solidColorForAccent(hex: string | undefined): string {
+  const key = ACCENT_COLORS.find(c => c.toLowerCase() === (hex || '').toLowerCase());
+  return SOLID_CARD_COLORS[key ?? ACCENT_COLORS[0]];
+}
+
 export interface CardMetric {
   name: string;
   unit: string;
@@ -120,6 +141,11 @@ export interface CardUiMeta {
   mapStyles?: string[];
   selectedStyle?: string;
   factFontSize?: 'small' | 'medium' | 'large';
+  /** KPI cards only: opt IN to the premium dark GRADIENT treatment (app-story-card).
+   *  Default/undefined = the free light card (app-card-kpi). Set by the owner in the
+   *  edit panel and gated to premium members; persisted so the card renders the same
+   *  on every surface (feed, detail, captures, share). */
+  useGradient?: boolean;
   /** Owner-uploaded background photo (Storage download URL) — layers softly
    *  under the card content; fills the panel on the fact split style. Set
    *  client-side only (card-detail edit panel), never by the backend. */

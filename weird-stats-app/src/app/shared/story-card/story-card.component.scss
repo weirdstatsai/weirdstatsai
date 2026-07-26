@@ -19,6 +19,11 @@
   box-shadow: 0 2px 4px rgba(20,22,31,0.10), 0 28px 50px -22px rgba(20,22,31,0.65);
   isolation: isolate;
 }
+// FREE / standard coloration: the same card in ONE flat colour (no multi-stop
+// gradient, no accent bloom). Premium switches it back to the gradient above via
+// uiMeta.useGradient — design, layout and chrome are identical either way.
+.pcard.pc-flat { background: var(--pg-solid, #3a2168); }
+
 .full .pcard, .pcard.full { min-height: 300px; border-radius: 22px; }
 
 // Desktop detail: keep the hero a compact landscape banner (it was taking up
