@@ -11,6 +11,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { WeirdCard, StoredStatCard, ACCENT_COLORS, CardSurface, cardSurfaceOf, gradientForAccent, premiumGradientForAccent, isHexColor } from '../models/weird-card.model';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
+import { EmojiPickerComponent } from '../shared/emoji-picker/emoji-picker.component';
 import { cardHasData } from '../shared/card-data.util';
 import { freezeCaptureLayout } from '../shared/capture.util';
 import { compressImage } from '../shared/image.util';
@@ -1380,6 +1381,29 @@ export class CardDetailPage implements OnInit {
     }
     this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, heroImage: '', heroImagePath: '' } };
     this.persistCardEdits();
+  }
+
+  /** Open the full emoji catalogue for the card's hero emoji. Replaces the old
+   *  free-text field, which required the user to already have an emoji on their
+   *  clipboard/keyboard and silently rejected anything that wasn't one. */
+  async pickIcon(): Promise<void> {
+    if (!this.card) return;
+    const modal = await this.modalCtrl.create({
+      component: EmojiPickerComponent,
+      componentProps: {
+        current: this.card.uiMeta?.icon || null,
+        title: 'Choose an emoji',
+        mode: 'all',
+        allowClear: true,
+      },
+      breakpoints: [0, 1], initialBreakpoint: 1,
+      handle: false,
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss();
+    // null = dismissed without choosing; '' = explicit "No emoji".
+    if (data === null || data === undefined) return;
+    this.setIcon(data);
   }
 
   setIcon(value: string): void {

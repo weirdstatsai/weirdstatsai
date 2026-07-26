@@ -470,11 +470,11 @@
       <ng-container *ngIf="card.cardType !== 'chart'">
         <p class="edit-label">Hero emoji</p>
         <div class="emoji-edit-row">
-          <input class="emoji-input" type="text" maxlength="16" placeholder="🙂"
-                 [value]="card.uiMeta.icon || ''"
-                 (change)="setIcon($any($event.target).value)"
-                 aria-label="Hero emoji" />
-          <span class="emoji-hint">The AI picks one — fix it here if it got the subject wrong.</span>
+          <button class="emoji-pick-btn" (click)="pickIcon()" aria-label="Choose hero emoji">
+            <span class="emoji-pick-glyph" *ngIf="card.uiMeta.icon">{{ card.uiMeta.icon }}</span>
+            <ion-icon name="add-outline" *ngIf="!card.uiMeta.icon"></ion-icon>
+          </button>
+          <span class="emoji-hint">The AI picks one — tap to choose any emoji if it got the subject wrong.</span>
         </div>
 
         <p class="edit-label">Background photo</p>
