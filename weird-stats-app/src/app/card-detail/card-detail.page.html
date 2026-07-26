@@ -408,30 +408,35 @@
         <button
           *ngFor="let hex of accentOptions"
           class="swatch"
-          [class.active]="cardSurface !== 'plain' && card.uiMeta.accentColor === hex"
+          [class.active]="cardSurface === 'color' && card.uiMeta.accentColor === hex"
           [style.background]="hex"
           (click)="setAccent(hex)"
           [attr.aria-label]="hex"></button>
       </div>
 
-      <!-- KPI gradient background — a premium perk layered on the chosen accent.
-           The clean light card is the free default. Accent (above) is the colour;
-           this toggle only flips the gradient treatment on/off, so recolouring
-           never loses the gradient. Free users get an upgrade link instead. -->
+      <!-- Rich depth gradients — the premium tier, offered in the same hues as
+           the basic colours above. Non-members see the real swatches behind a
+           frosted-glass lock; tapping it opens the upgrade sheet. -->
       <ng-container *ngIf="card.cardType === 'kpi'">
         <p class="edit-label">Gradient <span class="premium-tag">Premium</span></p>
-        <button class="grad-toggle" *ngIf="isPremium"
-                [class.active]="cardSurface === 'gradient'"
-                [style.background]="gradientSwatchCss(card.uiMeta.accentColor)"
-                (click)="toggleGradient()">
-          <span class="grad-toggle-label">{{ cardSurface === 'gradient' ? 'Gradient on' : 'Use gradient' }}</span>
-          <ion-icon [name]="cardSurface === 'gradient' ? 'checkmark-circle' : 'add-circle-outline'"></ion-icon>
-        </button>
-        <button class="gradient-upsell" *ngIf="!isPremium" (click)="promptGradientUpgrade()">
-          <ion-icon name="sparkles-outline"></ion-icon>
-          <span>Choose gradients</span>
-          <span class="gradient-upsell-tag">Premium</span>
-        </button>
+        <div class="grad-lockwrap" [class.locked]="!isPremium">
+          <div class="swatches grad-swatches">
+            <button
+              *ngFor="let hex of accentOptions"
+              class="swatch grad-swatch"
+              [class.active]="cardSurface === 'gradient' && card.uiMeta.accentColor === hex"
+              [style.background]="gradientSwatchCss(hex)"
+              [attr.tabindex]="isPremium ? null : -1"
+              (click)="setGradient(hex)"
+              [attr.aria-label]="'Gradient ' + hex"></button>
+          </div>
+          <!-- Frosted overlay: blurs the swatches it covers, so they read as a
+               real (but locked) premium option rather than a disabled row. -->
+          <button class="grad-lock" *ngIf="!isPremium" (click)="promptGradientUpgrade()">
+            <ion-icon name="lock-closed"></ion-icon>
+            <span>Unlock gradients</span>
+          </button>
+        </div>
       </ng-container>
 
       <p class="edit-label">Badge</p>

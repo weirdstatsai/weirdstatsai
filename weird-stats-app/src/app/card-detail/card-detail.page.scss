@@ -602,28 +602,49 @@ $alt-tile-w: min(45vw, 190px);
   &.active { border-style: solid; border-color: #1a1a2e; color: #1a1a2e; }
 }
 
-// ── Premium KPI gradient toggle ────────────────────────────────────────────
-// A pill previewing the current accent's gradient, dimmed when off / full +
-// outlined when on. Layers over the accent colour, independent of it.
-.grad-toggle {
-  display: inline-flex; align-items: center; gap: 10px;
-  min-width: 190px;
-  padding: 11px 16px;
-  border-radius: 14px;
-  border: 2px solid transparent;
-  cursor: pointer;
-  color: #fff;                 // dark gradient background → white label
-  font: inherit; font-size: 13.5px; font-weight: 700;
-  box-shadow: 0 2px 10px rgba(20,22,31,0.18);
-  opacity: 0.55;               // dimmed = off
-  transition: opacity 0.15s ease, transform 0.12s ease, border-color 0.15s ease;
-
-  ion-icon { font-size: 18px; margin-left: auto; }
-
-  &.active { opacity: 1; border-color: #1a1a2e; }
-  &:active { transform: scale(0.98); }
+// ── Premium gradient swatches + glass lock ─────────────────────────────────
+// Gradient swatches are rounded rectangles (a circle is too small to read a
+// 3-stop gradient) so they're clearly a different tier from the round basics.
+.grad-swatches { flex-wrap: wrap; }
+.grad-swatch {
+  width: 46px; height: 34px;
+  border-radius: 11px;          // gradient set inline per hue
+  box-shadow: 0 2px 8px rgba(20,22,31,0.18);
+  &.active { border-color: #1a1a2e; transform: scale(1.08); }
 }
-.grad-toggle-label { text-shadow: 0 1px 2px rgba(0,0,0,0.35); }
+
+.grad-lockwrap {
+  position: relative;
+  display: inline-block;
+
+  // Locked: the swatches stay visible but go soft behind the glass, so the
+  // upsell shows what's actually on offer.
+  &.locked .grad-swatches {
+    filter: blur(2.5px);
+    pointer-events: none;
+    user-select: none;
+  }
+}
+
+// Frosted-glass lock plate over the swatch row.
+.grad-lock {
+  position: absolute; inset: -6px -8px;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  border-radius: 14px;
+  cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 800; letter-spacing: -0.1px;
+  color: #2b2d47;
+  background: rgba(255, 255, 255, 0.42);
+  -webkit-backdrop-filter: blur(6px) saturate(140%);
+  backdrop-filter: blur(6px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 6px 18px -8px rgba(20, 22, 31, 0.35), inset 0 1px 0 rgba(255,255,255,0.6);
+  transition: transform 0.12s ease, background 0.15s ease;
+
+  ion-icon { font-size: 15px; color: #6C5CE7; }
+
+  &:active { transform: scale(0.985); background: rgba(255,255,255,0.55); }
+}
 
 // "Premium" pill next to the Gradient label.
 .premium-tag {
@@ -633,24 +654,6 @@ $alt-tile-w: min(45vw, 190px);
   background: rgba(108, 92, 231, 0.12);
   padding: 2px 7px; border-radius: 10px;
   vertical-align: 1px;
-}
-
-// Free-user link — opens the upgrade plan sheet.
-.gradient-upsell {
-  display: inline-flex; align-items: center; gap: 8px;
-  font: inherit; font-size: 13.5px; font-weight: 700; color: #6C5CE7;
-  cursor: pointer;
-  background: linear-gradient(135deg, rgba(108,92,231,0.10), rgba(56,138,221,0.10));
-  border: 1px dashed rgba(108, 92, 231, 0.5);
-  border-radius: 12px;
-  padding: 10px 14px;
-  ion-icon { font-size: 16px; }
-  &:active { background: rgba(108, 92, 231, 0.18); }
-}
-.gradient-upsell-tag {
-  font-size: 9.5px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase;
-  color: #fff; background: linear-gradient(135deg, #6C5CE7, #378ADD);
-  padding: 3px 8px; border-radius: 10px;
 }
 
 .badge-chips {

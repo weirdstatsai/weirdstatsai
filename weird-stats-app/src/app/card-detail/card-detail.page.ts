@@ -1222,9 +1222,9 @@ export class CardDetailPage implements OnInit {
 
   setAccent(hex: string): void {
     if (!this.card) return;
-    // Picking a colour fills the card with it — but NEVER downgrades a gradient
-    // card, so a premium member can recolour without losing the gradient.
-    const surface: CardSurface = this.cardSurface === 'gradient' ? 'gradient' : 'color';
+    // The basic-colour row and the gradient row are separate choices now, so a
+    // basic swatch always means "fill the card with this flat colour".
+    const surface: CardSurface = 'color';
     const grad = gradientForAccent(hex);
     this.card = {
       ...this.card,
@@ -1254,16 +1254,21 @@ export class CardDetailPage implements OnInit {
       + `linear-gradient(150deg, ${g.from} 0%, ${g.mid} 50%, ${g.to} 100%)`;
   }
 
-  /** Premium toggle: swap the card's colouring between the flat basic colour and
-   *  the multi-stop gradient. Independent of the accent, so it survives
-   *  recolouring. Free members are sent to the upgrade sheet instead. */
-  toggleGradient(): void {
+  /** Premium: paint the card with the rich depth gradient in this hue. Free
+   *  members get the upgrade sheet instead (the row is shown locked). */
+  setGradient(hex: string): void {
     if (!this.card) return;
     if (!this.isPremium) { this.promptGradientUpgrade(); return; }
-    const surface: CardSurface = this.cardSurface === 'gradient' ? 'color' : 'gradient';
+    const grad = gradientForAccent(hex);
     this.card = {
       ...this.card,
-      uiMeta: { ...this.card.uiMeta, cardSurface: surface },
+      uiMeta: {
+        ...this.card.uiMeta,
+        accentColor: hex,
+        gradientFrom: grad.from,
+        gradientTo: grad.to,
+        cardSurface: 'gradient',
+      },
     };
     this.persistCardEdits();
   }
