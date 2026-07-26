@@ -87,17 +87,18 @@ export function premiumGradientForAccent(hex: string | undefined): { from: strin
 
 /**
  * FLAT (non-gradient) card colours — the standard, free coloration for the same
- * premium card DESIGN. One deep, solid tone per accent, sampled from the middle
- * of each premium gradient so the white text/donut chrome keeps identical
- * contrast. Premium members can switch a card to the multi-stop gradient
+ * premium card DESIGN. This is simply the BASIC accent palette painted flat: the
+ * card wears the very colour the picker shows, so "blue card" means `#378ADD`.
+ * White copy stays legible because `.pc-scrim` already lays a dark wash over the
+ * text side. Premium members can switch a card to the multi-stop gradient
  * (`uiMeta.useGradient`); everything else about the card is unchanged.
  */
 export const SOLID_CARD_COLORS: Record<string, string> = {
-  '#6C5CE7': '#3a2168', // violet
-  '#378ADD': '#1b2560', // navy
-  '#1D9E75': '#0d5640', // emerald
-  '#D85A30': '#722e14', // terracotta
-  '#BA7517': '#5d3f0c', // amber
+  '#6C5CE7': '#6C5CE7', // violet
+  '#378ADD': '#378ADD', // blue
+  '#1D9E75': '#1D9E75', // green
+  '#D85A30': '#D85A30', // terracotta
+  '#BA7517': '#BA7517', // amber
 };
 
 /** The flat card colour for an accent hex, falling back to violet. */
