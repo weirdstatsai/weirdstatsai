@@ -19,9 +19,21 @@
   box-shadow: 0 2px 4px rgba(20,22,31,0.10), 0 28px 50px -22px rgba(20,22,31,0.65);
   isolation: isolate;
 }
-// COLOUR surface: the same card in ONE flat basic colour (no multi-stop
-// gradient, no accent bloom).
-.pcard.pc-flat { background: var(--pg-solid, #3a2168); }
+// COLOUR surface: the same card in ONE flat basic colour — no multi-stop
+// gradient, no accent bloom, and NO scrim. The scrim's dark-to-transparent wash
+// (there to rescue white text over the emoji on the gradient) read as a depth
+// fade across a solid fill, so the colour looked graded instead of plain. Depth
+// is the premium gradient's job; this tier stays perfectly uniform.
+.pcard.pc-flat {
+  background: var(--pg-solid, #3a2168);
+  .pc-scrim { display: none; }
+  // Photos still need a wash — without the scrim the copy would sit on bare
+  // image. Keep it tinted in the card's own colour so the plate stays uniform.
+  .pc-scrim.pc-scrim-photo {
+    display: block;
+    background: linear-gradient(90deg, rgba(10,7,22,0.82) 0%, rgba(10,7,22,0.5) 55%, rgba(10,7,22,0.28) 100%);
+  }
+}
 
 // ── PLAIN surface (the default) ─────────────────────────────────────────────
 // The same card with NO colour: a neutral white plate with dark copy. Every
