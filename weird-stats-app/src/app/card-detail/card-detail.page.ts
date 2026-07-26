@@ -1224,6 +1224,7 @@ export class CardDetailPage implements OnInit {
 
   setAccent(hex: string): void {
     if (!this.card) return;
+    this.previewHex = '';        // any other colour choice ends an abandoned drag
     // The basic-colour row and the gradient row are separate choices now, so a
     // basic swatch always means "fill the card with this flat colour".
     const surface: CardSurface = 'color';
@@ -1244,6 +1245,7 @@ export class CardDetailPage implements OnInit {
   /** Back to the neutral white card (the default) — no colour, dark copy. */
   setPlainSurface(): void {
     if (!this.card) return;
+    this.previewHex = '';        // ditto — the preview must not outlive the pick
     this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, cardSurface: 'plain' } };
     this.persistCardEdits();
   }
@@ -1260,6 +1262,7 @@ export class CardDetailPage implements OnInit {
    *  members get the upgrade sheet instead (the row is shown locked). */
   setGradient(hex: string): void {
     if (!this.card) return;
+    this.previewHex = '';                       // commit: drop the transient preview
     if (!this.isPremium) { this.promptGradientUpgrade(); return; }
     this.applyGradient(hex);
     this.persistCardEdits();
@@ -1274,12 +1277,35 @@ export class CardDetailPage implements OnInit {
       && !ACCENT_COLORS.some(c => c.toLowerCase() === hex);
   }
 
-  /** Live preview while the colour picker is being dragged — repaints the card
-   *  without writing, so a drag can't fire a Firestore write per frame. The
-   *  commit (`change`) calls setGradient and persists once. */
+  /** Live preview while the colour picker is being dragged. Paints ONLY the CSS
+   *  the hero binds to — it must not touch `this.card`, which is the object
+   *  persistCardEdits() serialises: an abandoned drag would otherwise be silently
+   *  committed by the next unrelated edit (badge, emoji, photo…). The commit
+   *  (`change`) calls setGradient, which does mutate the model and persists. */
   previewGradient(hex: string): void {
     if (!this.card || !this.isPremium || !isHexColor(hex)) return;
-    this.applyGradient(hex);
+    this.previewHex = hex;
+  }
+
+  /** Transient gradient preview colour — overrides the stored accent for
+   *  rendering only, and is dropped when the pick is committed or abandoned. */
+  previewHex = '';
+
+  /** The card the hero/alternatives should render: the real one, or a throwaway
+   *  clone carrying the in-flight preview colour. */
+  get displayCard(): WeirdCard | undefined {
+    if (!this.card || !this.previewHex) return this.card;
+    const grad = gradientForAccent(this.previewHex);
+    return {
+      ...this.card,
+      uiMeta: {
+        ...this.card.uiMeta,
+        accentColor: this.previewHex,
+        gradientFrom: grad.from,
+        gradientTo: grad.to,
+        cardSurface: 'gradient' as CardSurface,
+      },
+    };
   }
 
   /** Shared in-memory repaint for a gradient in `hex` (no persistence). */

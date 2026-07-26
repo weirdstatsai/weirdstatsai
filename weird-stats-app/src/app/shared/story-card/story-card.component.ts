@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
-import { WeirdCard, CardSurface, cardSurfaceOf, premiumGradientForAccent, solidColorForAccent } from '../../models/weird-card.model';
+import { WeirdCard, CardSurface, cardSurfaceOf, premiumGradientForAccent, solidColorForAccent, inkColorForAccent } from '../../models/weird-card.model';
 import { GraphConfig } from '../../models/graph.model';
 import { buildStoryView, StoryView, StoryVariant, asStoryVariant, fmtNum } from './story-view';
 
@@ -49,6 +49,8 @@ export class StoryCardComponent implements OnChanges {
   pgGlow = 'rgba(233,120,88,0.55)';
   /** Flat colour used when this card isn't on the premium gradient. */
   pgSolid = '#3a2168';
+  /** Accent darkened enough to read as a spot colour on the white plate. */
+  inkAccent = '#6C5CE7';
   /** Which background treatment this card paints. Same design in all three —
    *  only the colouring differs (see CardSurface). */
   surface: CardSurface = 'plain';
@@ -66,6 +68,7 @@ export class StoryCardComponent implements OnChanges {
     this.pgTo = g.to;
     this.pgGlow = g.glow;
     this.pgSolid = solidColorForAccent(this.accent);
+    this.inkAccent = inkColorForAccent(this.accent);
     // Colouring is the ONLY difference between the three surfaces (and the only
     // premium gate): plain white by default, the basic accent colour when the
     // owner picks one, the gradient when a premium member opts in. Structure,

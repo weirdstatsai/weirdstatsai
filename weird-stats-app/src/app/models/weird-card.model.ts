@@ -137,13 +137,54 @@ function hslToHex(h: number, s: number, l: number): string {
  */
 export function derivePremiumGradient(hex: string): { from: string; mid: string; to: string; glow: string } {
   const { h, s } = hexToHsl(hex);
-  const sat = Math.min(0.86, Math.max(0.42, s));
+  // An achromatic pick (black / white / any grey) has hue 0 and no chroma.
+  // Flooring saturation would invent a hue and paint the card RED, so keep
+  // greys grey — only floor the saturation of colours that actually have some.
+  const achromatic = s < 0.06;
+  const sat = achromatic ? 0 : Math.min(0.86, Math.max(0.42, s));
   return {
     from: hslToHex(h - 5, sat * 0.95, 0.10),
     mid:  hslToHex(h,     sat * 0.92, 0.25),
     to:   hslToHex(h + 9, sat * 0.82, 0.42),
-    glow: `hsla(${Math.round(((h + 12) % 360 + 360) % 360)}, ${Math.round(sat * 100)}%, 64%, 0.5)`,
+    glow: achromatic
+      ? 'hsla(0, 0%, 72%, 0.35)'
+      : `hsla(${Math.round(((h + 12) % 360 + 360) % 360)}, ${Math.round(sat * 100)}%, 64%, 0.5)`,
   };
+}
+
+/**
+ * The accent as a SPOT colour on the white 'plain' plate (hero number, donut
+ * ring, bars). A premium member can pick any colour, and a light one — pale
+ * yellow, near-white — is invisible on white, so lightness is capped. Hue and
+ * saturation are preserved, so the pick still reads as their colour.
+ */
+export function inkColorForAccent(hex: string | undefined): string {
+  const key = ACCENT_COLORS.find(c => c.toLowerCase() === (hex || '').toLowerCase());
+  if (key) return key;                       // the five presets are already safe
+  const norm = normalizeHex(hex);
+  if (!norm) return ACCENT_COLORS[0];
+  const { h, s } = hexToHsl(norm);
+  // Gate on RELATIVE LUMINANCE, not HSL lightness: they diverge badly by hue.
+  // Yellow at l=0.44 is still bright enough to disappear on white, while blue at
+  // the same l is already dark. Walk the lightness down until the colour is
+  // genuinely dark enough to read as text on the white plate.
+  if (relLuminance(norm) <= 0.30) return norm;
+  const sat = s < 0.06 ? 0 : Math.max(s, 0.35);
+  for (let l = 0.46; l >= 0.12; l -= 0.03) {
+    const candidate = hslToHex(h, sat, l);
+    if (relLuminance(candidate) <= 0.30) return candidate;
+  }
+  return hslToHex(h, sat, 0.12);
+}
+
+/** WCAG relative luminance (0 = black, 1 = white). */
+function relLuminance(hex: string): number {
+  const h = normalizeHex(hex) || '#000000';
+  const ch = [1, 3, 5].map(i => {
+    const v = parseInt(h.slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
 }
 
 /** Soft light wash for an arbitrary colour — the light-surface counterpart of

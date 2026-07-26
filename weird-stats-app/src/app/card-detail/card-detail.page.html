@@ -155,7 +155,9 @@
         <app-story-poster *ngIf="storyPreset" [card]="card" [preset]="storyPreset" (click)="scrollToStory()"></app-story-poster>
         <ng-container *ngIf="!storyPreset">
         <ng-container [ngSwitch]="card.cardType">
-          <app-story-card   *ngSwitchCase="'kpi'"     [card]="card" size="full" (storyCta)="scrollToStory()"></app-story-card>
+          <!-- displayCard = the real card, or a throwaway clone while a gradient
+               colour is being dragged (see previewGradient). -->
+          <app-story-card   *ngSwitchCase="'kpi'"     [card]="$any(displayCard)" size="full" (storyCta)="scrollToStory()"></app-story-card>
           <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>
           <app-card-table   *ngSwitchCase="'table'"   [card]="card" size="full" [tableStyle]="selectedTableStyle"></app-card-table>
           <app-card-versus  *ngSwitchCase="'versus'"  [card]="card" size="full" [versusStyle]="selectedVersusStyle"></app-card-versus>
@@ -397,6 +399,10 @@
          card is the only card: accent, badge, hero emoji and the background
          photo all apply to it regardless of cardType. -->
     <div class="edit-panel" *ngIf="!viewOnly && !storyPreset">
+      <!-- Card colour/gradient are read by app-story-card only, and the detail
+           hero routes just 'kpi' there — on other types the row (and its "None"
+           swatch) would render a state the card can't actually show. -->
+      <ng-container *ngIf="card.cardType === 'kpi'">
       <p class="edit-label">Card color</p>
       <div class="swatches">
         <!-- No colour: the neutral white card with dark copy (the default). -->
@@ -417,7 +423,6 @@
       <!-- Rich depth gradients — the premium tier, offered in the same hues as
            the basic colours above. Non-members see the real swatches behind a
            frosted-glass lock; tapping it opens the upgrade sheet. -->
-      <ng-container *ngIf="card.cardType === 'kpi'">
         <p class="edit-label">Gradient <span class="premium-tag">Premium</span></p>
         <div class="grad-lockwrap" [class.locked]="!isPremium">
           <div class="swatches grad-swatches">

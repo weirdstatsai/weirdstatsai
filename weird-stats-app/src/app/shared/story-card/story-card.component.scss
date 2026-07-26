@@ -27,6 +27,10 @@
 .pcard.pc-flat {
   background: var(--pg-solid, #3a2168);
   .pc-scrim { display: none; }
+  // The duel split-bar's track is normally the accent — on this surface the
+  // plate IS the accent, so the unfilled half vanished. Use a translucent well
+  // (same treatment as .pc-track) so both halves read.
+  .pc-splitbar { background: rgba(255,255,255,0.22); }
   // Photos still need a wash — without the scrim the copy would sit on bare
   // image. Keep it tinted in the card's own colour so the plate stays uniform.
   .pc-scrim.pc-scrim-photo {
@@ -72,7 +76,7 @@
   .pc-quip { color: #55586f; opacity: 1; }
 
   // Accent = the single spot colour on the plain plate.
-  .pc-num, .pc-unit { color: var(--accent, #6C5CE7); }
+  .pc-num, .pc-unit { color: var(--accent-ink, var(--accent, #6C5CE7)); }
   .pc-unit { opacity: 1; }
   .pc-stat-lbl { color: #6a6d84; opacity: 1; }
 
@@ -83,17 +87,17 @@
 
   .pc-donut {
     .pc-ring-bg { stroke: rgba(20,22,45,0.10); }
-    .pc-ring { stroke: var(--accent, #6C5CE7); filter: none; }
+    .pc-ring { stroke: var(--accent-ink, var(--accent, #6C5CE7)); filter: none; }
   }
   .pc-donut-c {
-    b { color: var(--accent, #6C5CE7); }
+    b { color: var(--accent-ink, var(--accent, #6C5CE7)); }
     small { color: #6a6d84; opacity: 1; }
   }
 
   // Bars / leaderboard
   .pc-lbl { color: #33364d; opacity: 1; }
   .pc-track { background: rgba(20,22,45,0.08); }
-  .pc-track i { background: var(--accent, #6C5CE7); }
+  .pc-track i { background: var(--accent-ink, var(--accent, #6C5CE7)); }
   .pc-val { color: #16172a; small { color: #6a6d84; opacity: 1; } }
   .pc-list li { color: #16172a; }
   .pc-rank {
@@ -101,11 +105,11 @@
   }
 
   // Duel
-  .pc-side b { color: var(--accent, #6C5CE7); }
+  .pc-side b { color: var(--accent-ink, var(--accent, #6C5CE7)); }
   .pc-side .pc-side-lbl { color: #6a6d84; opacity: 1; }
   .pc-side.win b { text-shadow: none; }
   .pc-vs { background: rgba(20,22,45,0.06); border-color: rgba(20,22,45,0.12); color: #52546e; opacity: 1; }
-  .pc-splitbar { background: rgba(20,22,45,0.10); i { background: var(--accent, #6C5CE7); } }
+  .pc-splitbar { background: rgba(20,22,45,0.10); i { background: var(--accent-ink, var(--accent, #6C5CE7)); } }
 
   .pc-empty { color: #6a6d84; opacity: 1; }
 
