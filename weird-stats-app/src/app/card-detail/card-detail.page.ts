@@ -628,6 +628,10 @@ export class CardDetailPage implements OnInit {
               // can edit / save it. It's already stored as a draft above, so
               // Back/exit lands on the Drafts tab (see back()).
               this.fromGenerate = true;
+              // Ask what to do with it. Deliberately after the reveal so the
+              // user sees their card first; guests are already being prompted to
+              // sign in, so only ask signed-in users.
+              if (uid) setTimeout(() => this.promptSaveOrDraft(), 900);
             } else if (event.type === 'error') {
               this.errorMsg = event.message;
               this.isLoading = false;
@@ -784,6 +788,51 @@ export class CardDetailPage implements OnInit {
     // detection and the *ngIf frames would never appear.
     this.ngZone.run(() => { this.capturesReady = true; });
     await new Promise((r) => setTimeout(r, 0));
+    await this.whenCaptureCharts();
+  }
+
+  /**
+   * Wait until any chart inside the offscreen frames has actually painted.
+   * One macrotask is enough for Angular to create the elements, but `app-chart`
+   * builds its Chart inside a requestAnimationFrame and Chart.js then draws on a
+   * later frame — so capturing straight after mounting produced a PNG with a
+   * BLANK chart area. Polls for a canvas with real pixels, then gives it one
+   * more frame; bails after `timeout` so a chartless card never stalls sharing.
+   */
+  private whenCaptureCharts(timeout = 1500): Promise<void> {
+    return new Promise((resolve) => {
+      const started = Date.now();
+      const frames = [this.shareArea?.nativeElement, this.ogArea?.nativeElement]
+        .filter(Boolean) as HTMLElement[];
+      const canvases = () => frames.flatMap(f => Array.from(f.querySelectorAll('canvas')));
+
+      const painted = (c: HTMLCanvasElement): boolean => {
+        if (!c.width || !c.height) return false;
+        try {
+          // A mounted-but-undrawn canvas is fully transparent. Sample a small
+          // scaled copy rather than the full bitmap — this runs on every poll.
+          const s = document.createElement('canvas');
+          s.width = 24; s.height = 24;
+          const ctx = s.getContext('2d', { willReadFrequently: true })!;
+          ctx.drawImage(c, 0, 0, 24, 24);
+          const { data } = ctx.getImageData(0, 0, 24, 24);
+          for (let i = 3; i < data.length; i += 4) if (data[i] !== 0) return true;
+          return false;
+        } catch {
+          return true;   // tainted canvas — assume drawn rather than block sharing
+        }
+      };
+
+      const tick = () => {
+        const list = canvases();
+        if (!list.length || list.every(painted) || Date.now() - started > timeout) {
+          requestAnimationFrame(() => resolve());
+          return;
+        }
+        setTimeout(tick, 60);
+      };
+      tick();
+    });
   }
 
   /** After the entrance animation (≤1.3s) and once the thread is idle, mount the
@@ -1121,6 +1170,26 @@ export class CardDetailPage implements OnInit {
    * first. Idempotent — a signed-in generation already auto-claimed the doc, so
    * this just re-persists and marks it saved.
    */
+  /**
+   * Post-generation prompt: keep the new card in Drafts, or save it to the
+   * profile. Nothing is at risk either way — the card was already persisted as a
+   * cloud draft the moment it arrived — so this is about where it lands, not
+   * about losing work. Backdrop-dismiss is off so the choice is deliberate.
+   */
+  private async promptSaveOrDraft(): Promise<void> {
+    if (!this.card || this.isSaved || this.viewOnly) return;
+    const alert = await this.alertCtrl.create({
+      header: 'Your card is ready',
+      message: 'Save it to your profile, or keep it in Drafts to finish later.',
+      backdropDismiss: false,
+      buttons: [
+        { text: 'Keep in Drafts', role: 'cancel' },
+        { text: 'Save to profile', handler: () => { this.saveDraft(); } },
+      ],
+    });
+    await alert.present();
+  }
+
   async saveDraft(): Promise<void> {
     if (!this.card) { this.toast('No card to save.'); return; }
     const user = await firstValueFrom(this.authService.user$);

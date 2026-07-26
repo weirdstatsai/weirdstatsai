@@ -231,7 +231,11 @@
            recipient gets is the same design the sharer is looking at. -->
       <div class="share-capture" #shareArea aria-hidden="true" inert *ngIf="capturesReady" [style.background]="ogGradient">
         <div class="card-wrap">
-          <ng-container [ngSwitch]="card.cardType">
+          <!-- Hand-authored Home story: render the poster, exactly as the visible
+               hero and the OG frame do. Without this branch the shared/downloaded
+               PNG was a completely different card from the one on screen. -->
+          <app-story-poster *ngIf="storyPreset" [card]="card" [preset]="storyPreset"></app-story-poster>
+          <ng-container *ngIf="!storyPreset" [ngSwitch]="card.cardType">
             <app-story-card   *ngSwitchCase="'kpi'"     [card]="card" size="full"></app-story-card>
             <app-card-ranking *ngSwitchCase="'ranking'" [card]="card" size="full" [rankStyle]="selectedRankStyle"></app-card-ranking>
             <app-card-table   *ngSwitchCase="'table'"   [card]="card" size="full" [tableStyle]="selectedTableStyle"></app-card-table>
