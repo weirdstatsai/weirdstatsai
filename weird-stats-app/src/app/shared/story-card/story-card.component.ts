@@ -1,10 +1,13 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
-import { WeirdCard, premiumGradientForAccent, solidColorForAccent } from '../../models/weird-card.model';
+import { WeirdCard, CardSurface, cardSurfaceOf, premiumGradientForAccent, solidColorForAccent } from '../../models/weird-card.model';
 import { GraphConfig } from '../../models/graph.model';
 import { buildStoryView, StoryView, StoryVariant, asStoryVariant, fmtNum } from './story-view';
 
 /** Light/pastel segment palette for doughnuts on the dark premium frame. */
 const PREMIUM_PIE = ['#ffffff', '#ffd27a', '#7ad0ff', '#8fe3b0', '#f4a3c9', '#c3b4f7', '#ffb08a'];
+/** Saturated segment palette for doughnuts on the PLAIN (white) surface, where
+ *  the light PREMIUM_PIE tones would wash out. */
+const LIGHT_PIE = ['#6C5CE7', '#378ADD', '#1D9E75', '#D85A30', '#BA7517', '#8e7bf0', '#5aa9e6'];
 
 /**
  * The premium "story card" — one data-driven component that renders any
@@ -46,9 +49,9 @@ export class StoryCardComponent implements OnChanges {
   pgGlow = 'rgba(233,120,88,0.55)';
   /** Flat colour used when this card isn't on the premium gradient. */
   pgSolid = '#3a2168';
-  /** True = paint the premium multi-stop gradient; false = the flat colour.
-   *  Same card design either way — only the coloration differs. */
-  gradientOn = false;
+  /** Which background treatment this card paints. Same design in all three —
+   *  only the colouring differs (see CardSurface). */
+  surface: CardSurface = 'plain';
   chartConfig?: GraphConfig;
 
   ngOnChanges(): void {
@@ -63,10 +66,11 @@ export class StoryCardComponent implements OnChanges {
     this.pgTo = g.to;
     this.pgGlow = g.glow;
     this.pgSolid = solidColorForAccent(this.accent);
-    // Coloration is the ONLY premium difference: gradient when the owner opted
-    // in (premium-gated in the edit panel) or on forced showcase surfaces,
-    // otherwise the flat colour. Structure/design is identical either way.
-    this.gradientOn = this.forceGradient || !!this.card?.uiMeta?.useGradient;
+    // Colouring is the ONLY difference between the three surfaces (and the only
+    // premium gate): plain white by default, the basic accent colour when the
+    // owner picks one, the gradient when a premium member opts in. Structure,
+    // layout and chrome are identical in all three.
+    this.surface = this.forceGradient ? 'gradient' : cardSurfaceOf(this.card?.uiMeta);
     this.chartConfig = this.view.treatment === 'chart' ? this.buildChartConfig() : undefined;
   }
 
@@ -99,8 +103,12 @@ export class StoryCardComponent implements OnChanges {
     const yearish = (c.labels || []).filter(l => /(1[6-9]\d{2}|2[0-1]\d{2})/.test(String(l))).length;
     if ((type === 'doughnut' || type === 'pie') && yearish >= Math.ceil((c.labels?.length || 1) * 0.6)) type = 'line';
 
-    const light = 'rgba(255,255,255,0.6)';
-    const grid = 'rgba(255,255,255,0.12)';
+    // On the plain (white) surface the white-on-dark chart palette would be
+    // invisible — draw with the accent on dark ticks instead.
+    const plain = this.surface === 'plain';
+    const ink = plain ? hex : '#ffffff';
+    const light = plain ? 'rgba(20,22,45,0.55)' : 'rgba(255,255,255,0.6)';
+    const grid = plain ? 'rgba(20,22,45,0.10)' : 'rgba(255,255,255,0.12)';
     const fmt = (v: unknown) => fmtNum(Number(v));
 
     const baseOpts: any = {
@@ -141,18 +149,18 @@ export class StoryCardComponent implements OnChanges {
           labels: c.labels,
           datasets: [{
             label: c.datasets[0].label || unit, data: c.datasets[0].data,
-            borderColor: '#ffffff', backgroundColor: hex + '59', borderWidth: full ? 3 : 2.5,
+            borderColor: ink, backgroundColor: hex + (plain ? '24' : '59'), borderWidth: full ? 3 : 2.5,
             fill: true, tension: 0.42,
             pointRadius: full ? 3 : 0, pointHoverRadius: 5,
-            pointBackgroundColor: '#fff', pointBorderColor: hex, pointBorderWidth: 1.5,
+            pointBackgroundColor: plain ? hex : '#fff', pointBorderColor: plain ? '#fff' : hex, pointBorderWidth: 1.5,
           } as any],
         },
         options: {
           ...baseOpts,
           plugins: {
             ...baseOpts.plugins,
-            lineGlow: { enabled: true, color: hex + 'cc', blur: full ? 16 : 10, offsetY: 3 },
-            lineHead: { enabled: full, color: '#ffffff', radius: 5 },
+            lineGlow: { enabled: !plain, color: hex + 'cc', blur: full ? 16 : 10, offsetY: 3 },
+            lineHead: { enabled: full, color: ink, radius: 5 },
           },
           scales: { x: xScale, y: yScale },
         },
@@ -162,7 +170,7 @@ export class StoryCardComponent implements OnChanges {
     if (type === 'doughnut' || type === 'pie') {
       return {
         type: 'doughnut',
-        data: { labels: c.labels, datasets: [{ data: c.datasets[0].data, backgroundColor: [...PREMIUM_PIE], borderWidth: 2, borderColor: 'rgba(10,8,24,0.55)', hoverOffset: 6 } as any] },
+        data: { labels: c.labels, datasets: [{ data: c.datasets[0].data, backgroundColor: plain ? [...LIGHT_PIE] : [...PREMIUM_PIE], borderWidth: 2, borderColor: plain ? '#ffffff' : 'rgba(10,8,24,0.55)', hoverOffset: 6 } as any] },
         options: { ...baseOpts, cutout: '62%' },
       };
     }
@@ -173,7 +181,7 @@ export class StoryCardComponent implements OnChanges {
         labels: c.labels,
         datasets: [{
           label: c.datasets[0].label || unit, data: c.datasets[0].data,
-          backgroundColor: 'rgba(255,255,255,0.88)', hoverBackgroundColor: '#ffffff',
+          backgroundColor: plain ? hex + 'D9' : 'rgba(255,255,255,0.88)', hoverBackgroundColor: ink,
           borderWidth: 0, borderRadius: 6, borderSkipped: false, barPercentage: 0.68, categoryPercentage: 0.72,
         } as any],
       },

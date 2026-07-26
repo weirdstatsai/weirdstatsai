@@ -19,10 +19,90 @@
   box-shadow: 0 2px 4px rgba(20,22,31,0.10), 0 28px 50px -22px rgba(20,22,31,0.65);
   isolation: isolate;
 }
-// FREE / standard coloration: the same card in ONE flat colour (no multi-stop
-// gradient, no accent bloom). Premium switches it back to the gradient above via
-// uiMeta.useGradient — design, layout and chrome are identical either way.
+// COLOUR surface: the same card in ONE flat basic colour (no multi-stop
+// gradient, no accent bloom).
 .pcard.pc-flat { background: var(--pg-solid, #3a2168); }
+
+// ── PLAIN surface (the default) ─────────────────────────────────────────────
+// The same card with NO colour: a neutral white plate with dark copy. Every
+// white-on-dark rule above is inverted here; the accent survives as the one
+// spot colour (hero number, donut ring, bars, chart). Picking a colour or the
+// premium gradient simply drops this class and the white-copy styling returns.
+.pcard.pc-plain {
+  background: #ffffff;
+  color: #16172a;
+  border: 1px solid rgba(20,22,45,0.09);
+  box-shadow: 0 2px 4px rgba(20,22,31,0.06), 0 22px 44px -26px rgba(20,22,31,0.42);
+
+  // The dark legibility wash exists to rescue white text over the emoji — on a
+  // white plate it would just dirty the card.
+  .pc-scrim { display: none; }
+  // Emoji sits on white: no heavy black halo.
+  .pc-emoji { filter: drop-shadow(0 10px 20px rgba(20,22,45,0.20)); }
+  // A photo still needs a wash, but a light one (dark copy over the image).
+  // Extra class needed: the `.pcard.full .pc-scrim-photo` rules further down the
+  // file match with equal specificity and would otherwise win on size="full".
+  .pc-scrim.pc-scrim-photo {
+    display: block;
+    background: linear-gradient(90deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.75) 52%, rgba(255,255,255,0.42) 100%);
+  }
+
+  .pc-pill {
+    background: rgba(20,22,45,0.06);
+    border-color: rgba(20,22,45,0.10);
+    color: #52546e;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+
+  // Dark copy needs no glow shadows.
+  .pc-title, .pc-quip, .pc-num, .pc-stat-lbl, .pc-donut-c b { text-shadow: none; }
+  .pc-title { color: #16172a; }
+  .pc-quip { color: #55586f; opacity: 1; }
+
+  // Accent = the single spot colour on the plain plate.
+  .pc-num, .pc-unit { color: var(--accent, #6C5CE7); }
+  .pc-unit { opacity: 1; }
+  .pc-stat-lbl { color: #6a6d84; opacity: 1; }
+
+  .pc-delta {
+    background: rgba(214,60,60,0.10); color: #c23b3b;
+    &.up { background: rgba(24,150,104,0.12); color: #14875c; }
+  }
+
+  .pc-donut {
+    .pc-ring-bg { stroke: rgba(20,22,45,0.10); }
+    .pc-ring { stroke: var(--accent, #6C5CE7); filter: none; }
+  }
+  .pc-donut-c {
+    b { color: var(--accent, #6C5CE7); }
+    small { color: #6a6d84; opacity: 1; }
+  }
+
+  // Bars / leaderboard
+  .pc-lbl { color: #33364d; opacity: 1; }
+  .pc-track { background: rgba(20,22,45,0.08); }
+  .pc-track i { background: var(--accent, #6C5CE7); }
+  .pc-val { color: #16172a; small { color: #6a6d84; opacity: 1; } }
+  .pc-list li { color: #16172a; }
+  .pc-rank {
+    background: rgba(20,22,45,0.06); border-color: rgba(20,22,45,0.10); color: #52546e;
+  }
+
+  // Duel
+  .pc-side b { color: var(--accent, #6C5CE7); }
+  .pc-side .pc-side-lbl { color: #6a6d84; opacity: 1; }
+  .pc-side.win b { text-shadow: none; }
+  .pc-vs { background: rgba(20,22,45,0.06); border-color: rgba(20,22,45,0.12); color: #52546e; opacity: 1; }
+  .pc-splitbar { background: rgba(20,22,45,0.10); i { background: var(--accent, #6C5CE7); } }
+
+  .pc-empty { color: #6a6d84; opacity: 1; }
+
+  // CTA: dark pill reads as the one strong affordance on a white plate.
+  .pc-cta {
+    background: #16172a; color: #ffffff;
+    box-shadow: 0 6px 16px rgba(20,22,45,0.22);
+  }
+}
 
 .full .pcard, .pcard.full { min-height: 300px; border-radius: 22px; }
 

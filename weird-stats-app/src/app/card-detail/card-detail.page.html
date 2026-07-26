@@ -397,12 +397,18 @@
          card is the only card: accent, badge, hero emoji and the background
          photo all apply to it regardless of cardType. -->
     <div class="edit-panel" *ngIf="!viewOnly && !storyPreset">
-      <p class="edit-label">Accent color</p>
+      <p class="edit-label">Card color</p>
       <div class="swatches">
+        <!-- No colour: the neutral white card with dark copy (the default). -->
+        <button class="swatch swatch-none"
+                [class.active]="cardSurface === 'plain'"
+                (click)="setPlainSurface()" aria-label="No colour (white card)">
+          <ion-icon name="ban-outline"></ion-icon>
+        </button>
         <button
           *ngFor="let hex of accentOptions"
           class="swatch"
-          [class.active]="card.uiMeta.accentColor === hex"
+          [class.active]="cardSurface !== 'plain' && card.uiMeta.accentColor === hex"
           [style.background]="hex"
           (click)="setAccent(hex)"
           [attr.aria-label]="hex"></button>
@@ -415,11 +421,11 @@
       <ng-container *ngIf="card.cardType === 'kpi'">
         <p class="edit-label">Gradient <span class="premium-tag">Premium</span></p>
         <button class="grad-toggle" *ngIf="isPremium"
-                [class.active]="card.uiMeta.useGradient"
+                [class.active]="cardSurface === 'gradient'"
                 [style.background]="gradientSwatchCss(card.uiMeta.accentColor)"
                 (click)="toggleGradient()">
-          <span class="grad-toggle-label">{{ card.uiMeta.useGradient ? 'Gradient on' : 'Use gradient' }}</span>
-          <ion-icon [name]="card.uiMeta.useGradient ? 'checkmark-circle' : 'add-circle-outline'"></ion-icon>
+          <span class="grad-toggle-label">{{ cardSurface === 'gradient' ? 'Gradient on' : 'Use gradient' }}</span>
+          <ion-icon [name]="cardSurface === 'gradient' ? 'checkmark-circle' : 'add-circle-outline'"></ion-icon>
         </button>
         <button class="gradient-upsell" *ngIf="!isPremium" (click)="promptGradientUpgrade()">
           <ion-icon name="sparkles-outline"></ion-icon>

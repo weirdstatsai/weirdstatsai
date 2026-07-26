@@ -1,6 +1,7 @@
 <div class="pcard" *ngIf="view"
      [class.full]="size==='full'" [class.feed]="size!=='full'" [class.compact]="compact"
-     [attr.data-treat]="view.treatment" [class.pc-flat]="!gradientOn"
+     [attr.data-treat]="view.treatment"
+     [class.pc-flat]="surface==='color'" [class.pc-plain]="surface==='plain'"
      [style.--accent]="accent" [style.--pg-from]="pgFrom" [style.--pg-mid]="pgMid" [style.--pg-to]="pgTo" [style.--pg-glow]="pgGlow"
      [style.--pg-solid]="pgSolid">
 

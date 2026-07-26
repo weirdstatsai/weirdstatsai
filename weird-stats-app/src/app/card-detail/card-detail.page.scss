@@ -590,6 +590,18 @@ $alt-tile-w: min(45vw, 190px);
   }
 }
 
+// "No colour" swatch — the neutral white card (default). A white chip with a
+// slash so it reads as an option, not a missing swatch.
+.swatch-none {
+  background: #fff;
+  border: 2px dashed rgba(20, 22, 45, 0.28);
+  display: grid; place-items: center;
+  color: #9a9db4;
+  ion-icon { font-size: 16px; }
+
+  &.active { border-style: solid; border-color: #1a1a2e; color: #1a1a2e; }
+}
+
 // ── Premium KPI gradient toggle ────────────────────────────────────────────
 // A pill previewing the current accent's gradient, dimmed when off / full +
 // outlined when on. Layers over the accent colour, independent of it.

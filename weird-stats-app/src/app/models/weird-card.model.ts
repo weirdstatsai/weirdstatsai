@@ -107,6 +107,19 @@ export function solidColorForAccent(hex: string | undefined): string {
   return SOLID_CARD_COLORS[key ?? ACCENT_COLORS[0]];
 }
 
+/**
+ * How a story card paints its background. The DESIGN is identical across all
+ * three — only the colouring differs, and only 'gradient' is premium-gated.
+ */
+export type CardSurface = 'plain' | 'color' | 'gradient';
+
+/** Resolve a card's surface, honouring the legacy `useGradient` flag. Cards with
+ *  nothing set are 'plain' — the neutral white default. */
+export function cardSurfaceOf(ui: CardUiMeta | undefined): CardSurface {
+  if (ui?.cardSurface) return ui.cardSurface;
+  return ui?.useGradient ? 'gradient' : 'plain';
+}
+
 export interface CardMetric {
   name: string;
   unit: string;
@@ -142,10 +155,16 @@ export interface CardUiMeta {
   mapStyles?: string[];
   selectedStyle?: string;
   factFontSize?: 'small' | 'medium' | 'large';
-  /** KPI cards only: opt IN to the premium dark GRADIENT treatment (app-story-card).
-   *  Default/undefined = the free light card (app-card-kpi). Set by the owner in the
-   *  edit panel and gated to premium members; persisted so the card renders the same
+  /** The card's background treatment — the ONLY thing that differs between free
+   *  and premium (the design/structure is identical in all three):
+   *    'plain'    — neutral white card with dark copy. THE DEFAULT.
+   *    'color'    — filled with the basic accent colour, white copy.
+   *    'gradient' — the premium multi-stop gradient, white copy. Premium only.
+   *  Set by the owner in the edit panel and persisted, so the card looks the same
    *  on every surface (feed, detail, captures, share). */
+  cardSurface?: CardSurface;
+  /** @deprecated superseded by `cardSurface`. Older cards that opted into the
+   *  gradient carry this; still READ so they keep rendering as a gradient. */
   useGradient?: boolean;
   /** Owner-uploaded background photo (Storage download URL) — layers softly
    *  under the card content; fills the panel on the fact split style. Set

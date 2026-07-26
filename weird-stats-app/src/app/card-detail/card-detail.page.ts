@@ -9,7 +9,7 @@ import { ActionSheetController, AlertController, ToastController, LoadingControl
 const domtoimage = require('dom-to-image-more');
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { WeirdCard, StoredStatCard, ACCENT_COLORS, gradientForAccent, premiumGradientForAccent } from '../models/weird-card.model';
+import { WeirdCard, StoredStatCard, ACCENT_COLORS, CardSurface, cardSurfaceOf, gradientForAccent, premiumGradientForAccent } from '../models/weird-card.model';
 import { PlanModalComponent } from '../shared/plan-modal/plan-modal.component';
 import { cardHasData } from '../shared/card-data.util';
 import { freezeCaptureLayout } from '../shared/capture.util';
@@ -421,7 +421,14 @@ export class CardDetailPage implements OnInit {
         else this.stashGuestCard(card);
       });
     } else if (card.id) {
-      this.afs.doc(`stats/${card.id}`).update({ data: card.data, updatedAt: new Date().toISOString() }).catch(() => {});
+      // Surface write failures: this used to swallow every error, so a rejected
+      // edit (rules, offline, bad value) silently reverted on the next load with
+      // no clue why.
+      this.afs.doc(`stats/${card.id}`).update({ data: card.data, updatedAt: new Date().toISOString() })
+        .catch((err) => {
+          console.warn('Card edit failed to save', err);
+          this.toast('Could not save your change.');
+        });
       // A published card's share/link-preview image must not drift from its
       // edited look — rebuild it (debounced) whenever a public card is edited.
       if (card.publishStatus === 'published') this.scheduleOgRefresh();
@@ -494,7 +501,13 @@ export class CardDetailPage implements OnInit {
     this.refreshGuest();
     try {
       const snap = await firstValueFrom(this.afs.doc<StoredStatCard>(`stats/${id}`).get());
-      this.storedCard = snap?.data() ?? undefined;
+      const doc = snap?.data();
+      // `id` is the document KEY, not a stored field, so snap.data() has none —
+      // stamp it on. Without it every code path guarded by `storedCard.id`
+      // (persistCardEdits, delete, share, feed flags) silently no-ops, so an
+      // owner's edits were quietly lost whenever they reached a card by URL
+      // (refresh or their own share link) instead of from the profile list.
+      this.storedCard = doc ? { ...doc, id: doc.id || id } : undefined;
       this.card = this.storedCard?.data;
       if (!this.card) this.errorMsg = 'Card not found.';
       else {
@@ -1202,11 +1215,16 @@ export class CardDetailPage implements OnInit {
     this.persistCardEdits();
   }
 
+  /** The card's current background treatment (plain / color / gradient). */
+  get cardSurface(): CardSurface {
+    return cardSurfaceOf(this.card?.uiMeta);
+  }
+
   setAccent(hex: string): void {
     if (!this.card) return;
-    // Accent = the card's COLOR (hue) only — it applies to BOTH the light and the
-    // gradient treatment and NEVER changes which one is active. So a premium
-    // member can recolor their gradient card without losing the gradient.
+    // Picking a colour fills the card with it — but NEVER downgrades a gradient
+    // card, so a premium member can recolour without losing the gradient.
+    const surface: CardSurface = this.cardSurface === 'gradient' ? 'gradient' : 'color';
     const grad = gradientForAccent(hex);
     this.card = {
       ...this.card,
@@ -1215,8 +1233,16 @@ export class CardDetailPage implements OnInit {
         accentColor: hex,
         gradientFrom: grad.from,
         gradientTo: grad.to,
+        cardSurface: surface,
       },
     };
+    this.persistCardEdits();
+  }
+
+  /** Back to the neutral white card (the default) — no colour, dark copy. */
+  setPlainSurface(): void {
+    if (!this.card) return;
+    this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, cardSurface: 'plain' } };
     this.persistCardEdits();
   }
 
@@ -1228,16 +1254,16 @@ export class CardDetailPage implements OnInit {
       + `linear-gradient(150deg, ${g.from} 0%, ${g.mid} 50%, ${g.to} 100%)`;
   }
 
-  /** Premium toggle: layer the dark GRADIENT treatment on/off over the card's
-   *  current accent — independent of the colour, so it survives recolouring.
-   *  Free members are sent to the upgrade sheet instead. */
+  /** Premium toggle: swap the card's colouring between the flat basic colour and
+   *  the multi-stop gradient. Independent of the accent, so it survives
+   *  recolouring. Free members are sent to the upgrade sheet instead. */
   toggleGradient(): void {
     if (!this.card) return;
     if (!this.isPremium) { this.promptGradientUpgrade(); return; }
-    const on = !this.card.uiMeta?.useGradient;
+    const surface: CardSurface = this.cardSurface === 'gradient' ? 'color' : 'gradient';
     this.card = {
       ...this.card,
-      uiMeta: { ...this.card.uiMeta, useGradient: on },
+      uiMeta: { ...this.card.uiMeta, cardSurface: surface },
     };
     this.persistCardEdits();
   }
