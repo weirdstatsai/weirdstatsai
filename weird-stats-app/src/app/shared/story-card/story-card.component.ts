@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
-import { WeirdCard, CardSurface, cardSurfaceOf, premiumGradientForAccent, solidColorForAccent, shadowScale } from '../../models/weird-card.model';
+import { WeirdCard, CardSurface, cardSurfaceOf, premiumGradientForAccent, solidColorForAccent } from '../../models/weird-card.model';
 import { GraphConfig } from '../../models/graph.model';
 import { buildStoryView, StoryView, StoryVariant, asStoryVariant, fmtNum } from './story-view';
 
@@ -52,8 +52,6 @@ export class StoryCardComponent implements OnChanges {
   /** Which background treatment this card paints. Same design in all three —
    *  only the colouring differs (see CardSurface). */
   surface: CardSurface = 'plain';
-  /** Multiplier the card's box-shadow is scaled by (0 = none, 1 = stock, 2 = deep). */
-  shadow = 1;
   chartConfig?: GraphConfig;
 
   ngOnChanges(): void {
@@ -73,7 +71,6 @@ export class StoryCardComponent implements OnChanges {
     // owner picks one, the gradient when a premium member opts in. Structure,
     // layout and chrome are identical in all three.
     this.surface = this.forceGradient ? 'gradient' : cardSurfaceOf(this.card?.uiMeta);
-    this.shadow = shadowScale(this.card?.uiMeta?.shadow);
     this.chartConfig = this.view.treatment === 'chart' ? this.buildChartConfig() : undefined;
   }
 

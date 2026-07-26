@@ -452,24 +452,6 @@
             <span>Unlock gradients</span>
           </button>
         </div>
-
-        <p class="edit-label">Shadow depth <span class="premium-tag">Premium</span></p>
-        <div class="grad-lockwrap shadow-lockwrap" [class.locked]="!isPremium">
-          <div class="shadow-row">
-            <ion-icon name="square-outline" class="shadow-hint"></ion-icon>
-            <input class="shadow-range" type="range" min="0" max="100" step="5"
-                   [value]="shadowValue"
-                   [attr.tabindex]="isPremium ? null : -1"
-                   (input)="previewShadow($any($event.target).value)"
-                   (change)="setShadow($any($event.target).value)"
-                   aria-label="Card shadow depth">
-            <ion-icon name="layers-outline" class="shadow-hint"></ion-icon>
-          </div>
-          <button class="grad-lock" *ngIf="!isPremium" (click)="promptGradientUpgrade()">
-            <ion-icon name="lock-closed"></ion-icon>
-            <span>Unlock shadow</span>
-          </button>
-        </div>
       </ng-container>
 
       <p class="edit-label">Badge</p>

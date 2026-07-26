@@ -194,16 +194,6 @@ export function solidColorForAccent(hex: string | undefined): string {
  */
 export type CardSurface = 'plain' | 'color' | 'gradient';
 
-/** Neutral shadow setting — the stock depth every card has always had. */
-export const SHADOW_DEFAULT = 50;
-
-/** Map the 0–100 shadow setting to the multiplier the card's CSS scales its
- *  box-shadow by: 0 → 0 (no shadow), 50 → 1 (stock), 100 → 2 (twice as deep). */
-export function shadowScale(shadow: number | undefined): number {
-  const v = typeof shadow === 'number' && isFinite(shadow) ? shadow : SHADOW_DEFAULT;
-  return Math.min(100, Math.max(0, v)) / SHADOW_DEFAULT;
-}
-
 /** Resolve a card's surface, honouring the legacy `useGradient` flag. Cards with
  *  nothing set are 'plain' — the neutral white default. */
 export function cardSurfaceOf(ui: CardUiMeta | undefined): CardSurface {
@@ -254,9 +244,6 @@ export interface CardUiMeta {
    *  Set by the owner in the edit panel and persisted, so the card looks the same
    *  on every surface (feed, detail, captures, share). */
   cardSurface?: CardSurface;
-  /** Card shadow depth, 0–100 (premium). 50 = the stock shadow, 0 = flat/none,
-   *  100 = twice as deep. Undefined means "never touched" and renders at 50. */
-  shadow?: number;
   /** @deprecated superseded by `cardSurface`. Older cards that opted into the
    *  gradient carry this; still READ so they keep rendering as a gradient. */
   useGradient?: boolean;
