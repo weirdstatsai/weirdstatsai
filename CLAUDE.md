@@ -193,6 +193,12 @@ share counts are **placeholders** — `mockShares`, no real share-tracking field
 
 ## Deploy
 - **Frontend**: `firebase deploy --only hosting --project weirdstats-ai`
+- **Before a backend deploy**: `cd services/backend && python3 eval/run_eval.py`
+  — runs one prompt per card shape through the real pipeline and asserts the
+  output is renderable (enums parse, labels==data, row counts, no placeholder
+  rows, curated "top X" lists carry `extra` notes, time series aren't pies).
+  Exits non-zero so it can gate the deploy; `--offline` re-checks the saved
+  cards in `eval/out/` for free. A full run is ~10 generations (<$1).
 - **Backend**: `cd services/backend && gcloud run deploy weirdstats-api --source=. --region=us-central1 --project=weirdstats-ai --min-instances=1 --cpu-boost --quiet`
   (`--min-instances=1` keeps one warm container so generation doesn't pay a
   cold-start [container boot + Python import + `firebase_admin` init, several

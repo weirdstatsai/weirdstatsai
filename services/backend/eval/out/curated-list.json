@@ -1,0 +1,132 @@
+{
+ "status": "success",
+ "title": "Top Family SUVs for 2026 Based on Multiple Rankings",
+ "cardType": "ranking",
+ "presentationType": "top-5",
+ "chartType": null,
+ "theme": "general",
+ "metric": {
+  "name": "Rank",
+  "unit": "",
+  "value": null,
+  "description": "Position in ranking"
+ },
+ "labels": [
+  "Car and Driver",
+  "MotorTrend",
+  "iSeeCars",
+  "Cars.com",
+  "Kelley Blue Book"
+ ],
+ "datasets": [],
+ "rows": [
+  {
+   "rank": 1,
+   "label": "2026 Hyundai Palisade Hybrid",
+   "value": 1.0,
+   "unit": "",
+   "extra": "C/D Rating: 10/10"
+  },
+  {
+   "rank": 2,
+   "label": "2026 Honda CR‑V Hybrid",
+   "value": 2.0,
+   "unit": "",
+   "extra": "C/D Rating: 10/10"
+  },
+  {
+   "rank": 3,
+   "label": "2026 Honda Passport",
+   "value": 3.0,
+   "unit": "",
+   "extra": "C/D Rating: 10/10"
+  },
+  {
+   "rank": 4,
+   "label": "2026 Lucid Gravity",
+   "value": 4.0,
+   "unit": "",
+   "extra": "C/D Rating: 10/10 (Electric)"
+  },
+  {
+   "rank": 5,
+   "label": "2026 Chevrolet Suburban",
+   "value": 5.0,
+   "unit": "",
+   "extra": "C/D Rating: 10/10"
+  }
+ ],
+ "insight": "The top family SUVs for 2026 include the Hyundai Palisade Hybrid, Honda CR-V Hybrid, and Honda Passport, all receiving perfect ratings from Car and Driver. With these models, your family can ride in style and comfort—just don’t forget to pack the snacks for the inevitable road trip debates over who gets the last chip.",
+ "tags": [
+  "SUVs",
+  "family",
+  "2026",
+  "automotive"
+ ],
+ "weirdScore": 3,
+ "uiMeta": {
+  "category": "Cars",
+  "visualTheme": "city",
+  "accentColor": "#378ADD",
+  "gradientFrom": "#e3f2fd",
+  "gradientTo": "#e8eaf6",
+  "backgroundPattern": "none",
+  "icon": "🚗",
+  "insightBadge": "Top 5",
+  "shareTitle": "Top Family SUVs for 2026 Based on Multiple Rankings",
+  "rankStyles": [],
+  "versusStyles": [],
+  "mapStyles": [],
+  "selectedStyle": ""
+ },
+ "dataMeta": {
+  "geoScope": "United States",
+  "timePeriod": "2026",
+  "dataMode": "researched",
+  "isProxy": false,
+  "proxyExplanation": "",
+  "confidence": "high"
+ },
+ "sourceMeta": {
+  "primarySourceName": "Car and Driver",
+  "sources": [
+   {
+    "name": "Car and Driver",
+    "url": "https://www.caranddriver.com/rankings/best-suvs/family?utm_source=openai",
+    "sourceType": "other",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "name": "MotorTrend",
+    "url": "https://www.motortrend.com/rankings/suvs/family?utm_source=openai",
+    "sourceType": "other",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "name": "iSeeCars.com",
+    "url": "https://www.iseecars.com/family-cars/suvs?utm_source=openai",
+    "sourceType": "other",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "name": "Cars.com",
+    "url": "https://www.cars.com/articles/best-family-car-of-2026-520768/?msockid=13efdca7bd726e8d1171ca5fbc196f47&utm_source=openai",
+    "sourceType": "other",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "name": "Kelley Blue Book",
+    "url": "https://www.kbb.com/awards/best-family-cars/?msockid=07c7a38ceecc69cf30cdb5eeef17684a&utm_source=openai",
+    "sourceType": "other",
+    "retrievedAt": "2026-07-27"
+   }
+  ]
+ },
+ "id": null,
+ "uid": null,
+ "createdByName": null,
+ "prompt": null,
+ "promptHash": null,
+ "createdAt": null,
+ "editedAt": null
+}

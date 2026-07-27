@@ -1,0 +1,92 @@
+{
+ "dataMeta": {
+  "isProxy": false,
+  "proxyExplanation": "",
+  "geoScope": "Human anatomy (universal)",
+  "confidence": "high",
+  "dataMode": "researched",
+  "timePeriod": "Latest available anatomical estimates as of July 27, 2026"
+ },
+ "title": "One human foot contains 26 bones",
+ "editedAt": null,
+ "insight": "A human foot contains 26 bones, which include tarsal, metatarsal, and phalange bones. That's a lot of bones for just one foot—imagine if they all had to wear shoes!",
+ "theme": "general",
+ "labels": [],
+ "prompt": "How many bones are in the human foot?",
+ "sourceMeta": {
+  "primarySourceName": "StatPearls (NCBI Bookshelf)",
+  "sources": [
+   {
+    "url": "https://www.ncbi.nlm.nih.gov/books/NBK546698/?report=printable&utm_source=openai",
+    "name": "StatPearls (NCBI Bookshelf)",
+    "sourceType": "official",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "url": "https://medlineplus.gov/footinjuriesanddisorders.html?utm_source=openai",
+    "name": "MedlinePlus (U.S. NIH)",
+    "sourceType": "official",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "url": "https://en.wikipedia.org/wiki/List_of_bones_of_the_human_skeleton?utm_source=openai",
+    "name": "Wikipedia",
+    "sourceType": "other",
+    "retrievedAt": "2026-07-01"
+   },
+   {
+    "url": "https://en.wikipedia.org/wiki/Foot?utm_source=openai",
+    "sourceType": "other",
+    "name": "Wikipedia",
+    "retrievedAt": "2026-07-01"
+   }
+  ]
+ },
+ "metric": {
+  "description": "Total number of bones",
+  "name": "Bones in one foot",
+  "value": 26,
+  "unit": "count"
+ },
+ "cardType": "kpi",
+ "createdByName": null,
+ "rows": [
+  {
+   "label": "Foot",
+   "extra": "Standard count in adult anatomy",
+   "rank": null,
+   "unit": "count",
+   "value": 26
+  }
+ ],
+ "status": "success",
+ "id": "a6e3b888-5c1b-4c2a-828a-c6f24f42f8d3",
+ "createdAt": "2026-07-27T02:52:58.203892+00:00",
+ "uiMeta": {
+  "shareTitle": "One human foot contains 26 bones",
+  "mapStyles": [],
+  "cardSurface": "gradient",
+  "versusStyles": [],
+  "selectedStyle": "",
+  "category": "Science",
+  "gradientFrom": "#fbeecb",
+  "icon": "🦶",
+  "visualTheme": "lab",
+  "backgroundPattern": "none",
+  "gradientTo": "#f6dfa6",
+  "insightBadge": "Unexpected",
+  "accentColor": "#BA7517",
+  "rankStyles": []
+ },
+ "weirdScore": 5,
+ "tags": [
+  "anatomy",
+  "human",
+  "bones"
+ ],
+ "datasets": [],
+ "presentationType": "kpi-single",
+ "promptHash": null,
+ "uid": null,
+ "chartType": null
+}

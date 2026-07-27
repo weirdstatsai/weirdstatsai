@@ -1,0 +1,124 @@
+{
+ "status": "success",
+ "title": "Peregrine Falcon Reaches Top Speed of 389 km/h (242 mph)",
+ "cardType": "ranking",
+ "presentationType": "top-5",
+ "chartType": null,
+ "theme": "animals",
+ "metric": {
+  "name": "Top speed",
+  "unit": "km/h",
+  "value": 389.0,
+  "description": "Maximum recorded speed of the fastest animals"
+ },
+ "labels": [
+  "Peregrine Falcon",
+  "Golden Eagle",
+  "Mexican Free-tailed Bat",
+  "Cheetah",
+  "Black Marlin"
+ ],
+ "datasets": [
+  {
+   "label": "Speed",
+   "data": [
+    389.0,
+    322.0,
+    160.0,
+    120.0,
+    129.0
+   ]
+  }
+ ],
+ "rows": [
+  {
+   "rank": 1,
+   "label": "Peregrine Falcon",
+   "value": 389.0,
+   "unit": "km/h",
+   "extra": "Fastest animal overall"
+  },
+  {
+   "rank": 2,
+   "label": "Golden Eagle",
+   "value": 322.0,
+   "unit": "km/h",
+   "extra": "Rapid stoop-diving bird"
+  },
+  {
+   "rank": 3,
+   "label": "Mexican Free-tailed Bat",
+   "value": 160.0,
+   "unit": "km/h",
+   "extra": "Fastest in level flight"
+  },
+  {
+   "rank": 4,
+   "label": "Cheetah",
+   "value": 120.0,
+   "unit": "km/h",
+   "extra": "Fastest land animal"
+  },
+  {
+   "rank": 5,
+   "label": "Black Marlin",
+   "value": 129.0,
+   "unit": "km/h",
+   "extra": "Fastest swimmer"
+  }
+ ],
+ "insight": "The peregrine falcon can reach speeds of up to 389 km/h (242 mph) during its hunting dives, making it the fastest animal on Earth. That's like being late to a meeting and still arriving before anyone else even leaves their house!",
+ "tags": [
+  "speed",
+  "animals",
+  "fastest"
+ ],
+ "weirdScore": 5,
+ "uiMeta": {
+  "category": "Animals",
+  "visualTheme": "jungle",
+  "accentColor": "#1D9E75",
+  "gradientFrom": "#e8f5e9",
+  "gradientTo": "#f1f8e9",
+  "backgroundPattern": "none",
+  "icon": "🦅",
+  "insightBadge": "Top 5",
+  "shareTitle": "Peregrine Falcon reaches top speed of 389 km/h (242 mph)",
+  "rankStyles": [],
+  "versusStyles": [],
+  "mapStyles": [],
+  "selectedStyle": ""
+ },
+ "dataMeta": {
+  "geoScope": "Global",
+  "timePeriod": "Latest available estimates (as of mid‑2026)",
+  "dataMode": "researched",
+  "isProxy": false,
+  "proxyExplanation": "",
+  "confidence": "high"
+ },
+ "sourceMeta": {
+  "primarySourceName": "Global Animal Guide",
+  "sources": [
+   {
+    "name": "Global Animal Guide",
+    "url": "https://globalanimalguide.org/stories/fastest-animals-on-earth/?utm_source=openai",
+    "sourceType": "company",
+    "retrievedAt": "2026-06-01"
+   },
+   {
+    "name": "Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Fastest_animals?utm_source=openai",
+    "sourceType": "database",
+    "retrievedAt": "2026-06-01"
+   }
+  ]
+ },
+ "id": "f47921cd-eb33-43f5-a7eb-21144c9587b9",
+ "uid": null,
+ "createdByName": null,
+ "prompt": "Top 5 fastest animals on Earth",
+ "promptHash": null,
+ "createdAt": "2026-07-27T05:28:57.403370+00:00",
+ "editedAt": null
+}

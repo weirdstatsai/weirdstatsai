@@ -1,0 +1,99 @@
+{
+ "status": "success",
+ "title": "Total 542 Members of Parliament in India by Age Group",
+ "cardType": "chart",
+ "presentationType": "bar-chart",
+ "chartType": "bar",
+ "theme": "general",
+ "metric": {
+  "name": "Number of MPs",
+  "unit": "MPs",
+  "value": 542.0,
+  "description": "Total number of MPs accounted for"
+ },
+ "labels": [
+  "18–20",
+  "21–30",
+  "31–40",
+  "41–45",
+  "46–50",
+  "51–60",
+  "61–70",
+  "71–80",
+  "81–90",
+  "91 and over"
+ ],
+ "datasets": [
+  {
+   "label": "Age Group Distribution",
+   "data": [
+    0.0,
+    7.0,
+    45.0,
+    46.0,
+    64.0,
+    166.0,
+    161.0,
+    52.0,
+    1.0,
+    0.0
+   ]
+  }
+ ],
+ "rows": [],
+ "insight": "At the start of the 18th Lok Sabha in June 2024, there are 542 Members of Parliament in India, with the largest age group being 51–60 years old, accounting for 166 MPs. Interestingly, there are no MPs under 21, so if you're looking for youthful exuberance, you might have to settle for the 21–30 age group, which has just 7 members — basically, the Lok Sabha's version of a toddler's playgroup.",
+ "tags": [
+  "india",
+  "politics",
+  "age",
+  "parliament"
+ ],
+ "weirdScore": 5,
+ "uiMeta": {
+  "category": "Politics",
+  "visualTheme": "city",
+  "accentColor": "#378ADD",
+  "gradientFrom": "#e3f2fd",
+  "gradientTo": "#e8eaf6",
+  "backgroundPattern": "none",
+  "icon": "🏛️",
+  "insightBadge": "Unexpected",
+  "shareTitle": "Total 542 Members of Parliament in India by Age Group",
+  "rankStyles": [],
+  "versusStyles": [],
+  "mapStyles": [],
+  "selectedStyle": ""
+ },
+ "dataMeta": {
+  "geoScope": "India",
+  "timePeriod": "June 2024",
+  "dataMode": "researched",
+  "isProxy": false,
+  "proxyExplanation": "",
+  "confidence": "high"
+ },
+ "sourceMeta": {
+  "primarySourceName": "IPU Parline",
+  "sources": [
+   {
+    "name": "IPU Parline database",
+    "url": "https://data.ipu.org/parliament/IN/IN-LC01/?utm_source=openai",
+    "sourceType": "official",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "name": "IPU Parline Breakdown of members by age and sex",
+    "url": "https://data.ipu.org/parliament/IN/IN-LC01/data-on-youth/?utm_source=openai",
+    "sourceType": "official",
+    "retrievedAt": "2026-07-27"
+   }
+  ]
+ },
+ "id": "9b2ab82e-85f6-4666-a657-3c216543ea94",
+ "uid": null,
+ "createdByName": null,
+ "prompt": "Members of Parliament in India by age group",
+ "promptHash": null,
+ "createdAt": "2026-07-27T05:30:39.976285+00:00",
+ "editedAt": null
+}

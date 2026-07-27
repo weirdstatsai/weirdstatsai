@@ -1,0 +1,179 @@
+{
+ "status": "success",
+ "title": "Finland Leads Global Coffee Consumption Per Capita",
+ "cardType": "map",
+ "presentationType": "map-region",
+ "chartType": null,
+ "theme": "general",
+ "metric": {
+  "name": "Coffee consumption",
+  "unit": "kg/person/year",
+  "value": null,
+  "description": "Annual per-capita coffee consumption by country."
+ },
+ "labels": [],
+ "datasets": [],
+ "rows": [
+  {
+   "rank": 1,
+   "label": "Finland",
+   "value": 12.5,
+   "unit": "kg/person/year",
+   "extra": ""
+  },
+  {
+   "rank": 2,
+   "label": "Norway",
+   "value": 10.0,
+   "unit": "kg/person/year",
+   "extra": ""
+  },
+  {
+   "rank": 3,
+   "label": "Sweden",
+   "value": 10.0,
+   "unit": "kg/person/year",
+   "extra": ""
+  },
+  {
+   "rank": 4,
+   "label": "Iceland",
+   "value": 8.75,
+   "unit": "kg/person/year",
+   "extra": ""
+  },
+  {
+   "rank": 5,
+   "label": "Denmark",
+   "value": 8.5,
+   "unit": "kg/person/year",
+   "extra": ""
+  },
+  {
+   "rank": 6,
+   "label": "Austria",
+   "value": 8.5,
+   "unit": "kg/person/year",
+   "extra": ""
+  },
+  {
+   "rank": 7,
+   "label": "Switzerland",
+   "value": 8.3,
+   "unit": "kg/person/year",
+   "extra": ""
+  },
+  {
+   "rank": 8,
+   "label": "Bosnia and Herzegovina",
+   "value": 6.2,
+   "unit": "kg/person/year",
+   "extra": ""
+  },
+  {
+   "rank": 9,
+   "label": "Canada",
+   "value": 6.4,
+   "unit": "kg/person/year",
+   "extra": ""
+  },
+  {
+   "rank": 10,
+   "label": "Luxembourg",
+   "value": 6.6,
+   "unit": "kg/person/year",
+   "extra": ""
+  },
+  {
+   "rank": 11,
+   "label": "Laos",
+   "value": 22.6,
+   "unit": "kg/person/year",
+   "extra": "supply-based"
+  },
+  {
+   "rank": 12,
+   "label": "Ireland",
+   "value": 15.8,
+   "unit": "kg/person/year",
+   "extra": "supply-based"
+  },
+  {
+   "rank": 13,
+   "label": "Estonia",
+   "value": 15.7,
+   "unit": "kg/person/year",
+   "extra": "supply-based"
+  }
+ ],
+ "insight": "Finland tops the world in coffee consumption with about 12–13 kg per person annually. That's enough caffeine to make even a polar bear jittery.",
+ "tags": [
+  "coffee",
+  "consumption",
+  "countries",
+  "global"
+ ],
+ "weirdScore": 7,
+ "uiMeta": {
+  "category": "Food",
+  "visualTheme": "map",
+  "accentColor": "#BA7517",
+  "gradientFrom": "#fff8e1",
+  "gradientTo": "#fce4ec",
+  "backgroundPattern": "dots",
+  "icon": "☕",
+  "insightBadge": "Global",
+  "shareTitle": "Finland Leads Global Coffee Consumption Per Capita",
+  "rankStyles": [],
+  "versusStyles": [],
+  "mapStyles": [
+   "choropleth",
+   "pins"
+  ],
+  "selectedStyle": ""
+ },
+ "dataMeta": {
+  "geoScope": "Global",
+  "timePeriod": "2023–2025",
+  "dataMode": "researched",
+  "isProxy": false,
+  "proxyExplanation": "",
+  "confidence": "high"
+ },
+ "sourceMeta": {
+  "primarySourceName": "WorldAtlas",
+  "sources": [
+   {
+    "name": "WorldAtlas",
+    "url": "https://www.worldatlas.com/society/the-top-coffee-consuming-countries.html?utm_source=openai",
+    "sourceType": "news",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "name": "IARC MONOGRAPHS",
+    "url": "https://publications.iarc.who.int/_publications/media/download/5593/c4abf55679b9972a06319d5cc45e2d9eefd800a6.pdf?utm_source=openai",
+    "sourceType": "research",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "name": "GeoTally",
+    "url": "https://www.geotally.org/rankings/coffee-consumption?utm_source=openai",
+    "sourceType": "database",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "name": "Data Explained",
+    "url": "https://dataexplained.com/trends/coffee-consuming-countries-in-the-world/?utm_source=openai",
+    "sourceType": "news",
+    "retrievedAt": "2026-07-27"
+   }
+  ]
+ },
+ "id": "e925ea58-dee7-42db-9a92-d819f44d6620",
+ "uid": null,
+ "createdByName": null,
+ "prompt": "Which country drinks the most coffee?",
+ "promptHash": null,
+ "createdAt": "2026-07-27T05:29:38.646078+00:00",
+ "editedAt": null
+}

@@ -1,0 +1,77 @@
+{
+ "status": "success",
+ "title": "Cats Purr for Various Reasons Including Communication and Healing",
+ "cardType": "fact",
+ "presentationType": "fact",
+ "chartType": null,
+ "theme": "animals",
+ "metric": {
+  "name": "Reasons for purring behavior",
+  "unit": "Behavioral explanation",
+  "value": null,
+  "description": "Various explanations for why domestic cats purr."
+ },
+ "labels": [],
+ "datasets": [],
+ "rows": [],
+ "insight": "Cats purr for several reasons, including communication, self-soothing, and even promoting healing through specific frequencies. It's like their way of saying, 'I'm fine, but also, can you please feed me?'",
+ "tags": [
+  "cats",
+  "behavior",
+  "purring"
+ ],
+ "weirdScore": 5,
+ "uiMeta": {
+  "category": "Animals",
+  "visualTheme": "jungle",
+  "accentColor": "#1D9E75",
+  "gradientFrom": "#e8f5e9",
+  "gradientTo": "#f1f8e9",
+  "backgroundPattern": "none",
+  "icon": "🐱",
+  "insightBadge": "Unexpected",
+  "shareTitle": "Cats purr for various reasons including communication and healing",
+  "rankStyles": [],
+  "versusStyles": [],
+  "mapStyles": [],
+  "selectedStyle": ""
+ },
+ "dataMeta": {
+  "geoScope": "Global",
+  "timePeriod": "Latest available information as of 2026",
+  "dataMode": "researched",
+  "isProxy": false,
+  "proxyExplanation": "",
+  "confidence": "high"
+ },
+ "sourceMeta": {
+  "primarySourceName": "Scientific American",
+  "sources": [
+   {
+    "name": "Scientific American",
+    "url": "https://www.scientificamerican.com/article/why-do-cats-purr/",
+    "sourceType": "research",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "name": "National Geographic",
+    "url": "https://www.nationalgeographic.com/animals/article/why-do-cats-purr",
+    "sourceType": "research",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "name": "Journal of Feline Medicine and Surgery",
+    "url": "https://journals.sagepub.com/home/jfm",
+    "sourceType": "research",
+    "retrievedAt": "2026-07-27"
+   }
+  ]
+ },
+ "id": "74a48cf3-6d4b-4da1-a289-b00621365203",
+ "uid": null,
+ "createdByName": null,
+ "prompt": "Why do cats purr?",
+ "promptHash": null,
+ "createdAt": "2026-07-27T05:30:13.796239+00:00",
+ "editedAt": null
+}

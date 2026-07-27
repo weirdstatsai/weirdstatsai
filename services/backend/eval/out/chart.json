@@ -1,0 +1,115 @@
+{
+ "status": "success",
+ "title": "World Population Estimated to Reach 8.3 Billion by 2026",
+ "cardType": "chart",
+ "presentationType": "line-chart",
+ "chartType": "line",
+ "theme": "general",
+ "metric": {
+  "name": "World Population",
+  "unit": "people",
+  "value": 8300678395.0,
+  "description": "Estimated total population in 2026"
+ },
+ "labels": [
+  "1950",
+  "1960",
+  "1970",
+  "1980",
+  "1990",
+  "2000",
+  "2010",
+  "2015",
+  "2020",
+  "2023",
+  "2025",
+  "2026"
+ ],
+ "datasets": [
+  {
+   "label": "Population (in billions)",
+   "data": [
+    2.493,
+    3.015,
+    3.695,
+    4.448,
+    5.328,
+    6.172,
+    7.022,
+    7.47,
+    7.887,
+    8.092,
+    8.232,
+    8.301
+   ]
+  }
+ ],
+ "rows": [],
+ "insight": "The world population is projected to reach approximately 8.3 billion by 2026, a significant increase from just 2.5 billion in 1950. That's like adding the entire population of the U.S. every year — talk about a crowded planet!",
+ "tags": [
+  "population",
+  "growth",
+  "world",
+  "estimates"
+ ],
+ "weirdScore": 5,
+ "uiMeta": {
+  "category": "Science",
+  "visualTheme": "general",
+  "accentColor": "#1D9E75",
+  "gradientFrom": "#e8f5e9",
+  "gradientTo": "#f1f8e9",
+  "backgroundPattern": "none",
+  "icon": "🌍",
+  "insightBadge": "Global",
+  "shareTitle": "World population estimated to reach 8.3 billion by 2026",
+  "rankStyles": [],
+  "versusStyles": [],
+  "mapStyles": [],
+  "selectedStyle": ""
+ },
+ "dataMeta": {
+  "geoScope": "Global",
+  "timePeriod": "1950 through 2026",
+  "dataMode": "researched",
+  "isProxy": false,
+  "proxyExplanation": "",
+  "confidence": "high"
+ },
+ "sourceMeta": {
+  "primarySourceName": "World Population Review",
+  "sources": [
+   {
+    "name": "World Population by Year, World Population Review",
+    "url": "https://worldpopulationreview.com/world/population-by-year?utm_source=openai",
+    "sourceType": "official",
+    "retrievedAt": "2026-07-01"
+   },
+   {
+    "name": "World Population Prospects 2024 Revision, United Nations Population Division",
+    "url": "https://population.un.org/wpp/?os=0&utm_source=openai",
+    "sourceType": "official",
+    "retrievedAt": "2026-07-01"
+   },
+   {
+    "name": "UN World Population Prospects 2022 summary (milestones)",
+    "url": "https://desapublications.un.org/file/1059/download?utm_source=openai",
+    "sourceType": "official",
+    "retrievedAt": "2026-07-01"
+   },
+   {
+    "name": "U.S. Census Bureau International Database projections",
+    "url": "https://www.census.gov/newsroom/stories/world-population-day.html?utm_source=openai",
+    "sourceType": "official",
+    "retrievedAt": "2026-07-01"
+   }
+  ]
+ },
+ "id": "e5bc9805-e69b-4f5e-af54-856d743bf595",
+ "uid": null,
+ "createdByName": null,
+ "prompt": "World population growth since 1950",
+ "promptHash": null,
+ "createdAt": "2026-07-27T05:28:39.364550+00:00",
+ "editedAt": null
+}

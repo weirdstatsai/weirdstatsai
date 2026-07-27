@@ -1,0 +1,151 @@
+{
+ "status": "success",
+ "title": "Top 10 Most Spoken Languages in the World",
+ "cardType": "table",
+ "presentationType": "top-10",
+ "chartType": null,
+ "theme": "general",
+ "metric": {
+  "name": "Total speakers",
+  "unit": "millions",
+  "value": null,
+  "description": "Total number of speakers including native and second-language speakers"
+ },
+ "labels": [
+  "Language",
+  "Speakers (millions)"
+ ],
+ "datasets": [],
+ "rows": [
+  {
+   "rank": 1,
+   "label": "English",
+   "value": 1493.0,
+   "unit": "millions",
+   "extra": "Widely spoken globally"
+  },
+  {
+   "rank": 2,
+   "label": "Mandarin Chinese",
+   "value": 1183.0,
+   "unit": "millions",
+   "extra": "Most spoken language in China"
+  },
+  {
+   "rank": 3,
+   "label": "Hindi",
+   "value": 611.0,
+   "unit": "millions",
+   "extra": "Official language of India"
+  },
+  {
+   "rank": 4,
+   "label": "Spanish",
+   "value": 561.0,
+   "unit": "millions",
+   "extra": "Official language in 20 countries"
+  },
+  {
+   "rank": 5,
+   "label": "Arabic (Standard)",
+   "value": 335.0,
+   "unit": "millions",
+   "extra": "Widely used in the Arab world"
+  },
+  {
+   "rank": 6,
+   "label": "French",
+   "value": 334.0,
+   "unit": "millions",
+   "extra": "Spoken in many countries"
+  },
+  {
+   "rank": 7,
+   "label": "Bengali",
+   "value": 274.0,
+   "unit": "millions",
+   "extra": "Main language in Bangladesh"
+  },
+  {
+   "rank": 8,
+   "label": "Portuguese",
+   "value": 269.0,
+   "unit": "millions",
+   "extra": "Official language of Brazil and Portugal"
+  },
+  {
+   "rank": 9,
+   "label": "Indonesian",
+   "value": 255.0,
+   "unit": "millions",
+   "extra": "National language of Indonesia"
+  },
+  {
+   "rank": 10,
+   "label": "Urdu",
+   "value": 246.0,
+   "unit": "millions",
+   "extra": "National language of Pakistan"
+  }
+ ],
+ "insight": "The top 10 most spoken languages in the world include English with approximately 1,493 million speakers, followed by Mandarin Chinese at about 1,183 million. This means if you want to make friends globally, learning English might just be your best bet — or at least a good way to order food in any country!",
+ "tags": [
+  "languages",
+  "communication",
+  "global"
+ ],
+ "weirdScore": 5,
+ "uiMeta": {
+  "category": "Culture",
+  "visualTheme": "general",
+  "accentColor": "#1D9E75",
+  "gradientFrom": "#e3f2fd",
+  "gradientTo": "#e8eaf6",
+  "backgroundPattern": "none",
+  "icon": "🌍",
+  "insightBadge": "Global",
+  "shareTitle": "Top 10 Most Spoken Languages Worldwide",
+  "rankStyles": [],
+  "versusStyles": [],
+  "mapStyles": [],
+  "selectedStyle": ""
+ },
+ "dataMeta": {
+  "geoScope": "Global",
+  "timePeriod": "Latest available estimates (2026)",
+  "dataMode": "researched",
+  "isProxy": false,
+  "proxyExplanation": "",
+  "confidence": "high"
+ },
+ "sourceMeta": {
+  "primarySourceName": "Wikipedia summary of Ethnologue 2026 data",
+  "sources": [
+   {
+    "name": "Wikipedia summary of Ethnologue 2026 data",
+    "url": "https://en.wikipedia.org/wiki/List_of_languages_by_total_number_of_speakers?utm_source=openai",
+    "sourceType": "database",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "name": "Statista, The most spoken languages worldwide in 2026",
+    "url": "https://www.statista.com/statistics/266808/the-most-spoken-languages-worldwide/?utm_source=openai",
+    "sourceType": "database",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "name": "CIA World Factbook (2022)",
+    "url": "https://en.wikipedia.org/wiki/List_of_languages_by_total_number_of_speakers?utm_source=openai",
+    "sourceType": "official",
+    "retrievedAt": "2026-07-27"
+   }
+  ]
+ },
+ "id": "c5da08b1-b39e-4b2d-b6c3-9ebc6b3646ea",
+ "uid": null,
+ "createdByName": null,
+ "prompt": "Top 10 most spoken languages in the world",
+ "promptHash": null,
+ "createdAt": "2026-07-27T05:29:17.507117+00:00",
+ "editedAt": null
+}

@@ -1,0 +1,93 @@
+{
+ "status": "success",
+ "title": "Cristiano Ronaldo Has 974 Goals, Lionel Messi Has 919 Goals",
+ "cardType": "versus",
+ "presentationType": "kpi-comparison",
+ "chartType": null,
+ "theme": "sports",
+ "metric": {
+  "name": "Goals",
+  "unit": "goals",
+  "value": null,
+  "description": "Total official senior career goals"
+ },
+ "labels": [],
+ "datasets": [],
+ "rows": [
+  {
+   "rank": 1,
+   "label": "Cristiano Ronaldo",
+   "value": 974.0,
+   "unit": "goals",
+   "extra": "Leading by 55 goals"
+  },
+  {
+   "rank": 2,
+   "label": "Lionel Messi",
+   "value": 919.0,
+   "unit": "goals",
+   "extra": "Chasing the record"
+  }
+ ],
+ "insight": "Cristiano Ronaldo has scored 974 official senior career goals, while Lionel Messi has netted 919. That's a 55-goal lead for Ronaldo, proving he might just be the ultimate goal machine — or at least the one with the most frequent flyer miles from all those matches!",
+ "tags": [
+  "football",
+  "goals",
+  "Ronaldo",
+  "Messi"
+ ],
+ "weirdScore": 5,
+ "uiMeta": {
+  "category": "Sports",
+  "visualTheme": "sports",
+  "accentColor": "#1D9E75",
+  "gradientFrom": "#e8f5e9",
+  "gradientTo": "#f1f8e9",
+  "backgroundPattern": "none",
+  "icon": "⚽",
+  "insightBadge": "Big Difference",
+  "shareTitle": "Cristiano Ronaldo Has 974 Goals, Lionel Messi Has 919 Goals",
+  "rankStyles": [],
+  "versusStyles": [],
+  "mapStyles": [],
+  "selectedStyle": ""
+ },
+ "dataMeta": {
+  "geoScope": "Global",
+  "timePeriod": "As of mid-July 2026",
+  "dataMode": "researched",
+  "isProxy": false,
+  "proxyExplanation": "",
+  "confidence": "high"
+ },
+ "sourceMeta": {
+  "primarySourceName": "MessiVsRonaldo.com",
+  "sources": [
+   {
+    "name": "Messi vs Ronaldo Full Career Stats Comparison",
+    "url": "https://messixronaldo.com/blog/messi-vs-ronaldo-full-career-stats-comparison/?utm_source=openai",
+    "sourceType": "official",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "name": "Messi vs Ronaldo Stats",
+    "url": "https://messivsronaldo.football/?utm_source=openai",
+    "sourceType": "research",
+    "retrievedAt": "2026-07-27"
+   },
+   {
+    "name": "Messi vs Ronaldo All-Time Career Goals",
+    "url": "https://www.messivsronaldo.app/?utm_source=openai",
+    "sourceType": "research",
+    "retrievedAt": "2026-07-27"
+   }
+  ]
+ },
+ "id": "35c46e97-7d7b-4a38-97a0-7853b7a2b712",
+ "uid": null,
+ "createdByName": null,
+ "prompt": "Ronaldo vs Messi career goals",
+ "promptHash": null,
+ "createdAt": "2026-07-27T05:29:55.241434+00:00",
+ "editedAt": null
+}
