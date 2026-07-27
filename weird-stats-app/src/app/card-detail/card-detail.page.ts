@@ -697,10 +697,9 @@ export class CardDetailPage implements OnInit {
               // can edit / save it. It's already stored as a draft above, so
               // Back/exit lands on the Drafts tab (see back()).
               this.fromGenerate = true;
-              // Ask what to do with it. Deliberately after the reveal so the
-              // user sees their card first; guests are already being prompted to
-              // sign in, so only ask signed-in users.
-              if (uid) setTimeout(() => this.promptSaveOrDraft(), 900);
+              // No prompt here — interrupting someone the instant their card
+              // appears is the worst moment to ask a filing question. The ask
+              // happens on the way out instead (see back()).
             } else if (event.type === 'error') {
               this.errorMsg = event.message;
               this.isLoading = false;
@@ -1285,17 +1284,28 @@ export class CardDetailPage implements OnInit {
    */
   private async promptSaveOrDraft(): Promise<void> {
     if (!this.card || this.isSaved || this.viewOnly) return;
+    // Guests can't save to a profile — they're already told to sign in when the
+    // card lands, so don't stack a second ask on top of that.
+    const user = await firstValueFrom(this.authService.user$);
+    if (!user) return;
+
+    let save = false;
     const alert = await this.alertCtrl.create({
-      header: 'Your card is ready',
+      header: 'Save this card?',
       message: 'Save it to your profile, or keep it in Drafts to finish later.',
-      backdropDismiss: false,
+      // Dismissible on purpose: backing out or tapping away is a legitimate
+      // answer, and it means "leave it in Drafts" — which is exactly where the
+      // card already is, so nothing is lost either way.
+      backdropDismiss: true,
       cssClass: 'ws-confirm-alert',
       buttons: [
-        { text: 'Save to profile', cssClass: 'ws-alert-primary', handler: () => { this.saveDraft(); } },
+        { text: 'Save to profile', cssClass: 'ws-alert-primary', handler: () => { save = true; } },
         { text: 'Keep in Drafts', role: 'cancel', cssClass: 'ws-alert-ghost' },
       ],
     });
     await alert.present();
+    await alert.onDidDismiss();
+    if (save) await this.saveDraft();
   }
 
   async saveDraft(): Promise<void> {
@@ -1700,6 +1710,10 @@ export class CardDetailPage implements OnInit {
   async back(): Promise<void> {
     // Staged edits are only in memory — offer to save them before we navigate.
     if (!(await this.confirmLeave())) return;
+    // Leaving a card they just generated and haven't filed yet: ask where it
+    // should live. This never blocks the exit — declining (or dismissing) keeps
+    // it in Drafts, which is where it already is, so the answer is always safe.
+    if (this.isUnsavedDraft) await this.promptSaveOrDraft();
     // Admin flow targets a specific page.
     if (this.returnUrl) { this.router.navigateByUrl(this.returnUrl); return; }
     // A freshly generated card lands in Drafts automatically; if the user hit

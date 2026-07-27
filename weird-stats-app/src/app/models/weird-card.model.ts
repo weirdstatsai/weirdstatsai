@@ -30,7 +30,9 @@ export type ChartType =
 
 export type CardStatus = 'success' | 'needs_review' | 'unsupported';
 
-export type DataMode = 'researched' | 'cached' | 'estimated' | 'proxy';
+/** 'unsupported' = the question had no verifiable answer (an opinion or a
+ *  prediction), so the card explains that rather than inventing a number. */
+export type DataMode = 'researched' | 'cached' | 'estimated' | 'proxy' | 'unsupported';
 
 export type Confidence = 'high' | 'medium' | 'low';
 
