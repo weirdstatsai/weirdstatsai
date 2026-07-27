@@ -22,7 +22,11 @@ export function rowsHaveMetric(card: WeirdCard | null | undefined): boolean {
     .filter(r => r && String(r.label ?? '').trim())
     .map(r => Number(r?.value))
     .filter(v => Number.isFinite(v));
-  return vals.length >= 2 && new Set(vals).size > 1;
+  if (vals.length < 2 || new Set(vals).size <= 1) return false;
+  // Variance alone isn't enough: the agent often echoes the RANK as the value
+  // (1, 2, 3…), which has variance but is not a metric — bars would just show
+  // 20%…100% of nothing. isCuratedList catches that and the all-zero case.
+  return !isCuratedList(card);
 }
 
 export function cardHasData(card: WeirdCard | null | undefined): boolean {
@@ -45,4 +49,26 @@ export function cardHasData(card: WeirdCard | null | undefined): boolean {
     default:
       return true;
   }
+}
+
+/**
+ * True when a ranking/table's row values are NOT a real comparable metric.
+ *
+ * The backend's LIST-vs-METRIC rule tells the agent that a curated "top/best X"
+ * list (best SUVs, top anime) has no honest number to rank by, and to emit
+ * `value: 0` with a short note in `extra` instead. In practice the model also
+ * echoes the rank as the value (1,2,3…) or repeats one identical figure. All
+ * three render as meaningless bars and a stray "0" next to every row, which is
+ * worse than showing nothing — so callers should fall back to a clean
+ * rank + name + note list.
+ */
+export function isCuratedList(card: { rows?: Array<{ value: number }> } | null | undefined): boolean {
+  const rows = card?.rows ?? [];
+  if (rows.length < 2) return false;
+  const vals = rows.map(r => Number(r.value));
+  if (vals.some(v => !isFinite(v))) return false;
+  if (vals.every(v => v === 0)) return true;              // the documented signal
+  if (vals.every((v, i) => v === i + 1)) return true;     // value is just the rank
+  if (vals.every(v => v === vals[0])) return true;        // one repeated figure
+  return false;
 }

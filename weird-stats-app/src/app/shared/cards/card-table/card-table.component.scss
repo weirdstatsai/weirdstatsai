@@ -188,3 +188,17 @@
   color: #999;
   margin: 0;
 }
+
+// Curated "top X" list — no honest metric to rank by, so the row carries the
+// agent's short qualitative note instead of a meaningless 0 / rank-as-value.
+.row-note {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #7a7d92;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 46%;
+  margin-left: auto;
+  text-align: right;
+}

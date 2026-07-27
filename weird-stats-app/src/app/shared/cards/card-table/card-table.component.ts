@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { getAnimalSvg } from '../../animal-icons';
+import { isCuratedList } from '../../card-data.util';
 import { WeirdCard, CardRow, ACCENT_COLORS, gradientForAccent } from '../../../models/weird-card.model';
 
 export type TableStyle = 'pill' | 'bars' | 'rows';
@@ -13,6 +14,9 @@ export type TableStyle = 'pill' | 'bars' | 'rows';
 export class CardTableComponent implements OnChanges {
   @Input() card!: WeirdCard;
   @Input() size: 'feed' | 'full' | 'alt' = 'feed';
+  /** No honest metric to rank by — render notes instead of zero-value bars. */
+  get curated(): boolean { return isCuratedList(this.card); }
+
   @Input() tableStyle: TableStyle = 'pill';
 
   accent = '#6C5CE7';
