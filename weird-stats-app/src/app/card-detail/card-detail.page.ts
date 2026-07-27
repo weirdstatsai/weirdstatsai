@@ -454,12 +454,15 @@ export class CardDetailPage implements OnInit {
     return new Promise<boolean>(async (resolve) => {
       const alert = await this.alertCtrl.create({
         header: 'Save your changes?',
-        message: 'You’ve edited this card. Save before leaving, or discard the changes.',
+        message: 'You’ve edited this card. Save it, or discard the changes and leave.',
         backdropDismiss: false,
+        cssClass: 'ws-confirm-alert',
+        // Primary action first — the styled group stacks them, so the order here
+        // is the visual order top-to-bottom.
         buttons: [
-          { text: 'Cancel', role: 'cancel', handler: () => resolve(false) },
-          { text: 'Discard', role: 'destructive', handler: () => { this.discardEdits(); resolve(true); } },
-          { text: 'Save', handler: () => { this.saveEdits().then(() => resolve(true)); } },
+          { text: 'Save changes', cssClass: 'ws-alert-primary', handler: () => { this.saveEdits().then(() => resolve(true)); } },
+          { text: 'Discard', role: 'destructive', cssClass: 'ws-alert-danger', handler: () => { this.discardEdits(); resolve(true); } },
+          { text: 'Keep editing', role: 'cancel', cssClass: 'ws-alert-ghost', handler: () => resolve(false) },
         ],
       });
       await alert.present();
@@ -1286,9 +1289,10 @@ export class CardDetailPage implements OnInit {
       header: 'Your card is ready',
       message: 'Save it to your profile, or keep it in Drafts to finish later.',
       backdropDismiss: false,
+      cssClass: 'ws-confirm-alert',
       buttons: [
-        { text: 'Keep in Drafts', role: 'cancel' },
-        { text: 'Save to profile', handler: () => { this.saveDraft(); } },
+        { text: 'Save to profile', cssClass: 'ws-alert-primary', handler: () => { this.saveDraft(); } },
+        { text: 'Keep in Drafts', role: 'cancel', cssClass: 'ws-alert-ghost' },
       ],
     });
     await alert.present();
@@ -1340,10 +1344,11 @@ export class CardDetailPage implements OnInit {
   private async confirmDelete(): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: 'Delete card?',
-      message: 'This cannot be undone.',
+      message: 'This permanently removes the card and its image. This cannot be undone.',
+      cssClass: 'ws-confirm-alert',
       buttons: [
-        { text: 'Cancel', role: 'cancel' },
-        { text: 'Delete', role: 'destructive', handler: () => this.deleteCard() },
+        { text: 'Delete card', role: 'destructive', cssClass: 'ws-alert-danger-solid', handler: () => this.deleteCard() },
+        { text: 'Cancel', role: 'cancel', cssClass: 'ws-alert-ghost' },
       ],
     });
     await alert.present();

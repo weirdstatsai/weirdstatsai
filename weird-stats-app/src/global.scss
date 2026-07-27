@@ -406,6 +406,94 @@ $desktop-content-max: 1280px;
   }
 }
 
+// ── Confirm dialogs (ws-confirm-alert) ──────────────────────────────────────
+// Ionic's stock alert is a plain box with a row of tiny text links, which reads
+// as a system prompt rather than part of the product. This restyles it as a
+// proper card: clear type hierarchy, and full-width stacked buttons where the
+// primary action is an actual filled button. Buttons stack in DOM order, so the
+// call sites list the primary action first.
+ion-alert.ws-confirm-alert {
+  --backdrop-opacity: 0.42;
+
+  .alert-wrapper {
+    width: calc(100vw - 48px);
+    max-width: 380px;
+    border-radius: 22px;
+    padding: 4px 4px 8px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(20, 20, 43, 0.26), 0 4px 14px rgba(0, 0, 0, 0.07);
+  }
+
+  .alert-head {
+    padding: 22px 22px 6px;
+    text-align: left;
+  }
+  .alert-title {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: #16172a;
+  }
+
+  .alert-message {
+    padding: 0 22px 18px;
+    text-align: left;
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: #55586f;
+  }
+
+  // Stacked, full-width actions — easier to hit on a phone and it lets the
+  // primary action carry real weight instead of being one link among three.
+  .alert-button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 16px 12px;
+  }
+
+  .alert-button {
+    margin: 0;
+    width: 100%;
+    min-height: 46px;
+    border-radius: 14px;
+    border: 0;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .alert-button .alert-button-inner {
+    justify-content: center;
+  }
+
+  .alert-button.ws-alert-primary {
+    background: #6C5CE7;
+    color: #fff;
+  }
+  .alert-button.ws-alert-danger {
+    background: rgba(216, 48, 48, 0.08);
+    color: #c23b3b;
+  }
+  .alert-button.ws-alert-danger-solid {
+    background: #d33a3a;
+    color: #fff;
+  }
+  .alert-button.ws-alert-ghost {
+    background: transparent;
+    color: #6a6d84;
+  }
+}
+
+// Roomier on tablet/desktop, where a 380px dialog can feel cramped.
+@media (min-width: 768px) {
+  ion-alert.ws-confirm-alert .alert-wrapper {
+    max-width: 420px;
+  }
+  ion-alert.ws-confirm-alert .alert-head { padding: 26px 26px 8px; }
+  ion-alert.ws-confirm-alert .alert-message { padding: 0 26px 20px; }
+}
+
 // Emoji picker + photo adjuster — same treatment as the login modal: a centered
 // card on tablet/desktop instead of a phone-width full-height panel. Without the
 // max-width/margin resets these inherit the global "stay phone-width" rule above
