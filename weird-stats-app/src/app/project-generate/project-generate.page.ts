@@ -165,7 +165,6 @@ export class ProjectGeneratePage implements OnInit, OnDestroy {
     };
     try {
       await this.afs.collection('stats').doc(id).set(doc);
-      this.membership.recordGeneration();
       this.prompt = '';
       this.toast('Stat added to project!');
     } catch {

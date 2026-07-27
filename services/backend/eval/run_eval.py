@@ -21,6 +21,7 @@ import argparse
 import json
 import pathlib
 import sys
+import os
 import time
 import urllib.request
 
@@ -53,7 +54,13 @@ def generate(base: str, prompt: str, timeout: int = 180) -> tuple[dict | None, s
     req = urllib.request.Request(
         f"{base}/api/generate/stream",
         data=json.dumps({"prompt": prompt}).encode(),
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            # Generation is metered per account/IP. Set INTERNAL_QUOTA_KEY (same
+            # value as the server's) so a test run doesn't eat the allowance.
+            **({"X-Internal-Key": os.environ["INTERNAL_QUOTA_KEY"]}
+               if os.getenv("INTERNAL_QUOTA_KEY") else {}),
+        },
     )
     card = err = None
     with urllib.request.urlopen(req, timeout=timeout) as resp:

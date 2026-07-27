@@ -1,58 +1,58 @@
 {
+ "uiMeta": {
+  "versusStyles": [],
+  "gradientFrom": "#e8f5e9",
+  "visualTheme": "general",
+  "gradientTo": "#f1f8e9",
+  "rankStyles": [],
+  "backgroundPattern": "none",
+  "selectedStyle": "",
+  "accentColor": "#D85A30",
+  "insightBadge": "Unexpected",
+  "shareTitle": "Evaluating the best Prime Minister of India is subjective.",
+  "mapStyles": [],
+  "icon": "🇮🇳",
+  "category": "Politics"
+ },
  "status": "unsupported",
- "title": "Evaluating the best Prime Minister of India is subjective.",
- "cardType": "fact",
- "presentationType": "fact",
- "chartType": null,
  "theme": "general",
+ "chartType": null,
+ "prompt": null,
+ "editedAt": null,
+ "createdAt": null,
+ "uid": null,
  "metric": {
   "name": "Subjectivity of Evaluation",
-  "unit": "",
   "value": null,
+  "unit": "",
   "description": "The evaluation of Prime Ministers varies based on personal opinions."
  },
- "labels": [],
+ "presentationType": "fact",
+ "id": null,
+ "createdByName": null,
+ "dataMeta": {
+  "isProxy": false,
+  "geoScope": "India",
+  "dataMode": "unsupported",
+  "timePeriod": "",
+  "proxyExplanation": "",
+  "confidence": "low"
+ },
  "datasets": [],
- "rows": [],
- "insight": "Determining the best Prime Minister of India is inherently subjective, influenced by personal opinions and political beliefs. It's like trying to pick the best flavor of ice cream—everyone has their favorite, but there's no definitive answer.",
+ "cardType": "fact",
+ "sourceMeta": {
+  "primarySourceName": "Research Brief",
+  "sources": []
+ },
+ "promptHash": null,
  "tags": [
   "politics",
   "India",
   "Prime Minister"
  ],
+ "rows": [],
+ "labels": [],
  "weirdScore": 5,
- "uiMeta": {
-  "category": "Politics",
-  "visualTheme": "general",
-  "accentColor": "#D85A30",
-  "gradientFrom": "#e8f5e9",
-  "gradientTo": "#f1f8e9",
-  "backgroundPattern": "none",
-  "icon": "🇮🇳",
-  "insightBadge": "Unexpected",
-  "shareTitle": "Evaluating the best Prime Minister of India is subjective.",
-  "rankStyles": [],
-  "versusStyles": [],
-  "mapStyles": [],
-  "selectedStyle": ""
- },
- "dataMeta": {
-  "geoScope": "India",
-  "timePeriod": "",
-  "dataMode": "unsupported",
-  "isProxy": false,
-  "proxyExplanation": "",
-  "confidence": "low"
- },
- "sourceMeta": {
-  "primarySourceName": "Research Brief",
-  "sources": []
- },
- "id": "111e76d1-9959-4698-a798-d04c1029eee2",
- "uid": null,
- "createdByName": null,
- "prompt": "Who is the best PM of India?",
- "promptHash": null,
- "createdAt": "2026-07-27T05:30:24.174822+00:00",
- "editedAt": null
+ "insight": "Determining the best Prime Minister of India is inherently subjective, influenced by personal opinions and political beliefs. It's like trying to pick the best flavor of ice cream—everyone has their favorite, but there's no definitive answer.",
+ "title": "Evaluating the best Prime Minister of India is subjective."
 }

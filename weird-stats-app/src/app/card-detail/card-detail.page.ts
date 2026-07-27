@@ -626,9 +626,15 @@ export class CardDetailPage implements OnInit {
     const creatorEmoji = uid ? await firstValueFrom(this.emoji.emoji$(uid)).catch(() => '') || '' : '';
 
     try {
+      // The server identifies the caller from this token alone — the `uid` in
+      // the body is a hint for logging and is never trusted for quota.
+      const idToken = user ? await user.getIdToken().catch(() => '') : '';
       const res = await fetch(`${environment.apiUrl}/api/generate/stream`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+        },
         body: JSON.stringify({ prompt, uid }),
       });
 
@@ -662,7 +668,6 @@ export class CardDetailPage implements OnInit {
               this.card = event.data;
               this.snapshotCard();
               this._buildAltStyles();
-              this.membership.recordGeneration();
               const draft: StoredStatCard = {
                 id: event.data.id,
                 status: 'completed',
@@ -700,6 +705,12 @@ export class CardDetailPage implements OnInit {
               // No prompt here — interrupting someone the instant their card
               // appears is the worst moment to ask a filing question. The ask
               // happens on the way out instead (see back()).
+            } else if (event.type === 'limit') {
+              // The server refused on quota. Show the upgrade path, not a dead end.
+              this.errorMsg = event.message;
+              this.isLoading = false;
+              this.resetLoadingUi();
+              this.modalCtrl.create(planModalOptions('limit')).then(m => m.present());
             } else if (event.type === 'error') {
               this.errorMsg = event.message;
               this.isLoading = false;

@@ -168,7 +168,6 @@ export class ProjectImportPage implements OnInit {
     };
     try {
       await this.afs.collection('stats').doc(id).set(doc);
-      this.membership.recordGeneration();
       this.cards = [...this.cards, doc];
     } catch {
       // Card generated but could not be saved — surface softly, keep importing.

@@ -16,6 +16,7 @@ from app.agent_client import (
 from app.firestore_client import (
     save_graph, find_cached_card, get_stored_card, list_published_cards,
 )
+from app.quota import uid_from_request, client_ip, consume_quota, is_internal
 from app.validator import validate_card
 from app.schemas import WeirdCard, GenerateRequest
 from app import seo
@@ -303,12 +304,28 @@ def _sse(event_type: str, payload: dict) -> str:
 
 
 @app.post("/api/generate/stream")
-async def generate_stream(req: GenerateRequest) -> StreamingResponse:
+async def generate_stream(req: GenerateRequest, request: Request) -> StreamingResponse:
+    # Identity comes from a verified ID token — NEVER req.uid, which the caller
+    # controls. Resolved here (outside the generator) so it happens before any
+    # work is scheduled.
+    caller = uid_from_request(request.headers.get("authorization"))
+    caller_ip = client_ip(request.headers, request.client.host if request.client else None)
+
     async def stream() -> AsyncGenerator[str, None]:
-        # Cache hit — return instantly
+        # Cache hit — return instantly, and don't bill it against the quota:
+        # serving a stored card costs a Firestore read, not an OpenAI call.
         cached = find_cached_card(req.prompt)
         if cached:
             yield _sse("card", {"data": cached})
+            return
+
+        # Everything past here spends money, so meter it. Atomic check-and-take
+        # in Firestore — the client-side cap is a UX hint, this is the gate.
+        allowed, why = (True, "") if is_internal(request.headers) else \
+            await run_in_threadpool(consume_quota, caller, caller_ip)
+        if not allowed:
+            yield _sse("limit", {"message": why})
+            yield _sse("error", {"message": why})
             return
 
         # Step 1: research
@@ -450,6 +467,7 @@ def _slice_pdf(data: bytes, max_pages: int) -> tuple[bytes, int, int]:
 
 @app.post("/api/projects/import/stream")
 async def project_import_stream(
+    request: Request,
     file: UploadFile = File(...),
     max_findings: Optional[int] = Form(None),
 ) -> StreamingResponse:
@@ -559,11 +577,20 @@ async def project_import_stream(
 
 
 @app.post("/api/generate", response_model=WeirdCard)
-async def generate(req: GenerateRequest) -> dict:
+async def generate(req: GenerateRequest, request: Request) -> dict:
     # 1. Dedup — serve an existing card for this question if we have one.
     cached = find_cached_card(req.prompt)
     if cached:
         return cached
+
+    # 2. Same gate as the streaming endpoint: verified identity, metered spend.
+    caller = uid_from_request(request.headers.get("authorization"))
+    allowed, why = (True, "") if is_internal(request.headers) else \
+        await run_in_threadpool(
+            consume_quota, caller,
+            client_ip(request.headers, request.client.host if request.client else None))
+    if not allowed:
+        raise HTTPException(status_code=429, detail=why)
 
     # 2. Run the two-step pipeline, validate. Retry once, then fall back.
     card: dict
