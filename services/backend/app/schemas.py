@@ -57,7 +57,12 @@ class CardUiMeta(BaseModel):
 class CardDataMeta(BaseModel):
     geoScope: str = ""
     timePeriod: str = ""
-    dataMode: Literal["researched", "cached", "estimated", "proxy"] = "researched"
+    # "unsupported" is required: FORMAT_PROMPT tells the agent to return an
+    # unsupported card for an unanswerable/opinion question ("who is the BEST
+    # X?"), and it sets dataMode to match. Without this member every such card
+    # died in validation and the whole generation surfaced a generic error,
+    # instead of the graceful "we couldn't verify this" card the prompt intends.
+    dataMode: Literal["researched", "cached", "estimated", "proxy", "unsupported"] = "researched"
     isProxy: bool = False
     proxyExplanation: str = ""
     confidence: Literal["high", "medium", "low"] = "medium"

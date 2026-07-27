@@ -14,6 +14,7 @@ from app.schemas import WeirdCard
 ACCENT_COLORS = ["#6C5CE7", "#378ADD", "#1D9E75", "#D85A30", "#BA7517"]
 CARD_TYPES = {"chart", "ranking", "kpi", "versus", "fact", "table", "map"}
 SOURCE_TYPES = {"official", "research", "company", "database", "news", "other"}
+DATA_MODES = {"researched", "cached", "estimated", "proxy", "unsupported"}
 ROW_TYPES = {"ranking", "table", "map", "versus", "kpi"}
 
 # Known country/territory names — used to auto-detect geographic cards
@@ -235,6 +236,13 @@ def validate_card(card: dict) -> dict:
         dm["proxyExplanation"] = ""
     if dm.get("confidence") not in ("high", "medium", "low"):
         dm["confidence"] = "medium"
+    # Coerce an off-enum dataMode instead of letting it fail the whole card.
+    # This normalizer already does exactly this for accentColor, sourceType,
+    # confidence and weirdScore; dataMode was the one gap, and a single stray
+    # value there (the agent likes "unsupported"/"unknown") raised a
+    # ValidationError that killed an otherwise renderable card.
+    if dm.get("dataMode") not in DATA_MODES:
+        dm["dataMode"] = "unsupported" if str(c.get("status")) == "unsupported" else "estimated"
     c["dataMeta"] = dm
 
     # sourceMeta: coerce unknown source types, ISO-normalize dates
