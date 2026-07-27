@@ -399,7 +399,7 @@ export class CardDetailPage implements OnInit {
   private _persistStyle(style: string): void {
     if (!this.card?.uiMeta) return;
     this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, selectedStyle: style } };
-    this.persistCardEdits();
+    this.markEdited();
   }
 
   /**
@@ -410,6 +410,62 @@ export class CardDetailPage implements OnInit {
    *  - Draft (not yet saved, or saved as draft)  → device-local storage.
    *  - Saved (private/published)                 → the Firestore doc in place.
    */
+  // ── Explicit save for card edits ─────────────────────────────────────────
+  /** In-memory edits (colour, gradient, badge, emoji, photo, style) not yet
+   *  written. Drives the header Save button and the leave guard. */
+  dirtyEdits = false;
+  /** Snapshot of the card as last saved, so Discard can put it back. */
+  private savedSnapshot?: WeirdCard;
+
+  /** Stage an edit: repaint now, write on Save. */
+  private markEdited(): void {
+    this.dirtyEdits = true;
+  }
+
+  /** Remember the current card as the saved baseline. */
+  private snapshotCard(): void {
+    this.savedSnapshot = this.card ? JSON.parse(JSON.stringify(this.card)) : undefined;
+    this.dirtyEdits = false;
+  }
+
+  /** Commit staged edits to wherever the card lives, and refresh its shareable
+   *  image so what gets shared matches what was just saved. */
+  async saveEdits(): Promise<void> {
+    if (!this.card || !this.dirtyEdits) return;
+    this.persistCardEdits();
+    this.snapshotCard();
+    this.toast('Changes saved');
+  }
+
+  /** Throw the staged edits away and restore the last saved state. */
+  private discardEdits(): void {
+    if (this.savedSnapshot) this.card = JSON.parse(JSON.stringify(this.savedSnapshot));
+    this.previewHex = '';
+    this.dirtyEdits = false;
+  }
+
+  /**
+   * Leave guard. Returns true when it's safe to navigate away. Offers Save /
+   * Discard rather than a bare warning, so the user is never forced back into
+   * the editor just to get out of it.
+   */
+  private async confirmLeave(): Promise<boolean> {
+    if (!this.dirtyEdits) return true;
+    return new Promise<boolean>(async (resolve) => {
+      const alert = await this.alertCtrl.create({
+        header: 'Save your changes?',
+        message: 'You’ve edited this card. Save before leaving, or discard the changes.',
+        backdropDismiss: false,
+        buttons: [
+          { text: 'Cancel', role: 'cancel', handler: () => resolve(false) },
+          { text: 'Discard', role: 'destructive', handler: () => { this.discardEdits(); resolve(true); } },
+          { text: 'Save', handler: () => { this.saveEdits().then(() => resolve(true)); } },
+        ],
+      });
+      await alert.present();
+    });
+  }
+
   private persistCardEdits(): void {
     if (!this.card || !this.storedCard) return;
     // The share PNG is pre-rendered and cached; any edit makes it stale, so drop
@@ -492,6 +548,7 @@ export class CardDetailPage implements OnInit {
     if (state?.card) {
       this.storedCard = state.card;
       this.card = state.card.data;
+      this.snapshotCard();
       this._buildAltStyles();
       this.applyCardSeo();
       this.trackCardOpen('in_app');
@@ -530,6 +587,7 @@ export class CardDetailPage implements OnInit {
       // (refresh or their own share link) instead of from the profile list.
       this.storedCard = doc ? { ...doc, id: doc.id || id } : undefined;
       this.card = this.storedCard?.data;
+      this.snapshotCard();
       if (!this.card) this.errorMsg = 'Card not found.';
       else {
         // Re-check the viewer now that we know who created the card.
@@ -599,6 +657,7 @@ export class CardDetailPage implements OnInit {
               this.skeletonType = event.cardType || '';
             } else if (event.type === 'card') {
               this.card = event.data;
+              this.snapshotCard();
               this._buildAltStyles();
               this.membership.recordGeneration();
               const draft: StoredStatCard = {
@@ -1259,6 +1318,7 @@ export class CardDetailPage implements OnInit {
     await this.drafts.add(user.uid, doc);
     this.storedCard = doc;
     await this._promoteDraft('private', 'Saved to your profile!');
+    this.snapshotCard();
     this.isSaved = true;
   }
 
@@ -1318,7 +1378,7 @@ export class CardDetailPage implements OnInit {
     this.selectedAltType = type;
     // Picking a chart type clears any "render as comparison KPI" selection.
     this.card = { ...this.card, chartType: type, uiMeta: { ...this.card.uiMeta, selectedStyle: '' } };
-    this.persistCardEdits();
+    this.markEdited();
   }
 
   // ── Chart → comparison-KPI alternative (only for 2-point time charts) ──
@@ -1340,7 +1400,7 @@ export class CardDetailPage implements OnInit {
   selectChartComparison(): void {
     if (!this.card) return;
     this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, selectedStyle: 'comparison' } };
-    this.persistCardEdits();
+    this.markEdited();
   }
 
   /** The card's current background treatment (plain / color / gradient). */
@@ -1365,7 +1425,7 @@ export class CardDetailPage implements OnInit {
         cardSurface: surface,
       },
     };
-    this.persistCardEdits();
+    this.markEdited();
   }
 
   /** Back to the neutral white card (the default) — no colour, dark copy. */
@@ -1373,7 +1433,7 @@ export class CardDetailPage implements OnInit {
     if (!this.card) return;
     this.previewHex = '';        // ditto — the preview must not outlive the pick
     this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, cardSurface: 'plain' } };
-    this.persistCardEdits();
+    this.markEdited();
   }
 
   // ── Premium KPI gradient background ──────────────────────────────────────
@@ -1391,7 +1451,7 @@ export class CardDetailPage implements OnInit {
     this.previewHex = '';                       // commit: drop the transient preview
     if (!this.isPremium) { this.promptGradientUpgrade(); return; }
     this.applyGradient(hex);
-    this.persistCardEdits();
+    this.markEdited();
   }
 
   /** True when the card is on a gradient in a colour outside the five presets —
@@ -1465,7 +1525,7 @@ export class CardDetailPage implements OnInit {
   setBadge(badge: string): void {
     if (!this.card) return;
     this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, insightBadge: badge } };
-    this.persistCardEdits();
+    this.markEdited();
   }
 
   /**
@@ -1545,7 +1605,7 @@ export class CardDetailPage implements OnInit {
       await ref.put(blob, { contentType: 'image/jpeg', cacheControl: 'public,max-age=31536000,immutable' });
       const url = await firstValueFrom(ref.getDownloadURL());
       this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, heroImage: url, heroImagePath: path } };
-      this.persistCardEdits();
+      this.markEdited();
       this.toast('Photo added!');
     } catch {
       this.toast('Upload failed — please try again.');
@@ -1563,7 +1623,7 @@ export class CardDetailPage implements OnInit {
       try { await firstValueFrom(this.storage.ref(path).delete()); } catch { /* already gone */ }
     }
     this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, heroImage: '', heroImagePath: '' } };
-    this.persistCardEdits();
+    this.markEdited();
   }
 
   /** Open the full emoji catalogue for the card's hero emoji. Replaces the old
@@ -1605,7 +1665,7 @@ export class CardDetailPage implements OnInit {
       if (!/\p{Extended_Pictographic}/u.test(icon)) return;   // letters/digits: keep the old emoji
     }
     this.card = { ...this.card, uiMeta: { ...this.card.uiMeta, icon } };
-    this.persistCardEdits();
+    this.markEdited();
   }
 
   async goShare(): Promise<void> {
@@ -1632,7 +1692,9 @@ export class CardDetailPage implements OnInit {
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  back(): void {
+  async back(): Promise<void> {
+    // Staged edits are only in memory — offer to save them before we navigate.
+    if (!(await this.confirmLeave())) return;
     // Admin flow targets a specific page.
     if (this.returnUrl) { this.router.navigateByUrl(this.returnUrl); return; }
     // A freshly generated card lands in Drafts automatically; if the user hit

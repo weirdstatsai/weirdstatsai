@@ -997,6 +997,30 @@ $alt-tile-w: min(45vw, 190px);
   letter-spacing: 0;
 }
 
+// Save for staged edits — same pill as the fresh-card Save, sitting beside the
+// options menu. Only visible while there are unsaved changes.
+.save-edits-btn {
+  --background: #6C5CE7;
+  --background-hover: #5b4bd6;
+  --background-activated: #5b4bd6;
+  --color: #fff;
+  --border-radius: 999px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --box-shadow: none;
+  height: 34px;
+  margin-inline-end: 2px;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+// The detail page has the full story right below the card, so the in-card
+// "See the full story" CTA is redundant here (and it was showing up in shares).
+// The Home deck and other surfaces keep theirs.
+.card-live ::ng-deep .pc-cta { display: none !important; }
+
 .create-cta {
   margin-top: 28px;
   padding: 22px 20px;

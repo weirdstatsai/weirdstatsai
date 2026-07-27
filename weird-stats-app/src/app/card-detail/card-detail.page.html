@@ -29,6 +29,11 @@
         </ion-button>
         <ion-button class="save-draft-btn" (click)="saveDraft()">Save</ion-button>
       </ng-container>
+      <!-- Staged edits: an explicit Save sits beside the options menu, so the
+           user always has a clear commit point after changing colour, badge,
+           emoji or photo. Leaving with it showing triggers the save prompt. -->
+      <ion-button class="save-edits-btn" *ngIf="card && dirtyEdits && !viewOnly && !isUnsavedDraft"
+                  (click)="saveEdits()">Save</ion-button>
       <!-- Saved / existing card: the options menu. Owner viewing their own
            shared card manages from their profile, so hide the menu for them. -->
       <ion-button (click)="isAdminView ? presentAdminActions() : viewOnly ? presentViewActions() : presentActions()" *ngIf="card && !isUnsavedDraft && !(viewOnly && isOwner)" aria-label="Options">
