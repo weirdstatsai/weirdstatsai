@@ -143,6 +143,10 @@ export class ImageAdjustComponent implements AfterViewInit, OnDestroy {
   private lastX = 0;
   private lastY = 0;
   private ro?: ResizeObserver;
+  /** Live pointers, so two fingers pinch instead of fighting over the pan. */
+  private pointers = new Map<number, { x: number; y: number }>();
+  private pinchDist = 0;
+  private pinchZoom0 = 1;
   /** Set once the user pans/zooms. Until then a resize re-centres instead of
    *  clamping: the sheet animates in, so the first layout pass can measure a
    *  zero-width canvas and the centring computed against it would be wrong
@@ -152,7 +156,17 @@ export class ImageAdjustComponent implements AfterViewInit, OnDestroy {
   constructor(private modalCtrl: ModalController) {}
 
   async ngAfterViewInit(): Promise<void> {
-    await this.load();
+    try {
+      await this.load();
+    } catch {
+      // Nothing could decode the file (HEIC/HEIF outside Safari, a truncated or
+      // renamed file — all of which still pass the `image/*` type check). Without
+      // this the sheet sat open and inert: empty stage, dead slider, and "Use
+      // photo" doing nothing because confirm() bails on a missing image.
+      this.release();
+      await this.modalCtrl.dismiss(null, 'decode-failed');
+      return;
+    }
     this.sizeCanvas();
     this.reset();
     // The sheet animates in, so the canvas' first measurement can be 0-width.
@@ -237,18 +251,46 @@ export class ImageAdjustComponent implements AfterViewInit, OnDestroy {
   }
 
   onDown(ev: PointerEvent): void {
-    this.dragging = true;
-    this.touched = true;
-    this.lastX = ev.clientX;
-    this.lastY = ev.clientY;
     (ev.target as HTMLElement).setPointerCapture?.(ev.pointerId);
+    this.pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    this.touched = true;
+    if (this.pointers.size === 1) {
+      this.dragging = true;
+      this.lastX = ev.clientX;
+      this.lastY = ev.clientY;
+    } else {
+      // Second finger down: switch from panning to pinching. Without this the
+      // extra pointer kept feeding pan deltas and the framing lurched around.
+      this.dragging = false;
+      const [a, b] = [...this.pointers.values()];
+      this.pinchDist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      this.pinchZoom0 = this.zoom;
+    }
   }
 
   onMove(ev: PointerEvent): void {
-    if (!this.dragging) return;
+    if (!this.pointers.has(ev.pointerId)) return;
+    this.pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     const c = this.canvasRef.nativeElement;
     // Pointer moves in CSS px; the canvas backing store may be 2-3x that.
     const k = c.width / (c.clientWidth || 1);
+
+    if (this.pointers.size >= 2) {
+      const [a, b] = [...this.pointers.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      const r = c.getBoundingClientRect();
+      const mx = ((a.x + b.x) / 2 - r.left) * k;      // pinch midpoint, canvas px
+      const my = ((a.y + b.y) / 2 - r.top) * k;
+      const next = Math.max(1, Math.min(3, this.pinchZoom0 * (d / this.pinchDist)));
+      const ratio = next / this.zoom;                 // baseScale cancels out
+      this.offX = mx - (mx - this.offX) * ratio;
+      this.offY = my - (my - this.offY) * ratio;
+      this.zoom = next;
+      this.clampAndDraw();
+      return;
+    }
+
+    if (!this.dragging) return;
     this.offX += (ev.clientX - this.lastX) * k;
     this.offY += (ev.clientY - this.lastY) * k;
     this.lastX = ev.clientX;
@@ -257,8 +299,22 @@ export class ImageAdjustComponent implements AfterViewInit, OnDestroy {
   }
 
   onUp(ev: PointerEvent): void {
-    this.dragging = false;
-    (ev.target as HTMLElement).releasePointerCapture?.(ev.pointerId);
+    this.pointers.delete(ev.pointerId);
+    const el = ev.target as HTMLElement;
+    // Guarded: onUp is also bound to pointerleave, so the leave that follows a
+    // release would otherwise call this with an already-freed id (which throws
+    // InvalidPointerId in some browsers).
+    if (el.hasPointerCapture?.(ev.pointerId)) el.releasePointerCapture?.(ev.pointerId);
+
+    if (this.pointers.size === 1) {
+      // Lifted one finger of a pinch — reseed the pan origin so it doesn't jump.
+      const p = [...this.pointers.values()][0];
+      this.lastX = p.x;
+      this.lastY = p.y;
+      this.dragging = true;
+    } else if (this.pointers.size === 0) {
+      this.dragging = false;
+    }
   }
 
   /** Keep the image covering the frame — never let a blank edge show. */

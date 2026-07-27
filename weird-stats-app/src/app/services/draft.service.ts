@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { AngularFireStorage } from '@angular/fire/compat/storage';
 import { firstValueFrom } from 'rxjs';
 import { StoredStatCard } from '../models/weird-card.model';
 
@@ -19,7 +20,7 @@ export class DraftService {
   /** localStorage key a guest's just-generated card is held under until they sign in. */
   static readonly PENDING_KEY = 'weirdstats_pending_card';
 
-  constructor(private afs: AngularFirestore) {}
+  constructor(private afs: AngularFirestore, private storage: AngularFireStorage) {}
 
   /**
    * Claim a guest's held card into their cloud drafts on sign-in. Wired into a
@@ -75,7 +76,27 @@ export class DraftService {
 
   /** Delete a draft/card document. OG-image cleanup is handled by the caller. */
   async remove(_uid: string, cardId: string): Promise<void> {
-    if (cardId) await this.afs.doc(`stats/${cardId}`).delete();
+    if (!cardId) return;
+    // Read the doc BEFORE deleting: the uploaded photo's Storage path lives on
+    // it, and without it we can't clean the object up. Deleting only the
+    // Firestore doc left `card-media/{uid}/{cardId}` and `og/{cardId}.png`
+    // behind — still publicly downloadable by URL — even though the delete
+    // confirmation promises the card is removed. Card-detail's own delete
+    // already did this; Profile and the admin screens go through here.
+    let heroPath = '';
+    try {
+      const snap = await firstValueFrom(this.afs.doc<StoredStatCard>(`stats/${cardId}`).get());
+      heroPath = snap?.data()?.data?.uiMeta?.heroImagePath || '';
+    } catch { /* unreadable — still delete the doc below */ }
+
+    await this.afs.doc(`stats/${cardId}`).delete();
+
+    // Best-effort cleanup; a missing object is not an error worth surfacing.
+    const bucket = this.storage;
+    if (heroPath) {
+      try { await firstValueFrom(bucket.ref(heroPath).delete()); } catch { /* already gone */ }
+    }
+    try { await firstValueFrom(bucket.ref(`og/${cardId}.png`).delete()); } catch { /* never had one */ }
   }
 
   /** Fetch one of the user's own cards by id (any status). */

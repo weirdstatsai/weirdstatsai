@@ -455,6 +455,10 @@ export class CardDetailPage implements OnInit {
    * dismissing the top one can reveal another beneath.
    */
   async ionViewWillLeave(): Promise<void> {
+    // A debounced OG rebuild would otherwise fire ~3s after the user left,
+    // capturing a detached/blank view and overwriting a published card's link
+    // preview with it.
+    clearTimeout(this.ogRefreshTimer);
     for (let top = await this.modalCtrl.getTop(); top; top = await this.modalCtrl.getTop()) {
       await top.dismiss();
     }
@@ -1458,8 +1462,12 @@ export class CardDetailPage implements OnInit {
       cssClass: 'ws-picker-modal',
     });
     await modal.present();
-    const { data } = await modal.onWillDismiss();
-    return data instanceof Blob ? data : null;
+    const { data, role } = await modal.onWillDismiss();
+    if (data instanceof Blob) return data;
+    // Distinguish "couldn't read the file" from a plain cancel — uploadHeroImage
+    // aborts on both, so without this the user got no explanation at all.
+    if (role === 'decode-failed') this.toast("Couldn't read that image — try a JPEG or PNG.");
+    return null;
   }
 
   async uploadHeroImage(ev: Event): Promise<void> {
@@ -1484,7 +1492,12 @@ export class CardDetailPage implements OnInit {
       // Already downsized + framed by the adjuster; this just enforces the
       // ceiling (and re-encodes if the adjuster was skipped).
       const blob = await compressImage(framed, 1400);
-      const path = `card-media/${uid}/${cardId}`;
+      // Key the path to the card's OWNER, not whoever is uploading. An admin
+      // editing someone else's card would otherwise write to their own folder,
+      // which the owner has no rights to delete — the photo would survive the
+      // card and the owner could never remove it.
+      const ownerUid = this.storedCard?.createdBy || uid;
+      const path = `card-media/${ownerUid}/${cardId}`;
       const ref = this.storage.ref(path);
       // Immutable cache: replacements go to the same path but a new download
       // token, so the URL changes and stale caches never show the old photo.
