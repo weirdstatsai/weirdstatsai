@@ -852,6 +852,15 @@ $alt-tile-w: min(45vw, 190px);
     // not clip this offscreen 360px frame — let the card take its natural
     // height, exactly like the mobile hero it mirrors.
     ::ng-deep .pcard.full { max-height: none; }
+
+    // A shared image is a flat picture, not a UI surface: the card's lift
+    // shadow just muddies the edge inside the PNG (and dom-to-image renders it
+    // heavier than the browser does).
+    ::ng-deep .pcard { box-shadow: none !important; }
+
+    // "See the full story" is an on-screen affordance. In a shared image it's a
+    // dead button that eats space below the stat, so drop it from the capture.
+    ::ng-deep .pc-cta { display: none !important; }
   }
 
   .card-wrap {
@@ -1087,6 +1096,9 @@ $alt-tile-w: min(45vw, 190px);
 // when captured from a desktop window. Unclamp — fitOgTile() already scales
 // the tile to fit the 1200×630 canvas, so free height is always safe here.
 .og-card-full ::ng-deep .pcard.full { max-height: none; }
+// Same as .share-capture: no lift shadow and no dead CTA inside a flat image.
+.og-card-full ::ng-deep .pcard { box-shadow: none !important; }
+.og-card-full ::ng-deep .pc-cta { display: none !important; }
 .og-brand {
   text-align: center;
   margin-top: 14px;

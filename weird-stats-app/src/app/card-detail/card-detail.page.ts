@@ -412,6 +412,9 @@ export class CardDetailPage implements OnInit {
    */
   private persistCardEdits(): void {
     if (!this.card || !this.storedCard) return;
+    // The share PNG is pre-rendered and cached; any edit makes it stale, so drop
+    // it or the next share would hand out a picture of the OLD card.
+    this.shareFile = undefined;
     this.storedCard = { ...this.storedCard, data: this.card };
     const card = this.storedCard;
     if (this.isDraftCard()) {
@@ -737,6 +740,45 @@ export class CardDetailPage implements OnInit {
     }
   }
 
+  /**
+   * Swap every remote <img> in a capture frame for an inlined data: URL, and
+   * return a restore function.
+   *
+   * dom-to-image otherwise has to fetch the photo itself at capture time, and
+   * that fetch is fragile in exactly the way users notice: the visible <img>
+   * deliberately carries no crossorigin attribute (so display never depends on
+   * CORS), which poisons the HTTP cache for the capture's CORS request, and any
+   * hiccup makes the image silently vanish from the PNG — the card shares
+   * WITHOUT the background photo the owner just added. Fetching once here, up
+   * front, makes the photo either present or a visible failure, never a silent
+   * omission.
+   */
+  private async inlineCaptureImages(root: HTMLElement): Promise<() => void> {
+    const imgs = Array.from(root.querySelectorAll('img'))
+      .filter(i => /^https?:/i.test(i.src));
+    const undo: Array<[HTMLImageElement, string]> = [];
+    await Promise.all(imgs.map(async (img) => {
+      const original = img.src;
+      try {
+        const res = await fetch(original, { mode: 'cors', cache: 'reload' });
+        if (!res.ok) return;
+        const blob = await res.blob();
+        const data = await new Promise<string>((resolve, reject) => {
+          const fr = new FileReader();
+          fr.onload = () => resolve(String(fr.result));
+          fr.onerror = () => reject(fr.error);
+          fr.readAsDataURL(blob);
+        });
+        undo.push([img, original]);
+        img.src = data;
+        await img.decode().catch(() => { /* still fine to draw */ });
+      } catch {
+        // Leave the original src — dom-to-image falls back to its own fetch.
+      }
+    }));
+    return () => undo.forEach(([img, src]) => { img.src = src; });
+  }
+
   /** Render the watermarked share frame to a PNG data URL */
   private async renderPng(): Promise<string | null> {
     await this.mountCaptures();   // frame is lazy-mounted — ensure it exists
@@ -744,14 +786,13 @@ export class CardDetailPage implements OnInit {
     if (!el) return null;
     // Pin the live layout so dom-to-image's clone can't re-resolve the story
     // card's container-query type scale (see capture.util.ts).
+    const unInline = await this.inlineCaptureImages(el);
     const restore = freezeCaptureLayout(el);
     try {
-      // cacheBust: the visible <img> caches the photo WITHOUT CORS headers; a
-      // capture-time CORS fetch would reuse that poisoned entry and be blocked
-      // (photo silently missing from the PNG). Busting forces a fresh request.
       return await domtoimage.toPng(el, { bgcolor: '#ffffff', scale: 2, cacheBust: true });
     } finally {
       restore();
+      unInline();
     }
   }
 
@@ -1638,17 +1679,19 @@ export class CardDetailPage implements OnInit {
       // Scale the card down to fit the fixed 1200×630 canvas so a tall card
       // (long table, big chart + story) is never clipped at the title/story.
       this.fitOgTile(el);
-      // Pin the live layout so dom-to-image's clone can't re-resolve the story
-      // card's container-query type scale (see capture.util.ts).
+      // Inline the photo first (see inlineCaptureImages) so the link preview can
+      // never lose it, then pin the live layout so dom-to-image's clone can't
+      // re-resolve the story card's container-query type scale.
+      const unInline = await this.inlineCaptureImages(el);
       const restore = freezeCaptureLayout(el);
       let dataUrl: string;
       try {
         dataUrl = await domtoimage.toPng(el, {
-          // cacheBust: see renderPng — avoids the CORS-poisoned image cache.
           width: 1200, height: 630, bgcolor: '#ffffff', cacheBust: true,
         });
       } finally {
         restore();
+        unInline();
       }
       const ref = this.storage.ref(`og/${id}.png`);
       await ref.putString(dataUrl, 'data_url', { contentType: 'image/png' });
